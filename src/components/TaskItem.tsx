@@ -50,15 +50,15 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask }: TaskItemProps
             <span>Urgencia: {task.urgencia}</span>
           </div>
           <div className="flex items-center space-x-1.5" title="Necesidad">
-            <ShieldCheck className="h-4 w-4 text-blue-500" />
+            <ShieldCheck className="h-4 w-4 text-primary" />
             <span>Necesidad: {task.necesidad}</span>
           </div>
           <div className="flex items-center space-x-1.5" title="Costo">
-            <CircleDollarSign className="h-4 w-4 text-green-600" />
+            <CircleDollarSign className="h-4 w-4 text-accent" />
             <span>Costo: {task.costo}</span>
           </div>
           <div className="flex items-center space-x-1.5" title="Duración">
-            <Hourglass className="h-4 w-4 text-purple-500" />
+            <Hourglass className="h-4 w-4 text-muted-foreground" />
             <span>Duración: {task.duracion}</span>
           </div>
         </div>

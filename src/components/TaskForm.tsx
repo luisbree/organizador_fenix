@@ -1,22 +1,13 @@
+// @ts-nocheck
+// Using @ts-nocheck because SpeechRecognition and related event types are not standard in all TS lib versions.
 "use client";
 
-import type * as React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/types/task';
-
-const taskFormSchema = z.object({
-  taskInput: z.string()
-    .min(1, "La entrada de la tarea no puede estar vacía.")
-    .regex(/^(.+?)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$/, "Formato inválido. Esperado: descripción urgencia necesidad costo duración (ej: limpiar la pecera 5 2 1 2)"),
-});
-
-type TaskFormValues = z.infer<typeof taskFormSchema>;
+import { Mic, Loader2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface TaskFormProps {
   onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt'> & { rawTarea: string }) => void;
@@ -24,15 +15,118 @@ interface TaskFormProps {
 
 export function TaskForm({ onAddTask }: TaskFormProps) {
   const { toast } = useToast();
-  const form = useForm<TaskFormValues>({
-    resolver: zodResolver(taskFormSchema),
-    defaultValues: {
-      taskInput: '',
-    },
-  });
+  const [isRecording, setIsRecording] = React.useState(false);
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [hasMicPermission, setHasMicPermission] = React.useState<boolean | null>(null);
+  
+  const recognitionRef = React.useRef<SpeechRecognition | null>(null);
+  const lastTranscriptRef = React.useRef<string>("");
+  const errorFlagRef = React.useRef<boolean>(false);
 
-  function onSubmit(data: TaskFormValues) {
-    const match = data.taskInput.match(/^(.+?)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$/);
+
+  React.useEffect(() => {
+    const requestMicPermission = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop()); // Stop tracks as we only need permission
+        setHasMicPermission(true);
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        setHasMicPermission(false);
+        toast({
+          variant: 'destructive',
+          title: 'Acceso al micrófono denegado',
+          description: 'Por favor, habilita el acceso al micrófono en la configuración de tu navegador.',
+        });
+      }
+    };
+    requestMicPermission();
+  }, [toast]);
+
+  React.useEffect(() => {
+    if (hasMicPermission !== true) return;
+
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+      toast({
+        variant: 'destructive',
+        title: 'Navegador no compatible',
+        description: 'Tu navegador no soporta el reconocimiento de voz.',
+      });
+      setHasMicPermission(false); // Disable if not supported
+      return;
+    }
+
+    const recognitionInstance = new SpeechRecognitionAPI();
+    recognitionInstance.continuous = false; // Stop on first pause
+    recognitionInstance.interimResults = false; // Only final results
+    recognitionInstance.lang = 'es-ES';
+
+    recognitionInstance.onstart = () => {
+      setIsRecording(true);
+      setIsProcessing(false);
+      errorFlagRef.current = false;
+    };
+
+    recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
+      lastTranscriptRef.current = event.results[event.results.length - 1][0].transcript.trim();
+    };
+
+    recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('Speech recognition error', event.error);
+      errorFlagRef.current = true;
+      let description = 'Ocurrió un error durante el reconocimiento de voz.';
+      if (event.error === 'no-speech') {
+        description = 'No se detectó voz. Inténtalo de nuevo.';
+      } else if (event.error === 'audio-capture') {
+        description = 'Problema con la captura de audio. Asegúrate que el micrófono funciona.';
+      } else if (event.error === 'not-allowed') {
+        description = 'Acceso al micrófono denegado. Habilítalo en la configuración.';
+        setHasMicPermission(false); // Update permission state
+      }
+      toast({ variant: 'destructive', title: 'Error de Reconocimiento', description });
+      setIsRecording(false);
+      setIsProcessing(false);
+    };
+
+    recognitionInstance.onend = () => {
+      const wasActuallyRecording = isRecording; // Capture state before setIsRecording(false)
+      setIsRecording(false);
+      
+      if (errorFlagRef.current) {
+        setIsProcessing(false);
+        lastTranscriptRef.current = ""; // Clear any partial/error transcript
+        return;
+      }
+
+      if (lastTranscriptRef.current) {
+        setIsProcessing(true);
+        processTranscript(lastTranscriptRef.current);
+        lastTranscriptRef.current = "";
+      } else if (wasActuallyRecording) {
+        // This case implies recording stopped, no error, but no transcript (e.g. silence timeout)
+        toast({
+            title: "No se detectó voz",
+            description: "No se escuchó nada. Inténtalo de nuevo.",
+            variant: "default", 
+        });
+        setIsProcessing(false);
+      } else {
+        setIsProcessing(false); // General fallback
+      }
+    };
+    
+    recognitionRef.current = recognitionInstance;
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort(); // Use abort to stop any ongoing recognition
+      }
+    };
+  }, [hasMicPermission, toast]); // isRecording removed from deps as onend handles it
+
+  const processTranscript = (transcript: string) => {
+    const match = transcript.match(/^(.+?)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$/);
     if (match) {
       const rawTarea = match[1].trim();
       const urgencia = parseInt(match[2], 10);
@@ -40,56 +134,118 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       const costo = parseInt(match[4], 10);
       const duracion = parseInt(match[5], 10);
 
-      if ([urgencia, necesidad, costo, duracion].some(isNaN)) {
+      const isValidNumber = (num: number) => !isNaN(num) && num >= 0 && num <= 10;
+
+      if ([urgencia, necesidad, costo, duracion].every(isValidNumber)) {
+        onAddTask({ rawTarea, tarea: rawTarea, urgencia, necesidad, costo, duracion });
         toast({
-          title: "Error de formato",
-          description: "Los valores numéricos no son válidos.",
+          title: "Tarea añadida por voz",
+          description: `"${rawTarea}" ha sido añadida a la lista.`,
+        });
+      } else {
+         toast({
+          title: "Error en los valores",
+          description: "Los valores numéricos (urgencia, necesidad, costo, duración) deben ser números entre 0 y 10.",
           variant: "destructive",
         });
-        return;
       }
-      
-      onAddTask({ rawTarea, tarea: rawTarea, urgencia, necesidad, costo, duracion });
-      form.reset();
-      toast({
-        title: "Tarea añadida",
-        description: `"${rawTarea}" ha sido añadida a la lista.`,
-      });
     } else {
-      // This case should ideally be caught by Zod, but as a fallback:
       toast({
-        title: "Error de formato",
-        description: "Por favor, introduce la tarea en el formato correcto.",
+        title: "Formato de voz no reconocido",
+        description: `No se pudo entender: "${transcript}". Asegúrate de decir: descripción de la tarea, seguido de los cuatro números (urgencia, necesidad, costo, duración). Por ejemplo: "limpiar la pecera 5 2 1 2".`,
         variant: "destructive",
+        duration: 7000, // Longer duration for detailed message
       });
     }
+    setIsProcessing(false);
+  };
+
+  const handleMicClick = () => {
+    if (hasMicPermission === false) {
+      toast({
+        variant: 'destructive',
+        title: 'Micrófono no disponible',
+        description: 'Por favor, otorga permisos para el micrófono o actualiza la página si ya los diste.',
+      });
+      // Optionally try to request permission again, or guide user.
+      // For now, just shows toast. User might need to refresh or change browser settings.
+      return;
+    }
+    if (hasMicPermission === null) {
+       toast({
+        title: 'Permiso de Micrófono Pendiente',
+        description: 'Esperando confirmación del permiso para usar el micrófono.',
+      });
+      return;
+    }
+
+
+    if (isRecording) {
+      recognitionRef.current?.stop();
+    } else if (!isProcessing && recognitionRef.current) {
+      lastTranscriptRef.current = "";
+      errorFlagRef.current = false;
+      try {
+        recognitionRef.current.start();
+      } catch (e) {
+         console.error("Error starting recognition:", e);
+         toast({
+           variant: 'destructive',
+           title: 'Error al iniciar grabación',
+           description: 'No se pudo iniciar el reconocimiento de voz. Intenta de nuevo.',
+         });
+         setIsRecording(false);
+         setIsProcessing(false);
+      }
+    }
+  };
+
+  let buttonContent;
+  let statusText = "Presiona el micrófono para añadir una tarea por voz.";
+
+  if (isProcessing) {
+    buttonContent = <Loader2 className="h-10 w-10 animate-spin" />;
+    statusText = "Procesando tarea...";
+  } else if (isRecording) {
+    buttonContent = <Mic className="h-10 w-10 text-destructive animate-pulse" />;
+    statusText = "Escuchando... Di tu tarea y los parámetros.";
+  } else {
+    buttonContent = <Mic className="h-10 w-10" />;
+  }
+  
+  if(hasMicPermission === null) {
+    statusText = "Solicitando permiso para el micrófono...";
+    buttonContent = <Loader2 className="h-10 w-10 animate-spin" />;
+  } else if (hasMicPermission === false) {
+     statusText = "El acceso al micrófono está denegado o no disponible.";
+     buttonContent = <Mic className="h-10 w-10 text-muted-foreground" />;
   }
 
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow-md">
-        <FormField
-          control={form.control}
-          name="taskInput"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel htmlFor="taskInput" className="text-lg font-semibold">Añadir Nueva Tarea</FormLabel>
-              <FormControl>
-                <Input 
-                  id="taskInput" 
-                  placeholder="Ej: Limpiar la pecera 5 2 1 2 (descripción urgencia necesidad costo duración)" 
-                  {...field}
-                  className="text-base"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground">
-          Añadir Tarea
-        </Button>
-      </form>
-    </Form>
+    <div className="flex flex-col items-center justify-center space-y-6 bg-card p-8 rounded-lg shadow-md min-h-[200px]">
+      {hasMicPermission === false && (
+         <Alert variant="destructive" className="w-full max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Acceso al Micrófono Requerido</AlertTitle>
+            <AlertDescription>
+              Para usar el ingreso por voz, por favor habilita el acceso al micrófono en la configuración de tu navegador y actualiza la página.
+            </AlertDescription>
+        </Alert>
+      )}
+      
+      <Button
+        onClick={handleMicClick}
+        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)} // Disable if processing, permission pending, or denied (unless it was already recording and got denied mid-way)
+        className="h-24 w-24 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg flex items-center justify-center"
+        aria-label={isRecording ? "Detener grabación" : "Iniciar grabación de tarea"}
+      >
+        {buttonContent}
+      </Button>
+      <p className="text-center text-muted-foreground px-4">{statusText}</p>
+       <p className="text-xs text-center text-muted-foreground px-4 pt-2">
+        Ejemplo: "Comprar leche 8 7 2 1" (Tarea Urgencia Necesidad Costo Duración)
+      </p>
+    </div>
   );
 }
