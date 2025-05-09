@@ -126,6 +126,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
   }, [hasMicPermission, toast]); // isRecording removed from deps as onend handles it
 
   const processTranscript = (transcript: string) => {
+    // Regex expects: Task description (anything), space, number, space, number, space, number, space, number
     const match = transcript.match(/^(.+?)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$/);
     if (match) {
       const rawTarea = match[1].trim();
@@ -134,7 +135,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       const costo = parseInt(match[4], 10);
       const duracion = parseInt(match[5], 10);
 
-      const isValidNumber = (num: number) => !isNaN(num) && num >= 0 && num <= 10;
+      const isValidNumber = (num: number) => !isNaN(num) && num >= 0 && num <= 5;
 
       if ([urgencia, necesidad, costo, duracion].every(isValidNumber)) {
         onAddTask({ rawTarea, tarea: rawTarea, urgencia, necesidad, costo, duracion });
@@ -145,16 +146,16 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       } else {
          toast({
           title: "Error en los valores",
-          description: "Los valores numéricos (urgencia, necesidad, costo, duración) deben ser números entre 0 y 10.",
+          description: "Los valores numéricos (urgencia, necesidad, costo, duración) deben ser números entre 0 y 5.",
           variant: "destructive",
         });
       }
     } else {
       toast({
         title: "Formato de voz no reconocido",
-        description: `No se pudo entender: "${transcript}". Asegúrate de decir: descripción de la tarea, seguido de los cuatro números (urgencia, necesidad, costo, duración). Por ejemplo: "limpiar la pecera 5 2 1 2".`,
+        description: `No se pudo entender: "${transcript}". Asegúrate de decir: descripción de la tarea, seguido de los cuatro números (urgencia, necesidad, costo, duración) entre 0 y 5, separados por espacios. Por ejemplo: "limpiar la pecera 5 2 1 2".`,
         variant: "destructive",
-        duration: 7000, // Longer duration for detailed message
+        duration: 9000, // Longer duration for detailed message
       });
     }
     setIsProcessing(false);
@@ -167,8 +168,6 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
         title: 'Micrófono no disponible',
         description: 'Por favor, otorga permisos para el micrófono o actualiza la página si ya los diste.',
       });
-      // Optionally try to request permission again, or guide user.
-      // For now, just shows toast. User might need to refresh or change browser settings.
       return;
     }
     if (hasMicPermission === null) {
@@ -178,7 +177,6 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       });
       return;
     }
-
 
     if (isRecording) {
       recognitionRef.current?.stop();
@@ -204,21 +202,21 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
   let statusText = "Presiona el micrófono para añadir una tarea por voz.";
 
   if (isProcessing) {
-    buttonContent = <Loader2 className="h-10 w-10 animate-spin" />;
+    buttonContent = <Loader2 className="h-14 w-14 animate-spin" />;
     statusText = "Procesando tarea...";
   } else if (isRecording) {
-    buttonContent = <Mic className="h-10 w-10 text-destructive animate-pulse" />;
+    buttonContent = <Mic className="h-14 w-14 text-destructive animate-pulse" />;
     statusText = "Escuchando... Di tu tarea y los parámetros.";
   } else {
-    buttonContent = <Mic className="h-10 w-10" />;
+    buttonContent = <Mic className="h-14 w-14" />;
   }
   
   if(hasMicPermission === null) {
     statusText = "Solicitando permiso para el micrófono...";
-    buttonContent = <Loader2 className="h-10 w-10 animate-spin" />;
+    buttonContent = <Loader2 className="h-14 w-14 animate-spin" />;
   } else if (hasMicPermission === false) {
      statusText = "El acceso al micrófono está denegado o no disponible.";
-     buttonContent = <Mic className="h-10 w-10 text-muted-foreground" />;
+     buttonContent = <Mic className="h-14 w-14 text-muted-foreground" />;
   }
 
 
@@ -236,15 +234,15 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       
       <Button
         onClick={handleMicClick}
-        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)} // Disable if processing, permission pending, or denied (unless it was already recording and got denied mid-way)
-        className="h-24 w-24 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg flex items-center justify-center"
+        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)}
+        className="h-28 w-28 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg flex items-center justify-center"
         aria-label={isRecording ? "Detener grabación" : "Iniciar grabación de tarea"}
       >
         {buttonContent}
       </Button>
       <p className="text-center text-muted-foreground px-4">{statusText}</p>
        <p className="text-xs text-center text-muted-foreground px-4 pt-2">
-        Ejemplo: "Comprar leche 8 7 2 1" (Tarea Urgencia Necesidad Costo Duración)
+        Ejemplo: "Comprar leche 5 4 1 2" (Tarea Urgencia Necesidad Costo Duración - valores 0 a 5)
       </p>
     </div>
   );
