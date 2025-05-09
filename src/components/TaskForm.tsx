@@ -58,9 +58,25 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     }
 
     const recognitionInstance = new SpeechRecognitionAPI();
-    recognitionInstance.continuous = true; // Allow for pauses, user clicks to stop
-    recognitionInstance.interimResults = false; // Only final results for segments
+    recognitionInstance.continuous = true; 
+    recognitionInstance.interimResults = false; 
     recognitionInstance.lang = 'es-ES';
+
+    // Longer speech timeout settings
+    recognitionInstance.speechRecognitionTimeout = 10000; // 10 seconds, specific to some implementations
+    recognitionInstance.endpointerTimeout = 5000; // 5 seconds, specific to some implementations
+    
+    // Standard properties for timeouts (check browser compatibility if these specific ones exist)
+    if ('speechTimeout' in recognitionInstance) { // Non-standard, but some engines might use it
+        (recognitionInstance as any).speechTimeout = 10000; // ms
+    }
+    if ('endpointerTimeout' in recognitionInstance) { // Non-standard
+        (recognitionInstance as any).endpointerTimeout = 5000; // ms - how long to wait after speech stops
+    }
+     if ('silenceTimeout' in recognitionInstance) { // Non-standard
+        (recognitionInstance as any).silenceTimeout = 10000; // ms for initial silence
+    }
+
 
     recognitionInstance.onstart = () => {
       setIsRecording(true);
@@ -71,8 +87,6 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
       let fullTranscript = "";
       for (let i = 0; i < event.results.length; i++) {
-        // With continuous=true and interimResults=false, event.results[i].isFinal should be true for each segment.
-        // We build the transcript from all segments received so far.
         fullTranscript += event.results[i][0].transcript.trim() + " ";
       }
       lastTranscriptRef.current = fullTranscript.trim();
@@ -88,7 +102,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
         description = 'Problema con la captura de audio. Asegúrate que el micrófono funciona.';
       } else if (event.error === 'not-allowed') {
         description = 'Acceso al micrófono denegado. Habilítalo en la configuración.';
-        setHasMicPermission(false); // Update permission state
+        setHasMicPermission(false); 
       }
       toast({ variant: 'destructive', title: 'Error de Reconocimiento', description });
       setIsRecording(false);
@@ -108,9 +122,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       if (lastTranscriptRef.current) {
         setIsProcessing(true);
         processTranscript(lastTranscriptRef.current);
-        // lastTranscriptRef.current is cleared before next recording session starts
       } else if (wasActuallyRecording) {
-        // This case implies recording stopped by user, no error, but no transcript (e.g. silence throughout)
         toast({
             title: "No se detectó voz",
             description: "No se escuchó nada. Inténtalo de nuevo.",
@@ -118,7 +130,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
         });
         setIsProcessing(false);
       } else {
-        setIsProcessing(false); // General fallback
+        setIsProcessing(false); 
       }
     };
     
@@ -132,8 +144,14 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
   }, [hasMicPermission, toast]);
 
   const processTranscript = (transcript: string) => {
-    // Regex expects: Task description (anything), space, number, space, number, space, number, space, number
-    const match = transcript.match(/^(.+?)\s+(\d)\s+(\d)\s+(\d)\s+(\d)$/);
+    // Regex 1: Task description, space, N, space, N, space, N, space, N (numbers 0-5)
+    let match = transcript.match(/^(.+?)\s+(\d)\s+(\d)\s+(\d)\s+(\d)$/);
+
+    if (!match) {
+      // Regex 2: Task description, space, NNNN (four consecutive numbers 0-5)
+      match = transcript.match(/^(.+?)\s+(\d)(\d)(\d)(\d)$/);
+    }
+
     if (match) {
       const rawTarea = match[1].trim();
       const urgencia = parseInt(match[2], 10);
@@ -159,9 +177,9 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     } else {
       toast({
         title: "Formato de voz no reconocido",
-        description: `No se pudo entender: "${transcript}". Asegúrate de decir: descripción de la tarea, seguido de los cuatro números (urgencia, necesidad, costo, duración) entre 0 y 5, separados por espacios. Por ejemplo: "limpiar la pecera 5 2 1 2".`,
+        description: `No se pudo entender: "${transcript}". Asegúrate de decir: descripción de la tarea, seguido de los cuatro números (0-5). Por ejemplo: "limpiar la pecera 5 2 1 2" o "limpiar la pecera 5212".`,
         variant: "destructive",
-        duration: 9000, 
+        duration: 10000, 
       });
     }
     setIsProcessing(false);
@@ -185,9 +203,9 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     }
 
     if (isRecording) {
-      recognitionRef.current?.stop(); // User explicitly stops recording
+      recognitionRef.current?.stop(); 
     } else if (!isProcessing && recognitionRef.current) {
-      lastTranscriptRef.current = ""; // Clear previous transcript before new recording
+      lastTranscriptRef.current = ""; 
       errorFlagRef.current = false;
       try {
         recognitionRef.current.start();
@@ -198,7 +216,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
            title: 'Error al iniciar grabación',
            description: 'No se pudo iniciar el reconocimiento de voz. Intenta de nuevo.',
          });
-         setIsRecording(false); // Ensure states are reset on error
+         setIsRecording(false); 
          setIsProcessing(false);
       }
     }
@@ -240,7 +258,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       
       <Button
         onClick={handleMicClick}
-        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)} // Disable if processing, permission pending, or permission denied (unless already recording to allow stop)
+        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)}
         className="h-28 w-28 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg flex items-center justify-center"
         aria-label={isRecording ? "Detener grabación" : "Iniciar grabación de tarea"}
       >
