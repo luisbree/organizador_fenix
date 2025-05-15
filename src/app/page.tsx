@@ -14,13 +14,14 @@ export default function HomePage() {
 
   React.useEffect(() => {
     const storedTasksRaw = localStorage.getItem('task-ranker-tasks');
+    let loadedTasks: Task[] = [];
     if (storedTasksRaw) {
       try {
         const storedTasks = JSON.parse(storedTasksRaw);
-        setTasks(storedTasks.map((task: any) => ({
+        loadedTasks = storedTasks.map((task: any) => ({
           ...task,
           createdAt: new Date(task.createdAt) // Ensure Date object is restored
-        })));
+        }));
       } catch (e) {
         console.error("Failed to parse tasks from localStorage", e);
         toast({
@@ -31,6 +32,25 @@ export default function HomePage() {
         localStorage.removeItem('task-ranker-tasks'); // Clear corrupted data
       }
     }
+
+    if (loadedTasks.length === 0) {
+      // Add a default task if no tasks are loaded
+      const exampleTask: Task = {
+        id: crypto.randomUUID(),
+        tarea: "Pasear al perro",
+        urgencia: 4,
+        necesidad: 5,
+        costo: 1,
+        duracion: 2,
+        indice: (4 + 5) / (1 + 2), // (U+N)/(C+D) = 9/3 = 3
+        completado: false,
+        createdAt: new Date(),
+      };
+      setTasks([exampleTask]);
+    } else {
+      setTasks(loadedTasks);
+    }
+    
     setIsLoading(false);
   }, [toast]);
 
@@ -49,13 +69,12 @@ export default function HomePage() {
       if (num > 0) {
         indice = Infinity;
       } else {
-        indice = 0; // Or handle as an error/special case like NaN then normalize
+        indice = 0; 
       }
     } else {
       indice = num / den;
     }
 
-    // Normalize NaN to 0, though previous logic should prevent it with valid numbers
     if (isNaN(indice)) {
       indice = 0;
     }
@@ -92,19 +111,19 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
-      <header className="mb-6 text-center">
-        <h1 className="text-3xl sm:text-4xl font-bold text-primary tracking-tight">
+      <header className="mb-4 text-center">
+        <h1 className="text-2xl font-semibold text-primary tracking-tight">
           Task Ranker
         </h1>
       </header>
 
-      <main className="flex-grow flex flex-col">
-        <section className="mb-8">
+      <main className="flex-grow flex flex-col space-y-6">
+        <section>
           <TaskForm onAddTask={handleAddTask} />
         </section>
 
         <section className="flex-grow flex flex-col">
-          <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-foreground border-b pb-2">
+          <h2 className="text-xl font-semibold mb-3 text-foreground border-b pb-1.5">
             Lista de Tareas
           </h2>
           {isLoading ? (
