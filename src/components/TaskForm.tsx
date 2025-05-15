@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 // Using @ts-nocheck because SpeechRecognition and related event types are not standard in all TS lib versions.
 "use client";
@@ -241,26 +242,26 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
   let statusText = "Presiona el micrófono para añadir una tarea por voz. Vuelve a presionar para finalizar.";
 
   if (isProcessing) {
-    buttonContent = <Loader2 className="h-20 w-20 animate-spin" />;
+    buttonContent = <Loader2 className="h-24 w-24 animate-spin" />; // Increased icon size
     statusText = "Procesando tarea...";
   } else if (isRecording) {
-    buttonContent = <Mic className="h-20 w-20 text-destructive animate-pulse" />;
+    buttonContent = <Mic className="h-24 w-24 text-destructive animate-pulse" />; // Increased icon size
     statusText = "Escuchando... Presiona de nuevo para finalizar.";
   } else {
-    buttonContent = <Mic className="h-20 w-20" />;
+    buttonContent = <Mic className="h-24 w-24" />; // Increased icon size
   }
   
   if(hasMicPermission === null) {
     statusText = "Solicitando permiso para el micrófono...";
-    buttonContent = <Loader2 className="h-20 w-20 animate-spin" />;
+    buttonContent = <Loader2 className="h-24 w-24 animate-spin" />; // Increased icon size
   } else if (hasMicPermission === false) {
      statusText = "El acceso al micrófono está denegado o no disponible.";
-     buttonContent = <Mic className="h-20 w-20 text-muted-foreground" />;
+     buttonContent = <Mic className="h-24 w-24 text-muted-foreground" />; // Increased icon size
   }
 
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-6 bg-card p-8 rounded-lg shadow-md min-h-[250px]"> {/* Increased min-h slightly */}
+    <div className="flex flex-col items-center justify-center space-y-6 bg-card p-8 rounded-lg shadow-md min-h-[250px]">
       {hasMicPermission === false && (
          <Alert variant="destructive" className="w-full max-w-md">
             <AlertCircle className="h-4 w-4" />
@@ -274,10 +275,10 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       <Button
         onClick={handleMicClick}
         disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)}
-        className="h-36 w-36 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg flex items-center justify-center" /* Increased button size */
+        className="h-40 w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg flex items-center justify-center" /* Increased button size */
         aria-label={isRecording ? "Detener grabación" : "Iniciar grabación de tarea"}
       >
-        {buttonContent} {/* Icon size is handled inside buttonContent logic */}
+        {buttonContent}
       </Button>
       <p className="text-center text-muted-foreground px-4">{statusText}</p>
        <p className="text-xs text-center text-muted-foreground px-4 pt-2">
@@ -286,3 +287,4 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     </div>
   );
 }
+
