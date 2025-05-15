@@ -149,7 +149,21 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
 
     if (!match) {
       // Regex 2: Task description, space, NNNN (four consecutive numbers 0-5)
-      match = transcript.match(/^(.+?)\s+(\d)(\d)(\d)(\d)$/);
+      // This will now also try to split the four numbers if they appear together
+      const fourNumbersMatch = transcript.match(/^(.+?)\s+(\d{4})$/);
+      if (fourNumbersMatch) {
+        const taskDesc = fourNumbersMatch[1];
+        const numbersStr = fourNumbersMatch[2];
+        // Split the 4-digit string into individual digits
+        match = [
+          fourNumbersMatch[0], // Full match
+          taskDesc,            // Task description
+          numbersStr[0],       // urgencia
+          numbersStr[1],       // necesidad
+          numbersStr[2],       // costo
+          numbersStr[3]        // duracion
+        ];
+      }
     }
 
     if (match) {
@@ -170,14 +184,15 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       } else {
          toast({
           title: "Error en los valores",
-          description: "Los valores numéricos (urgencia, necesidad, costo, duración) deben ser números entre 0 y 5.",
+          description: "Los valores numéricos (urgencia, necesidad, costo, duración) deben ser números entre 0 y 5. El formato detectado no es válido.",
           variant: "destructive",
+          duration: 7000,
         });
       }
     } else {
       toast({
         title: "Formato de voz no reconocido",
-        description: `No se pudo entender: "${transcript}". Asegúrate de decir: descripción de la tarea, seguido de los cuatro números (0-5). Por ejemplo: "limpiar la pecera 5 2 1 2" o "limpiar la pecera 5212".`,
+        description: `No se pudo entender: "${transcript}". Asegúrate de decir: descripción de la tarea, seguido de los cuatro números (0-5) separados o juntos. Por ejemplo: "limpiar la pecera 5 2 1 2" o "limpiar la pecera 5212".`,
         variant: "destructive",
         duration: 10000, 
       });
@@ -226,26 +241,26 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
   let statusText = "Presiona el micrófono para añadir una tarea por voz. Vuelve a presionar para finalizar.";
 
   if (isProcessing) {
-    buttonContent = <Loader2 className="h-14 w-14 animate-spin" />;
+    buttonContent = <Loader2 className="h-20 w-20 animate-spin" />;
     statusText = "Procesando tarea...";
   } else if (isRecording) {
-    buttonContent = <Mic className="h-14 w-14 text-destructive animate-pulse" />;
+    buttonContent = <Mic className="h-20 w-20 text-destructive animate-pulse" />;
     statusText = "Escuchando... Presiona de nuevo para finalizar.";
   } else {
-    buttonContent = <Mic className="h-14 w-14" />;
+    buttonContent = <Mic className="h-20 w-20" />;
   }
   
   if(hasMicPermission === null) {
     statusText = "Solicitando permiso para el micrófono...";
-    buttonContent = <Loader2 className="h-14 w-14 animate-spin" />;
+    buttonContent = <Loader2 className="h-20 w-20 animate-spin" />;
   } else if (hasMicPermission === false) {
      statusText = "El acceso al micrófono está denegado o no disponible.";
-     buttonContent = <Mic className="h-14 w-14 text-muted-foreground" />;
+     buttonContent = <Mic className="h-20 w-20 text-muted-foreground" />;
   }
 
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-6 bg-card p-8 rounded-lg shadow-md min-h-[200px]">
+    <div className="flex flex-col items-center justify-center space-y-6 bg-card p-8 rounded-lg shadow-md min-h-[250px]"> {/* Increased min-h slightly */}
       {hasMicPermission === false && (
          <Alert variant="destructive" className="w-full max-w-md">
             <AlertCircle className="h-4 w-4" />
@@ -259,10 +274,10 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       <Button
         onClick={handleMicClick}
         disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)}
-        className="h-28 w-28 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg flex items-center justify-center"
+        className="h-36 w-36 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg flex items-center justify-center" /* Increased button size */
         aria-label={isRecording ? "Detener grabación" : "Iniciar grabación de tarea"}
       >
-        {buttonContent}
+        {buttonContent} {/* Icon size is handled inside buttonContent logic */}
       </Button>
       <p className="text-center text-muted-foreground px-4">{statusText}</p>
        <p className="text-xs text-center text-muted-foreground px-4 pt-2">
