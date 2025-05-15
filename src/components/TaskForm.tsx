@@ -5,6 +5,7 @@
 
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/types/task';
 import { Mic, Loader2, AlertCircle } from 'lucide-react';
@@ -17,152 +18,43 @@ interface TaskFormProps {
 export function TaskForm({ onAddTask }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
-  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [isProcessing, setIsProcessing] = React.useState(false); // Used for both voice and text processing
   const [hasMicPermission, setHasMicPermission] = React.useState<boolean | null>(null);
+  const [textInputValue, setTextInputValue] = React.useState("");
   
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
   const lastTranscriptRef = React.useRef<string>("");
   const errorFlagRef = React.useRef<boolean>(false);
 
-
   React.useEffect(() => {
     const requestMicPermission = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop()); // Stop tracks as we only need permission
+        stream.getTracks().forEach(track => track.stop()); 
         setHasMicPermission(true);
       } catch (error) {
         console.error('Error accessing microphone:', error);
         setHasMicPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Acceso al micrófono denegado',
-          description: 'Por favor, habilita el acceso al micrófono en la configuración de tu navegador.',
-        });
       }
     };
     requestMicPermission();
-  }, [toast]);
+  }, []);
 
-  React.useEffect(() => {
-    if (hasMicPermission !== true) return;
-
-    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognitionAPI) {
-      toast({
-        variant: 'destructive',
-        title: 'Navegador no compatible',
-        description: 'Tu navegador no soporta el reconocimiento de voz.',
-      });
-      setHasMicPermission(false); // Disable if not supported
-      return;
-    }
-
-    const recognitionInstance = new SpeechRecognitionAPI();
-    recognitionInstance.continuous = true; 
-    recognitionInstance.interimResults = false; 
-    recognitionInstance.lang = 'es-ES';
-
-    // Longer speech timeout settings
-    recognitionInstance.speechRecognitionTimeout = 10000; // 10 seconds, specific to some implementations
-    recognitionInstance.endpointerTimeout = 5000; // 5 seconds, specific to some implementations
-    
-    // Standard properties for timeouts (check browser compatibility if these specific ones exist)
-    if ('speechTimeout' in recognitionInstance) { // Non-standard, but some engines might use it
-        (recognitionInstance as any).speechTimeout = 10000; // ms
-    }
-    if ('endpointerTimeout' in recognitionInstance) { // Non-standard
-        (recognitionInstance as any).endpointerTimeout = 5000; // ms - how long to wait after speech stops
-    }
-     if ('silenceTimeout' in recognitionInstance) { // Non-standard
-        (recognitionInstance as any).silenceTimeout = 10000; // ms for initial silence
-    }
-
-
-    recognitionInstance.onstart = () => {
-      setIsRecording(true);
-      setIsProcessing(false);
-      errorFlagRef.current = false;
-    };
-
-    recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
-      let fullTranscript = "";
-      for (let i = 0; i < event.results.length; i++) {
-        fullTranscript += event.results[i][0].transcript.trim() + " ";
-      }
-      lastTranscriptRef.current = fullTranscript.trim();
-    };
-
-    recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('Speech recognition error', event.error);
-      errorFlagRef.current = true;
-      let description = 'Ocurrió un error durante el reconocimiento de voz.';
-      if (event.error === 'no-speech') {
-        description = 'No se detectó voz. Inténtalo de nuevo.';
-      } else if (event.error === 'audio-capture') {
-        description = 'Problema con la captura de audio. Asegúrate que el micrófono funciona.';
-      } else if (event.error === 'not-allowed') {
-        description = 'Acceso al micrófono denegado. Habilítalo en la configuración.';
-        setHasMicPermission(false); 
-      }
-      toast({ variant: 'destructive', title: 'Error de Reconocimiento', description });
-      setIsRecording(false);
-      setIsProcessing(false);
-    };
-
-    recognitionInstance.onend = () => {
-      const wasActuallyRecording = isRecording; 
-      setIsRecording(false);
-      
-      if (errorFlagRef.current) {
-        setIsProcessing(false);
-        lastTranscriptRef.current = ""; 
-        return;
-      }
-
-      if (lastTranscriptRef.current) {
-        setIsProcessing(true);
-        processTranscript(lastTranscriptRef.current);
-      } else if (wasActuallyRecording) {
-        toast({
-            title: "No se detectó voz",
-            description: "No se escuchó nada. Inténtalo de nuevo.",
-            variant: "default", 
-        });
-        setIsProcessing(false);
-      } else {
-        setIsProcessing(false); 
-      }
-    };
-    
-    recognitionRef.current = recognitionInstance;
-
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort(); 
-      }
-    };
-  }, [hasMicPermission, toast]);
-
-  const processTranscript = (transcript: string) => {
-    // Regex 1: Task description, space, N, space, N, space, N, space, N (numbers 0-5)
-    let match = transcript.match(/^(.+?)\s+(\d)\s+(\d)\s+(\d)\s+(\d)$/);
+  const parseAndAddTask = (inputText: string): boolean => {
+    let match = inputText.match(/^(.+?)\s+(\d)\s+(\d)\s+(\d)\s+(\d)$/);
 
     if (!match) {
-      // Regex 2: Task description, space, NNNN (four consecutive numbers 0-5)
-      // This will now also try to split the four numbers if they appear together
-      const fourNumbersMatch = transcript.match(/^(.+?)\s+(\d{4})$/);
+      const fourNumbersMatch = inputText.match(/^(.+?)\s+(\d{4})$/);
       if (fourNumbersMatch) {
         const taskDesc = fourNumbersMatch[1];
         const numbersStr = fourNumbersMatch[2];
-        // Split the 4-digit string into individual digits
         match = [
-          fourNumbersMatch[0], // Full match
-          taskDesc,            // Task description
-          numbersStr[0],       // urgencia
-          numbersStr[1],       // necesidad
-          numbersStr[2],       // costo
-          numbersStr[3]        // duracion
+          fourNumbersMatch[0], 
+          taskDesc,            
+          numbersStr[0],       
+          numbersStr[1],       
+          numbersStr[2],       
+          numbersStr[3]        
         ];
       }
     }
@@ -179,9 +71,10 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       if ([urgencia, necesidad, costo, duracion].every(isValidNumber)) {
         onAddTask({ rawTarea, tarea: rawTarea, urgencia, necesidad, costo, duracion });
         toast({
-          title: "Tarea añadida por voz",
+          title: "Tarea añadida",
           description: `"${rawTarea}" ha sido añadida a la lista.`,
         });
+        return true; 
       } else {
          toast({
           title: "Error en los valores",
@@ -192,14 +85,104 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       }
     } else {
       toast({
-        title: "Formato de voz no reconocido",
-        description: `No se pudo entender: "${transcript}". Asegúrate de decir: descripción de la tarea, seguido de los cuatro números (0-5) separados o juntos. Por ejemplo: "limpiar la pecera 5 2 1 2" o "limpiar la pecera 5212".`,
+        title: "Formato no reconocido",
+        description: `No se pudo entender: "${inputText}". Asegúrate de usar el formato: descripción, seguido de los cuatro números (0-5) separados o juntos. Por ejemplo: "limpiar la pecera 5 2 1 2" o "limpiar la pecera 5212".`,
         variant: "destructive",
         duration: 10000, 
       });
     }
-    setIsProcessing(false);
+    return false;
   };
+
+  React.useEffect(() => {
+    if (hasMicPermission !== true) return;
+
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionAPI) {
+      toast({
+        variant: 'destructive',
+        title: 'Navegador no compatible',
+        description: 'Tu navegador no soporta el reconocimiento de voz.',
+      });
+      setHasMicPermission(false);
+      return;
+    }
+
+    const recognitionInstance = new SpeechRecognitionAPI();
+    recognitionInstance.continuous = true; 
+    recognitionInstance.interimResults = false; 
+    recognitionInstance.lang = 'es-ES';
+    recognitionInstance.speechRecognitionTimeout = 10000; 
+    recognitionInstance.endpointerTimeout = 5000; 
+    if ('speechTimeout' in recognitionInstance) { (recognitionInstance as any).speechTimeout = 10000; }
+    if ('endpointerTimeout' in recognitionInstance) { (recognitionInstance as any).endpointerTimeout = 5000; }
+    if ('silenceTimeout' in recognitionInstance) { (recognitionInstance as any).silenceTimeout = 10000; }
+
+    recognitionInstance.onstart = () => {
+      setIsRecording(true);
+      setIsProcessing(false); // Reset processing flag when starting new recording
+      errorFlagRef.current = false;
+    };
+
+    recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
+      let fullTranscript = "";
+      for (let i = 0; i < event.results.length; i++) {
+        fullTranscript += event.results[i][0].transcript.trim() + " ";
+      }
+      lastTranscriptRef.current = fullTranscript.trim();
+    };
+
+    recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('Speech recognition error', event.error);
+      errorFlagRef.current = true;
+      let description = 'Ocurrió un error durante el reconocimiento de voz.';
+      if (event.error === 'no-speech') { description = 'No se detectó voz. Inténtalo de nuevo.'; }
+      else if (event.error === 'audio-capture') { description = 'Problema con la captura de audio. Asegúrate que el micrófono funciona.'; }
+      else if (event.error === 'not-allowed') { description = 'Acceso al micrófono denegado. Habilítalo en la configuración.'; setHasMicPermission(false); }
+      toast({ variant: 'destructive', title: 'Error de Reconocimiento', description });
+      setIsRecording(false);
+      setIsProcessing(false);
+    };
+
+    recognitionInstance.onend = () => {
+      const wasActuallyRecording = isRecording; 
+      setIsRecording(false); // Set recording to false first
+      
+      if (errorFlagRef.current) {
+        setIsProcessing(false);
+        lastTranscriptRef.current = ""; 
+        return;
+      }
+
+      if (lastTranscriptRef.current) {
+        setIsProcessing(true); // Set processing before calling parse
+        const success = parseAndAddTask(lastTranscriptRef.current);
+        if (success) {
+          // Optional: Specific success handling for voice
+        }
+        lastTranscriptRef.current = ""; 
+        setIsProcessing(false); // Clear processing after handling
+      } else if (wasActuallyRecording) { // Check if it was recording and stopped without result
+        toast({
+            title: "No se detectó voz",
+            description: "No se escuchó nada. Inténtalo de nuevo.",
+            variant: "default", 
+        });
+        setIsProcessing(false);
+      } else {
+        setIsProcessing(false); // Ensure processing is false if no valid scenario met
+      }
+    };
+    
+    recognitionRef.current = recognitionInstance;
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort(); 
+      }
+    };
+  }, [hasMicPermission, toast, onAddTask]);
+
 
   const handleMicClick = () => {
     if (hasMicPermission === false) {
@@ -223,6 +206,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     } else if (!isProcessing && recognitionRef.current) {
       lastTranscriptRef.current = ""; 
       errorFlagRef.current = false;
+      setTextInputValue(""); // Clear text input when starting voice input
       try {
         recognitionRef.current.start();
       } catch (e) {
@@ -238,53 +222,97 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     }
   };
 
+  const handleTextInputSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!textInputValue.trim()) {
+        toast({
+            title: "Campo vacío",
+            description: "Por favor, escribe la tarea y sus valores.",
+            variant: "destructive",
+        });
+        return;
+    }
+    setIsProcessing(true);
+    const success = parseAndAddTask(textInputValue);
+    if (success) {
+        setTextInputValue(""); 
+    }
+    setIsProcessing(false);
+  };
+
+
   let buttonContent;
-  let statusText = "Presiona el micrófono para añadir una tarea por voz. Vuelve a presionar para finalizar.";
+  let statusText;
 
   if (isProcessing) {
-    buttonContent = <Loader2 className="h-24 w-24 animate-spin" />; // Increased icon size
+    buttonContent = <Loader2 className="h-28 w-28 animate-spin" />; 
     statusText = "Procesando tarea...";
   } else if (isRecording) {
-    buttonContent = <Mic className="h-24 w-24 text-destructive animate-pulse" />; // Increased icon size
+    buttonContent = <Mic className="h-28 w-28 text-destructive animate-pulse" />; 
     statusText = "Escuchando... Presiona de nuevo para finalizar.";
   } else {
-    buttonContent = <Mic className="h-24 w-24" />; // Increased icon size
+    buttonContent = <Mic className="h-28 w-28" />; 
+    if (hasMicPermission === null) {
+      statusText = "Solicitando permiso para el micrófono...";
+      buttonContent = <Loader2 className="h-28 w-28 animate-spin" />;
+    } else if (hasMicPermission === false) {
+      statusText = "Micrófono no disponible. Puedes usar el campo de texto.";
+      buttonContent = <Mic className="h-28 w-28 text-muted-foreground" />;
+    } else {
+      statusText = "Presiona el micrófono o escribe abajo para añadir una tarea.";
+    }
   }
   
-  if(hasMicPermission === null) {
-    statusText = "Solicitando permiso para el micrófono...";
-    buttonContent = <Loader2 className="h-24 w-24 animate-spin" />; // Increased icon size
-  } else if (hasMicPermission === false) {
-     statusText = "El acceso al micrófono está denegado o no disponible.";
-     buttonContent = <Mic className="h-24 w-24 text-muted-foreground" />; // Increased icon size
-  }
-
-
   return (
-    <div className="flex flex-col items-center justify-center space-y-6 bg-card p-8 rounded-lg shadow-md min-h-[250px]">
-      {hasMicPermission === false && (
-         <Alert variant="destructive" className="w-full max-w-md">
+    <div className="flex flex-col items-center justify-center space-y-4 bg-card p-6 sm:p-8 rounded-lg shadow-md min-h-[300px] w-full max-w-lg mx-auto">
+      {hasMicPermission === false && !isRecording && !isProcessing && (
+         <Alert variant="destructive" className="w-full">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Acceso al Micrófono Requerido</AlertTitle>
             <AlertDescription>
-              Para usar el ingreso por voz, por favor habilita el acceso al micrófono en la configuración de tu navegador y actualiza la página.
+              Para usar el ingreso por voz, habilita el acceso al micrófono en la configuración de tu navegador y actualiza la página. Aún puedes ingresar tareas por texto.
             </AlertDescription>
         </Alert>
       )}
       
+      <p className="text-center text-muted-foreground px-2 h-10 flex items-center text-sm">
+        {statusText}
+      </p>
+
       <Button
         onClick={handleMicClick}
-        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)}
-        className="h-40 w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg flex items-center justify-center" /* Increased button size */
+        disabled={isProcessing || hasMicPermission === null || hasMicPermission === false}
+        className="h-40 w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg flex items-center justify-center"
         aria-label={isRecording ? "Detener grabación" : "Iniciar grabación de tarea"}
       >
         {buttonContent}
       </Button>
-      <p className="text-center text-muted-foreground px-4">{statusText}</p>
-       <p className="text-xs text-center text-muted-foreground px-4 pt-2">
-        Ejemplo: "Comprar leche 5 4 1 2" (Tarea Urgencia Necesidad Costo Duración - valores 0 a 5)
+
+      <div className="text-center text-muted-foreground my-1 text-sm">O usa el texto:</div>
+      
+      <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-2">
+        <Input 
+          type="text"
+          placeholder="Ej: Comprar leche 5 4 1 2"
+          value={textInputValue}
+          onChange={(e) => setTextInputValue(e.target.value)}
+          disabled={isRecording || isProcessing || hasMicPermission === null}
+          aria-label="Ingresar tarea manualmente con descripción y cuatro números"
+          className="text-base"
+        />
+        <Button 
+          type="submit" 
+          className="w-full" 
+          disabled={isRecording || isProcessing || !textInputValue.trim() || hasMicPermission === null}
+        >
+          Añadir Tarea con Texto
+        </Button>
+      </form>
+
+       <p className="text-xs text-center text-muted-foreground px-4 pt-2 max-w-md">
+        <strong>Formato:</strong> "Descripción Urgencia Necesidad Costo Duración". Los valores numéricos deben ser entre 0 y 5.
+        <br/>Ejemplo: "Pasear al perro 5 3 1 2" o "Pasear al perro 5312".
       </p>
     </div>
   );
 }
-
