@@ -245,26 +245,26 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
   let statusText;
 
   if (isProcessing) {
-    buttonContent = <Loader2 className="h-28 w-28 animate-spin" />; 
+    buttonContent = <Loader2 className="h-32 w-32 animate-spin" />; 
     statusText = "Procesando tarea...";
   } else if (isRecording) {
-    buttonContent = <Mic className="h-28 w-28 text-destructive animate-pulse" />; 
+    buttonContent = <Mic className="h-32 w-32 text-destructive animate-pulse" />; 
     statusText = "Escuchando... Presiona de nuevo para finalizar.";
   } else {
-    buttonContent = <Mic className="h-28 w-28" />; 
     if (hasMicPermission === null) {
       statusText = "Solicitando permiso para el micrófono...";
-      buttonContent = <Loader2 className="h-28 w-28 animate-spin" />;
+      buttonContent = <Loader2 className="h-32 w-32 animate-spin" />;
     } else if (hasMicPermission === false) {
       statusText = "Micrófono no disponible. Puedes usar el campo de texto.";
-      buttonContent = <Mic className="h-28 w-28 text-muted-foreground" />;
+      buttonContent = <Mic className="h-32 w-32 text-muted-foreground" />;
     } else {
       statusText = "Presiona el micrófono o escribe abajo para añadir una tarea.";
+      buttonContent = <Mic className="h-32 w-32" />;
     }
   }
   
   return (
-    <div className="flex flex-col items-center justify-center space-y-4 bg-card p-6 sm:p-8 rounded-lg shadow-md min-h-[300px] w-full max-w-lg mx-auto">
+    <div className="flex flex-col items-center justify-center space-y-4 bg-card p-6 sm:p-8 rounded-xl shadow-lg min-h-[300px] w-full max-w-lg mx-auto">
       {hasMicPermission === false && !isRecording && !isProcessing && (
          <Alert variant="destructive" className="w-full">
             <AlertCircle className="h-4 w-4" />
@@ -275,22 +275,22 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
         </Alert>
       )}
       
-      <p className="text-center text-muted-foreground px-2 h-10 flex items-center text-sm">
+      <p className="text-center text-muted-foreground px-2 py-2 flex items-center text-sm min-h-[3rem] sm:min-h-[2.5rem]">
         {statusText}
       </p>
 
       <Button
         onClick={handleMicClick}
         disabled={isProcessing || hasMicPermission === null || hasMicPermission === false}
-        className="h-40 w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg flex items-center justify-center"
+        className="h-44 w-44 sm:h-48 sm:w-48 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl flex items-center justify-center transition-all duration-150 ease-in-out hover:scale-105"
         aria-label={isRecording ? "Detener grabación" : "Iniciar grabación de tarea"}
       >
         {buttonContent}
       </Button>
 
-      <div className="text-center text-muted-foreground my-1 text-sm">O usa el texto:</div>
+      <div className="text-center text-muted-foreground my-2 text-sm">O usa el texto:</div>
       
-      <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-2">
+      <form onSubmit={handleTextInputSubmit} className="w-full space-y-4 px-2">
         <Input 
           type="text"
           placeholder="Ej: Comprar leche 5 4 1 2"
@@ -309,7 +309,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
         </Button>
       </form>
 
-       <p className="text-xs text-center text-muted-foreground px-4 pt-2 max-w-md">
+       <p className="text-xs text-center text-muted-foreground px-4 pt-4 max-w-md">
         <strong>Formato:</strong> "Descripción Urgencia Necesidad Costo Duración". Los valores numéricos deben ser entre 0 y 5.
         <br/>Ejemplo: "Pasear al perro 5 3 1 2" o "Pasear al perro 5312".
       </p>

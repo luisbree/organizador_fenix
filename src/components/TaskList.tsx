@@ -1,3 +1,4 @@
+
 "use client";
 
 import type * as React from 'react';
@@ -48,7 +49,7 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask }: TaskListProp
 
   if (tasks.length === 0) {
     return (
-      <div className="text-center py-10 border rounded-lg shadow-sm bg-card">
+      <div className="text-center py-10 border rounded-xl shadow-md bg-card">
         <ListChecks className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
         <p className="text-xl text-foreground font-semibold">No hay tareas pendientes.</p>
         <p className="text-md text-muted-foreground">¡Añade una nueva tarea para empezar!</p>
@@ -57,10 +58,10 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask }: TaskListProp
   }
 
   return (
-    <div className="border rounded-lg shadow-sm overflow-hidden">
+    <div className="border rounded-xl shadow-md overflow-hidden bg-card">
       <Table>
         <TableHeader>
-          <TableRow className="bg-muted/50 hover:bg-muted/60">
+          <TableRow className="bg-muted/60 hover:bg-muted/70">
             <TableHead className="w-px p-2 h-10"></TableHead> {/* Checkbox */}
             <TableHead className="p-2 h-10 min-w-[150px]">Tarea</TableHead>
             <TableHead className="p-2 h-10 text-center" title="Urgencia">
@@ -111,7 +112,7 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask }: TaskListProp
           ))}
         </TableBody>
          {tasks.length > 0 && (
-          <TableCaption className="py-3">
+          <TableCaption className="py-4 text-sm">
             {tasks.filter(task => !task.completado).length} tarea(s) pendiente(s). Total: {tasks.length} tarea(s).
           </TableCaption>
         )}
@@ -119,4 +120,3 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask }: TaskListProp
     </div>
   );
 }
-

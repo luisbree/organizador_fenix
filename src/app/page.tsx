@@ -111,19 +111,19 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
-      <header className="mb-4 text-center">
-        <h1 className="text-2xl font-semibold text-primary tracking-tight">
+      <header className="my-6 md:my-8 text-center">
+        <h1 className="text-3xl sm:text-4xl font-bold text-primary tracking-tight">
           Task Ranker
         </h1>
       </header>
 
-      <main className="flex-grow flex flex-col space-y-6">
+      <main className="flex-grow flex flex-col space-y-8">
         <section>
           <TaskForm onAddTask={handleAddTask} />
         </section>
 
         <section className="flex-grow flex flex-col">
-          <h2 className="text-xl font-semibold mb-3 text-foreground border-b pb-1.5">
+          <h2 className="text-2xl font-semibold mb-4 text-foreground border-b pb-2">
             Lista de Tareas
           </h2>
           {isLoading ? (
