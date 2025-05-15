@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -91,41 +92,34 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
-      <header className="mb-8 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold text-primary tracking-tight">
+      <header className="mb-6 text-center">
+        <h1 className="text-3xl sm:text-4xl font-bold text-primary tracking-tight">
           Task Ranker
         </h1>
-        <p className="text-lg text-muted-foreground mt-2">
-          Organiza y prioriza tus tareas pendientes de forma inteligente.
-        </p>
       </header>
 
-      <main className="flex-grow">
-        <section className="mb-10">
+      <main className="flex-grow flex flex-col">
+        <section className="mb-8">
           <TaskForm onAddTask={handleAddTask} />
         </section>
 
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-semibold mb-6 text-foreground border-b pb-2">
+        <section className="flex-grow flex flex-col">
+          <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-foreground border-b pb-2">
             Lista de Tareas
           </h2>
           {isLoading ? (
-            <p className="text-center text-muted-foreground">Cargando tareas...</p>
+            <p className="text-center text-muted-foreground py-4">Cargando tareas...</p>
           ) : (
-            <TaskList
-              tasks={tasks}
-              onToggleComplete={handleToggleComplete}
-              onDeleteTask={handleDeleteTask}
-            />
+            <div className="flex-grow">
+              <TaskList
+                tasks={tasks}
+                onToggleComplete={handleToggleComplete}
+                onDeleteTask={handleDeleteTask}
+              />
+            </div>
           )}
         </section>
       </main>
-      
-      <footer className="text-center py-6 mt-10 border-t">
-        <p className="text-sm text-muted-foreground">
-          Task Ranker &copy; {new Date().getFullYear()}
-        </p>
-      </footer>
     </div>
   );
 }
