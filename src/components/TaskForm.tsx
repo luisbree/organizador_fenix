@@ -122,7 +122,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
 
     recognitionInstance.onstart = () => {
       setIsRecording(true);
-      setIsProcessing(false); // Reset processing flag when starting new recording
+      setIsProcessing(false); 
       errorFlagRef.current = false;
     };
 
@@ -159,14 +159,13 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       if (lastTranscriptRef.current) {
         setIsProcessing(true); 
         const recognizedText = lastTranscriptRef.current;
-        setTextInputValue(recognizedText); // Populate the text input
+        setTextInputValue(recognizedText); 
 
-        const success = parseAndAddTask(recognizedText); // Try to add the task
+        const success = parseAndAddTask(recognizedText); 
         if (success) {
-          setTextInputValue(""); // Clear text input if successfully added by voice
+          setTextInputValue(""); 
         }
-        // If not successful, textInputValue remains for manual correction/submission
-
+        
         lastTranscriptRef.current = ""; 
         setIsProcessing(false); 
       } else if (wasActuallyRecording) { 
@@ -213,7 +212,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     } else if (!isProcessing && recognitionRef.current) {
       lastTranscriptRef.current = ""; 
       errorFlagRef.current = false;
-      setTextInputValue(""); // Clear text input when starting voice input
+      setTextInputValue(""); 
       try {
         recognitionRef.current.start();
       } catch (e) {
@@ -252,26 +251,26 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
   let statusText;
 
   if (isProcessing) {
-    buttonContent = <Loader2 className="h-[60%] w-[60%] sm:h-[65%] sm:w-[65%] animate-spin" />; 
+    buttonContent = <Loader2 className="h-[70%] w-[70%] sm:h-[75%] sm:w-[75%] animate-spin" />; 
     statusText = "Procesando tarea...";
   } else if (isRecording) {
-    buttonContent = <Mic className="h-[60%] w-[60%] sm:h-[65%] sm:w-[65%] text-destructive animate-pulse" />; 
+    buttonContent = <Mic className="h-[70%] w-[70%] sm:h-[75%] sm:w-[75%] text-destructive animate-pulse" />; 
     statusText = "Escuchando... Presiona de nuevo para finalizar.";
   } else {
     if (hasMicPermission === null) {
       statusText = "Solicitando permiso para el micrófono...";
-      buttonContent = <Loader2 className="h-[60%] w-[60%] sm:h-[65%] sm:w-[65%] animate-spin" />;
+      buttonContent = <Loader2 className="h-[70%] w-[70%] sm:h-[75%] sm:w-[75%] animate-spin" />;
     } else if (hasMicPermission === false) {
       statusText = "Micrófono no disponible. Puedes usar el campo de texto.";
-      buttonContent = <Mic className="h-[60%] w-[60%] sm:h-[65%] sm:w-[65%] text-muted-foreground" />;
+      buttonContent = <Mic className="h-[70%] w-[70%] sm:h-[75%] sm:w-[75%] text-muted-foreground" />;
     } else {
       statusText = "Presiona el micrófono o escribe abajo para añadir una tarea.";
-      buttonContent = <Mic className="h-[60%] w-[60%] sm:h-[65%] sm:w-[65%]" />;
+      buttonContent = <Mic className="h-[70%] w-[70%] sm:h-[75%] sm:w-[75%]" />;
     }
   }
   
   return (
-    <div className="flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full max-w-md mx-auto">
+    <div className="flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full">
       {hasMicPermission === false && !isRecording && !isProcessing && (
          <Alert variant="destructive" className="w-full mb-2">
             <AlertCircle className="h-4 w-4" />
@@ -288,14 +287,14 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
 
       <Button
         onClick={handleMicClick}
-        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)} // Allow stopping if recording without permission
+        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)} 
         className="h-36 w-36 sm:h-40 sm:w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl flex items-center justify-center transition-all duration-150 ease-in-out hover:scale-105 active:scale-95"
         aria-label={isRecording ? "Detener grabación" : "Iniciar grabación de tarea"}
       >
         {buttonContent}
       </Button>
       
-      <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2">
+      <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2 max-w-xl mx-auto"> {/* Limita el ancho del formulario interno */}
         <Input 
           type="text"
           placeholder="Ej: Comprar leche 5 4 1 2"
@@ -321,4 +320,3 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     </div>
   );
 }
-
