@@ -12,7 +12,7 @@ import { Mic, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface TaskFormProps {
-  onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt'> & { rawTarea: string }) => void;
+  onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'isSchedulingAttempted'> & { rawTarea: string }) => void;
 }
 
 export function TaskForm({ onAddTask }: TaskFormProps) {
@@ -112,11 +112,13 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     recognitionInstance.continuous = true; 
     recognitionInstance.interimResults = false; 
     recognitionInstance.lang = 'es-ES';
-    recognitionInstance.speechRecognitionTimeout = 10000; 
-    recognitionInstance.endpointerTimeout = 5000; 
-    if ('speechTimeout' in recognitionInstance) { (recognitionInstance as any).speechTimeout = 10000; }
-    if ('endpointerTimeout' in recognitionInstance) { (recognitionInstance as any).endpointerTimeout = 5000; }
-    if ('silenceTimeout' in recognitionInstance) { (recognitionInstance as any).silenceTimeout = 10000; }
+    
+    // Extended timeouts for speech recognition
+    recognitionInstance.maxSpeechInputLength = 20000; // Extend the maximum length of speech input if supported (non-standard)
+    if ('speechRecognitionTimeout' in recognitionInstance) { (recognitionInstance as any).speechRecognitionTimeout = 20000; } // W3C Speech API draft
+    if ('endpointerTimeout' in recognitionInstance) { (recognitionInstance as any).endpointerTimeout = 10000; } // Specific to some implementations
+    if ('silenceTimeout' in recognitionInstance) { (recognitionInstance as any).silenceTimeout = 10000; } // Web Speech API by Google
+    if ('longSilenceTimeout' in recognitionInstance) { (recognitionInstance as any).longSilenceTimeout = 10000; } // Experimental property
 
     recognitionInstance.onstart = () => {
       setIsRecording(true);
@@ -146,7 +148,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
 
     recognitionInstance.onend = () => {
       const wasActuallyRecording = isRecording; 
-      setIsRecording(false); // Set recording to false first
+      setIsRecording(false); 
       
       if (errorFlagRef.current) {
         setIsProcessing(false);
@@ -155,14 +157,19 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       }
 
       if (lastTranscriptRef.current) {
-        setIsProcessing(true); // Set processing before calling parse
-        const success = parseAndAddTask(lastTranscriptRef.current);
+        setIsProcessing(true); 
+        const recognizedText = lastTranscriptRef.current;
+        setTextInputValue(recognizedText); // Populate the text input
+
+        const success = parseAndAddTask(recognizedText); // Try to add the task
         if (success) {
-          // Optional: Specific success handling for voice
+          setTextInputValue(""); // Clear text input if successfully added by voice
         }
+        // If not successful, textInputValue remains for manual correction/submission
+
         lastTranscriptRef.current = ""; 
-        setIsProcessing(false); // Clear processing after handling
-      } else if (wasActuallyRecording) { // Check if it was recording and stopped without result
+        setIsProcessing(false); 
+      } else if (wasActuallyRecording) { 
         toast({
             title: "No se detectó voz",
             description: "No se escuchó nada. Inténtalo de nuevo.",
@@ -170,7 +177,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
         });
         setIsProcessing(false);
       } else {
-        setIsProcessing(false); // Ensure processing is false if no valid scenario met
+        setIsProcessing(false); 
       }
     };
     
@@ -245,28 +252,28 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
   let statusText;
 
   if (isProcessing) {
-    buttonContent = <Loader2 className="h-32 w-32 animate-spin" />; 
+    buttonContent = <Loader2 className="h-[60%] w-[60%] sm:h-[65%] sm:w-[65%] animate-spin" />; 
     statusText = "Procesando tarea...";
   } else if (isRecording) {
-    buttonContent = <Mic className="h-32 w-32 text-destructive animate-pulse" />; 
+    buttonContent = <Mic className="h-[60%] w-[60%] sm:h-[65%] sm:w-[65%] text-destructive animate-pulse" />; 
     statusText = "Escuchando... Presiona de nuevo para finalizar.";
   } else {
     if (hasMicPermission === null) {
       statusText = "Solicitando permiso para el micrófono...";
-      buttonContent = <Loader2 className="h-32 w-32 animate-spin" />;
+      buttonContent = <Loader2 className="h-[60%] w-[60%] sm:h-[65%] sm:w-[65%] animate-spin" />;
     } else if (hasMicPermission === false) {
       statusText = "Micrófono no disponible. Puedes usar el campo de texto.";
-      buttonContent = <Mic className="h-32 w-32 text-muted-foreground" />;
+      buttonContent = <Mic className="h-[60%] w-[60%] sm:h-[65%] sm:w-[65%] text-muted-foreground" />;
     } else {
       statusText = "Presiona el micrófono o escribe abajo para añadir una tarea.";
-      buttonContent = <Mic className="h-32 w-32" />;
+      buttonContent = <Mic className="h-[60%] w-[60%] sm:h-[65%] sm:w-[65%]" />;
     }
   }
   
   return (
-    <div className="flex flex-col items-center justify-center space-y-4 bg-card p-6 sm:p-8 rounded-xl shadow-lg min-h-[300px] w-full max-w-lg mx-auto">
+    <div className="flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full max-w-md mx-auto">
       {hasMicPermission === false && !isRecording && !isProcessing && (
-         <Alert variant="destructive" className="w-full">
+         <Alert variant="destructive" className="w-full mb-2">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Acceso al Micrófono Requerido</AlertTitle>
             <AlertDescription>
@@ -275,22 +282,20 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
         </Alert>
       )}
       
-      <p className="text-center text-muted-foreground px-2 py-2 flex items-center text-sm min-h-[3rem] sm:min-h-[2.5rem]">
+      <p className="text-center text-muted-foreground px-2 py-1 flex items-center text-sm min-h-[2rem]">
         {statusText}
       </p>
 
       <Button
         onClick={handleMicClick}
-        disabled={isProcessing || hasMicPermission === null || hasMicPermission === false}
-        className="h-44 w-44 sm:h-48 sm:w-48 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl flex items-center justify-center transition-all duration-150 ease-in-out hover:scale-105"
+        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)} // Allow stopping if recording without permission
+        className="h-36 w-36 sm:h-40 sm:w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl flex items-center justify-center transition-all duration-150 ease-in-out hover:scale-105 active:scale-95"
         aria-label={isRecording ? "Detener grabación" : "Iniciar grabación de tarea"}
       >
         {buttonContent}
       </Button>
-
-      <div className="text-center text-muted-foreground my-2 text-sm">O usa el texto:</div>
       
-      <form onSubmit={handleTextInputSubmit} className="w-full space-y-4 px-2">
+      <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2">
         <Input 
           type="text"
           placeholder="Ej: Comprar leche 5 4 1 2"
@@ -298,7 +303,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
           onChange={(e) => setTextInputValue(e.target.value)}
           disabled={isRecording || isProcessing || hasMicPermission === null}
           aria-label="Ingresar tarea manualmente con descripción y cuatro números"
-          className="text-base"
+          className="text-base text-center"
         />
         <Button 
           type="submit" 
@@ -309,10 +314,11 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
         </Button>
       </form>
 
-       <p className="text-xs text-center text-muted-foreground px-4 pt-4 max-w-md">
-        <strong>Formato:</strong> "Descripción Urgencia Necesidad Costo Duración". Los valores numéricos deben ser entre 0 y 5.
-        <br/>Ejemplo: "Pasear al perro 5 3 1 2" o "Pasear al perro 5312".
+       <p className="text-xs text-center text-muted-foreground px-4 pt-3 max-w-md">
+        <strong>Formato:</strong> "Descripción U N C D" (0-5).
+        <br/>Ej: "Pasear al perro 5312" o "Pasear al perro 5 3 1 2".
       </p>
     </div>
   );
 }
+
