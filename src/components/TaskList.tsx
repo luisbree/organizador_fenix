@@ -29,31 +29,38 @@ interface TaskListProps {
 
 export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted, onUpdateTaskValue }: TaskListProps) {
   const sortedTasks = [...tasks].sort((a, b) => {
-    const aIndex = a.indice;
-    const bIndex = b.indice;
-
+    // 1. Completed tasks go to the bottom
     if (a.completado && !b.completado) return 1;
     if (!a.completado && b.completado) return -1;
 
-    if (!a.completado && !b.completado) {
-      if (a.isSchedulingAttempted && !b.isSchedulingAttempted) return 1; 
-      if (!a.isSchedulingAttempted && b.isSchedulingAttempted) return -1;
-    }
-    
+    // At this point, tasks are either all completed or all not completed.
+    // Sort them by indice and then by createdAt.
+
+    const aIndex = a.indice;
+    const bIndex = b.indice;
+
+    // Handle Infinity for indice (Infinity comes first in descending sort)
     if (aIndex === Infinity && bIndex !== Infinity) return -1;
     if (bIndex === Infinity && aIndex !== Infinity) return 1;
     if (aIndex === Infinity && bIndex === Infinity) {
+      // Both are Infinity, sort by creation date (newer first)
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
-    if (isNaN(aIndex) && !isNaN(bIndex)) return 1; 
-    if (!isNaN(aIndex) && isNaN(bIndex)) return -1;
+
+    // Handle NaN for indice (NaN goes to the bottom of its current group, effectively lower priority)
+    if (isNaN(aIndex) && !isNaN(bIndex)) return 1; // a (NaN) after b
+    if (!isNaN(aIndex) && isNaN(bIndex)) return -1; // b (NaN) after a
     if (isNaN(aIndex) && isNaN(bIndex)) {
+      // Both are NaN, sort by creation date (newer first)
        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
     
+    // Main sort by indice (descending)
     if (bIndex !== aIndex) {
       return bIndex - aIndex; 
     }
+
+    // Fallback sort by creation date (descending - newer first)
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
