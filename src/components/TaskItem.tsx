@@ -13,9 +13,10 @@ interface TaskItemProps {
   task: Task;
   onToggleComplete: (id: string) => void;
   onDeleteTask: (id: string) => void;
+  onMarkSchedulingAttempted: (id: string) => void;
 }
 
-export function TaskItem({ task, onToggleComplete, onDeleteTask }: TaskItemProps) {
+export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted }: TaskItemProps) {
   const handleCheckboxChange = () => {
     onToggleComplete(task.id);
   };
@@ -29,14 +30,16 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask }: TaskItemProps
     const taskDetails = encodeURIComponent(
       `Tarea: ${task.tarea}\nUrgencia: ${task.urgencia}\nNecesidad: ${task.necesidad}\nCosto: ${task.costo}\nDuración: ${task.duracion}`
     );
-    // Abre Google Calendar con el título y detalles pre-rellenados.
-    // El usuario seleccionará la fecha y hora.
     const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${taskTitle}&details=${taskDetails}`;
     window.open(calendarUrl, '_blank', 'noopener,noreferrer');
+    onMarkSchedulingAttempted(task.id); // Marcar como intento de programación
   };
 
   return (
-    <TableRow className={cn(task.completado && "opacity-60 bg-muted/30 hover:bg-muted/40")}>
+    <TableRow className={cn(
+      task.completado && "opacity-60 bg-muted/30 hover:bg-muted/40",
+      task.isSchedulingAttempted && !task.completado && "bg-accent/[.08] hover:bg-accent/[.12]"
+    )}>
       <TableCell className="w-px p-2 align-middle">
         <Checkbox
           id={`complete-${task.id}`}

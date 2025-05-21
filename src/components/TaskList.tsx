@@ -19,9 +19,10 @@ interface TaskListProps {
   tasks: Task[];
   onToggleComplete: (id: string) => void;
   onDeleteTask: (id: string) => void;
+  onMarkSchedulingAttempted: (id: string) => void; // Nueva prop
 }
 
-export function TaskList({ tasks, onToggleComplete, onDeleteTask }: TaskListProps) {
+export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted }: TaskListProps) {
   const sortedTasks = [...tasks].sort((a, b) => {
     const aIndex = a.indice;
     const bIndex = b.indice;
@@ -43,7 +44,6 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask }: TaskListProp
     if (bIndex !== aIndex) {
       return bIndex - aIndex; // Descending order for finite indices
     }
-    // If indices are equal, sort by creation date (older first)
     return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
   });
 
@@ -108,6 +108,7 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask }: TaskListProp
               task={task}
               onToggleComplete={onToggleComplete}
               onDeleteTask={onDeleteTask}
+              onMarkSchedulingAttempted={onMarkSchedulingAttempted}
             />
           ))}
         </TableBody>

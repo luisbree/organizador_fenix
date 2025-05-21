@@ -20,7 +20,9 @@ export default function HomePage() {
         const storedTasks = JSON.parse(storedTasksRaw);
         loadedTasks = storedTasks.map((task: any) => ({
           ...task,
-          createdAt: new Date(task.createdAt) // Ensure Date object is restored
+          createdAt: new Date(task.createdAt), // Ensure Date object is restored
+          completado: task.completado || false,
+          isSchedulingAttempted: task.isSchedulingAttempted || false, // Default for older tasks
         }));
       } catch (e) {
         console.error("Failed to parse tasks from localStorage", e);
@@ -34,7 +36,6 @@ export default function HomePage() {
     }
 
     if (loadedTasks.length === 0) {
-      // Add a default task if no tasks are loaded
       const exampleTask: Task = {
         id: crypto.randomUUID(),
         tarea: "Pasear al perro",
@@ -42,9 +43,10 @@ export default function HomePage() {
         necesidad: 5,
         costo: 1,
         duracion: 2,
-        indice: (4 + 5) / (1 + 2), // (U+N)/(C+D) = 9/3 = 3
+        indice: (4 + 5) / (1 + 2),
         completado: false,
         createdAt: new Date(),
+        isSchedulingAttempted: false,
       };
       setTasks([exampleTask]);
     } else {
@@ -60,7 +62,7 @@ export default function HomePage() {
     }
   }, [tasks, isLoading]);
 
-  const handleAddTask = (taskData: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt'> & { rawTarea: string }) => {
+  const handleAddTask = (taskData: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'isSchedulingAttempted'> & { rawTarea: string }) => {
     const num = taskData.urgencia + taskData.necesidad;
     const den = taskData.costo + taskData.duracion;
     let indice;
@@ -89,6 +91,7 @@ export default function HomePage() {
       indice: indice,
       completado: false,
       createdAt: new Date(),
+      isSchedulingAttempted: false,
     };
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
@@ -109,21 +112,29 @@ export default function HomePage() {
     });
   };
 
+  const handleMarkSchedulingAttempted = (id: string) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === id ? { ...task, isSchedulingAttempted: true } : task
+      )
+    );
+  };
+
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
-      <header className="my-6 md:my-8 text-center">
-        <h1 className="text-3xl sm:text-4xl font-bold text-primary tracking-tight">
+      <header className="my-4 md:my-6 text-center">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary tracking-tight">
           Task Ranker
         </h1>
       </header>
 
-      <main className="flex-grow flex flex-col space-y-8">
+      <main className="flex-grow flex flex-col space-y-6">
         <section>
           <TaskForm onAddTask={handleAddTask} />
         </section>
 
         <section className="flex-grow flex flex-col">
-          <h2 className="text-2xl font-semibold mb-4 text-foreground border-b pb-2">
+          <h2 className="text-xl font-semibold mb-3 text-foreground border-b pb-1.5">
             Lista de Tareas
           </h2>
           {isLoading ? (
@@ -134,6 +145,7 @@ export default function HomePage() {
                 tasks={tasks}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
+                onMarkSchedulingAttempted={handleMarkSchedulingAttempted}
               />
             </div>
           )}

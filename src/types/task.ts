@@ -8,4 +8,5 @@ export interface Task {
   indice: number;
   completado: boolean;
   createdAt: Date;
+  isSchedulingAttempted?: boolean; // Nuevo campo
 }
