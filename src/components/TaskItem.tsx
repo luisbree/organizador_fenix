@@ -1,10 +1,11 @@
+
 "use client";
 
 import type * as React from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Flame, ShieldCheck, CircleDollarSign, Hourglass, Trash2 } from 'lucide-react';
+import { Flame, ShieldCheck, CircleDollarSign, Hourglass, Trash2, CalendarPlus } from 'lucide-react';
 import type { Task } from '@/types/task';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,17 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask }: TaskItemProps
 
   const handleDelete = () => {
     onDeleteTask(task.id);
+  };
+
+  const handleScheduleOnCalendar = () => {
+    const taskTitle = encodeURIComponent(task.tarea);
+    const taskDetails = encodeURIComponent(
+      `Tarea: ${task.tarea}\nUrgencia: ${task.urgencia}\nNecesidad: ${task.necesidad}\nCosto: ${task.costo}\nDuración: ${task.duracion}`
+    );
+    // Abre Google Calendar con el título y detalles pre-rellenados.
+    // El usuario seleccionará la fecha y hora.
+    const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${taskTitle}&details=${taskDetails}`;
+    window.open(calendarUrl, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -70,17 +82,29 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask }: TaskItemProps
         {new Date(task.createdAt).toLocaleDateString('es-ES', { year: '2-digit', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
       </TableCell>
       <TableCell className="p-2 align-middle text-right">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleDelete}
-          aria-label={`Eliminar tarea ${task.tarea}`}
-          className="text-destructive hover:bg-destructive/10 h-7 w-7"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center justify-end space-x-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleScheduleOnCalendar}
+            aria-label={`Programar tarea ${task.tarea} en Google Calendar`}
+            className="text-accent hover:bg-accent/10 h-7 w-7"
+            title="Programar en Google Calendar"
+          >
+            <CalendarPlus className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDelete}
+            aria-label={`Eliminar tarea ${task.tarea}`}
+            className="text-destructive hover:bg-destructive/10 h-7 w-7"
+            title="Eliminar tarea"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </TableCell>
     </TableRow>
   );
 }
-
