@@ -13,7 +13,7 @@ interface TaskItemProps {
   task: Task;
   onToggleComplete: (id: string) => void;
   onDeleteTask: (id: string) => void;
-  onMarkSchedulingAttempted: (id: string) => void;
+  onMarkSchedulingAttempted: (id: string) => void; // Nueva prop
 }
 
 export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted }: TaskItemProps) {
@@ -30,7 +30,11 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
     const taskDetails = encodeURIComponent(
       `Tarea: ${task.tarea}\nUrgencia: ${task.urgencia}\nNecesidad: ${task.necesidad}\nCosto: ${task.costo}\nDuración: ${task.duracion}`
     );
+    // Formato de fecha YYYYMMDD para Google Calendar (opcional, si quieres sugerir una fecha)
+    // const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    // const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${taskTitle}&dates=${today}/${today}&details=${taskDetails}`;
     const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${taskTitle}&details=${taskDetails}`;
+    
     window.open(calendarUrl, '_blank', 'noopener,noreferrer');
     onMarkSchedulingAttempted(task.id); // Marcar como intento de programación
   };
@@ -38,7 +42,8 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
   return (
     <TableRow className={cn(
       task.completado && "opacity-60 bg-muted/30 hover:bg-muted/40",
-      task.isSchedulingAttempted && !task.completado && "bg-accent/[.08] hover:bg-accent/[.12]"
+      // Aplicar estilo si se intentó programar y no está completada
+      task.isSchedulingAttempted && !task.completado && "bg-accent/[.08] hover:bg-accent/[.12]" 
     )}>
       <TableCell className="w-px p-2 align-middle">
         <Checkbox
@@ -91,7 +96,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
             size="icon"
             onClick={handleScheduleOnCalendar}
             aria-label={`Programar tarea ${task.tarea} en Google Calendar`}
-            className="text-accent hover:bg-accent/10 h-7 w-7"
+            className="text-accent hover:bg-accent/10 h-7 w-7" // Usamos color de acento
             title="Programar en Google Calendar"
           >
             <CalendarPlus className="h-4 w-4" />

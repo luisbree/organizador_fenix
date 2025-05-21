@@ -30,6 +30,12 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
     if (a.completado && !b.completado) return 1;
     if (!a.completado && b.completado) return -1;
 
+    // Considerar isSchedulingAttempted para el orden si no están completadas
+    if (!a.completado && !b.completado) {
+      if (a.isSchedulingAttempted && !b.isSchedulingAttempted) return 1; // Las no intentadas primero (opcional, o -1 para al revés)
+      if (!a.isSchedulingAttempted && b.isSchedulingAttempted) return -1;
+    }
+    
     if (aIndex === Infinity && bIndex !== Infinity) return -1;
     if (bIndex === Infinity && aIndex !== Infinity) return 1;
     if (aIndex === Infinity && bIndex === Infinity) {
@@ -42,7 +48,7 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
     }
     
     if (bIndex !== aIndex) {
-      return bIndex - aIndex; // Descending order for finite indices
+      return bIndex - aIndex; 
     }
     return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
   });
@@ -62,7 +68,7 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/60 hover:bg-muted/70">
-            <TableHead className="w-px p-2 h-10"></TableHead> {/* Checkbox */}
+            <TableHead className="w-px p-2 h-10"></TableHead> 
             <TableHead className="p-2 h-10 min-w-[150px]">Tarea</TableHead>
             <TableHead className="p-2 h-10 text-center" title="Urgencia">
               <div className="flex items-center justify-center">
@@ -96,7 +102,7 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
             </TableHead>
             <TableHead className="p-2 h-10 text-right" title="Acciones">
               <div className="flex items-center justify-end">
-                <Trash2 className="h-4 w-4 mr-1 text-muted-foreground" /> Acción
+                 Acción 
               </div>
             </TableHead>
           </TableRow>
@@ -108,7 +114,7 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
               task={task}
               onToggleComplete={onToggleComplete}
               onDeleteTask={onDeleteTask}
-              onMarkSchedulingAttempted={onMarkSchedulingAttempted}
+              onMarkSchedulingAttempted={onMarkSchedulingAttempted} // Pasamos la prop
             />
           ))}
         </TableBody>

@@ -1,3 +1,4 @@
+
 export interface Task {
   id: string;
   tarea: string;
@@ -8,5 +9,5 @@ export interface Task {
   indice: number;
   completado: boolean;
   createdAt: Date;
-  isSchedulingAttempted?: boolean; // Nuevo campo
+  isSchedulingAttempted?: boolean; // Aseguramos que este campo esté presente
 }

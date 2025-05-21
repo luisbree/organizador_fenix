@@ -18,11 +18,12 @@ export default function HomePage() {
     if (storedTasksRaw) {
       try {
         const storedTasks = JSON.parse(storedTasksRaw);
+        // Aseguramos que isSchedulingAttempted se cargue o se inicialice en false
         loadedTasks = storedTasks.map((task: any) => ({
           ...task,
-          createdAt: new Date(task.createdAt), // Ensure Date object is restored
+          createdAt: new Date(task.createdAt),
           completado: task.completado || false,
-          isSchedulingAttempted: task.isSchedulingAttempted || false, // Default for older tasks
+          isSchedulingAttempted: task.isSchedulingAttempted || false, 
         }));
       } catch (e) {
         console.error("Failed to parse tasks from localStorage", e);
@@ -31,7 +32,7 @@ export default function HomePage() {
           description: "No se pudieron cargar las tareas guardadas. Se iniciará con una lista vacía.",
           variant: "destructive",
         });
-        localStorage.removeItem('task-ranker-tasks'); // Clear corrupted data
+        localStorage.removeItem('task-ranker-tasks');
       }
     }
 
@@ -46,7 +47,7 @@ export default function HomePage() {
         indice: (4 + 5) / (1 + 2),
         completado: false,
         createdAt: new Date(),
-        isSchedulingAttempted: false,
+        isSchedulingAttempted: false, // Inicializamos para la tarea de ejemplo
       };
       setTasks([exampleTask]);
     } else {
@@ -91,7 +92,7 @@ export default function HomePage() {
       indice: indice,
       completado: false,
       createdAt: new Date(),
-      isSchedulingAttempted: false,
+      isSchedulingAttempted: false, // Nueva tarea inicializada
     };
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
@@ -112,6 +113,7 @@ export default function HomePage() {
     });
   };
 
+  // Función para marcar una tarea como intento de programación
   const handleMarkSchedulingAttempted = (id: string) => {
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -145,7 +147,7 @@ export default function HomePage() {
                 tasks={tasks}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
-                onMarkSchedulingAttempted={handleMarkSchedulingAttempted}
+                onMarkSchedulingAttempted={handleMarkSchedulingAttempted} // Pasamos la nueva función
               />
             </div>
           )}
