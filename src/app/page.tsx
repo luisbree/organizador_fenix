@@ -18,7 +18,6 @@ export default function HomePage() {
     if (storedTasksRaw) {
       try {
         const storedTasks = JSON.parse(storedTasksRaw);
-        // Aseguramos que isSchedulingAttempted se cargue o se inicialice en false
         loadedTasks = storedTasks.map((task: any) => ({
           ...task,
           createdAt: new Date(task.createdAt),
@@ -47,7 +46,7 @@ export default function HomePage() {
         indice: (4 + 5) / (1 + 2),
         completado: false,
         createdAt: new Date(),
-        isSchedulingAttempted: false, // Inicializamos para la tarea de ejemplo
+        isSchedulingAttempted: false,
       };
       setTasks([exampleTask]);
     } else {
@@ -69,11 +68,7 @@ export default function HomePage() {
     let indice;
 
     if (den === 0) {
-      if (num > 0) {
-        indice = Infinity;
-      } else {
-        indice = 0; 
-      }
+      indice = num > 0 ? Infinity : 0;
     } else {
       indice = num / den;
     }
@@ -92,7 +87,7 @@ export default function HomePage() {
       indice: indice,
       completado: false,
       createdAt: new Date(),
-      isSchedulingAttempted: false, // Nueva tarea inicializada
+      isSchedulingAttempted: false,
     };
     setTasks((prevTasks) => [...prevTasks, newTask]);
   };
@@ -113,7 +108,6 @@ export default function HomePage() {
     });
   };
 
-  // Función para marcar una tarea como intento de programación
   const handleMarkSchedulingAttempted = (id: string) => {
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -122,10 +116,45 @@ export default function HomePage() {
     );
   };
 
+  const handleUpdateTaskValue = (
+    taskId: string,
+    field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
+    newValue: number
+  ) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) => {
+        if (task.id === taskId) {
+          const updatedTask = { ...task, [field]: newValue };
+
+          const num = updatedTask.urgencia + updatedTask.necesidad;
+          const den = updatedTask.costo + updatedTask.duracion;
+          let newIndice;
+          if (den === 0) {
+            newIndice = num > 0 ? Infinity : 0;
+          } else {
+            newIndice = num / den;
+          }
+          if (isNaN(newIndice)) {
+            newIndice = 0;
+          }
+          updatedTask.indice = newIndice;
+
+          toast({
+            title: "Tarea actualizada",
+            description: `El campo "${field}" de la tarea "${updatedTask.tarea}" ha sido actualizado a ${newValue}. Nuevo índice: ${newIndice.toFixed(2)}`,
+          });
+          return updatedTask;
+        }
+        return task;
+      })
+    );
+  };
+
+
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
-      <header className="my-4 md:my-6 text-center">
-        <h1 className="text-2xl sm:text-3xl font-bold text-primary tracking-tight">
+      <header className="my-2 md:my-4 text-center">
+        <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
           Task Ranker
         </h1>
       </header>
@@ -147,7 +176,8 @@ export default function HomePage() {
                 tasks={tasks}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
-                onMarkSchedulingAttempted={handleMarkSchedulingAttempted} // Pasamos la nueva función
+                onMarkSchedulingAttempted={handleMarkSchedulingAttempted}
+                onUpdateTaskValue={handleUpdateTaskValue}
               />
             </div>
           )}

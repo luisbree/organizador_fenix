@@ -12,17 +12,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Flame, ShieldCheck, CircleDollarSign, Hourglass, ListChecks, CalendarDays, HelpCircle, Trash2 } from 'lucide-react';
+import { Flame, ShieldCheck, CircleDollarSign, Hourglass, ListChecks, CalendarDays, HelpCircle } from 'lucide-react';
 
 
 interface TaskListProps {
   tasks: Task[];
   onToggleComplete: (id: string) => void;
   onDeleteTask: (id: string) => void;
-  onMarkSchedulingAttempted: (id: string) => void; // Nueva prop
+  onMarkSchedulingAttempted: (id: string) => void;
+  onUpdateTaskValue: (
+    taskId: string,
+    field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
+    newValue: number
+  ) => void;
 }
 
-export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted }: TaskListProps) {
+export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted, onUpdateTaskValue }: TaskListProps) {
   const sortedTasks = [...tasks].sort((a, b) => {
     const aIndex = a.indice;
     const bIndex = b.indice;
@@ -30,27 +35,26 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
     if (a.completado && !b.completado) return 1;
     if (!a.completado && b.completado) return -1;
 
-    // Considerar isSchedulingAttempted para el orden si no están completadas
     if (!a.completado && !b.completado) {
-      if (a.isSchedulingAttempted && !b.isSchedulingAttempted) return 1; // Las no intentadas primero (opcional, o -1 para al revés)
+      if (a.isSchedulingAttempted && !b.isSchedulingAttempted) return 1; 
       if (!a.isSchedulingAttempted && b.isSchedulingAttempted) return -1;
     }
     
     if (aIndex === Infinity && bIndex !== Infinity) return -1;
     if (bIndex === Infinity && aIndex !== Infinity) return 1;
     if (aIndex === Infinity && bIndex === Infinity) {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
     if (isNaN(aIndex) && !isNaN(bIndex)) return 1; 
     if (!isNaN(aIndex) && isNaN(bIndex)) return -1;
     if (isNaN(aIndex) && isNaN(bIndex)) {
-       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
     
     if (bIndex !== aIndex) {
       return bIndex - aIndex; 
     }
-    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   if (tasks.length === 0) {
@@ -100,7 +104,7 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
                 <CalendarDays className="h-4 w-4 mr-1 text-muted-foreground" /> Creado
                </div>
             </TableHead>
-            <TableHead className="p-2 h-10 text-right" title="Acciones">
+            <TableHead className="p-2 h-10 text-right min-w-[80px]">
               <div className="flex items-center justify-end">
                  Acción 
               </div>
@@ -114,7 +118,8 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
               task={task}
               onToggleComplete={onToggleComplete}
               onDeleteTask={onDeleteTask}
-              onMarkSchedulingAttempted={onMarkSchedulingAttempted} // Pasamos la prop
+              onMarkSchedulingAttempted={onMarkSchedulingAttempted}
+              onUpdateTaskValue={onUpdateTaskValue}
             />
           ))}
         </TableBody>

@@ -8,15 +8,21 @@ import { Button } from '@/components/ui/button';
 import { Flame, ShieldCheck, CircleDollarSign, Hourglass, Trash2, CalendarPlus } from 'lucide-react';
 import type { Task } from '@/types/task';
 import { cn } from '@/lib/utils';
+import { EditableNumericCell } from './EditableNumericCell'; // Asegúrate que la ruta sea correcta
 
 interface TaskItemProps {
   task: Task;
   onToggleComplete: (id: string) => void;
   onDeleteTask: (id: string) => void;
-  onMarkSchedulingAttempted: (id: string) => void; // Nueva prop
+  onMarkSchedulingAttempted: (id: string) => void;
+  onUpdateTaskValue: (
+    taskId: string,
+    field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
+    newValue: number
+  ) => void;
 }
 
-export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted }: TaskItemProps) {
+export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted, onUpdateTaskValue }: TaskItemProps) {
   const handleCheckboxChange = () => {
     onToggleComplete(task.id);
   };
@@ -30,19 +36,15 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
     const taskDetails = encodeURIComponent(
       `Tarea: ${task.tarea}\nUrgencia: ${task.urgencia}\nNecesidad: ${task.necesidad}\nCosto: ${task.costo}\nDuración: ${task.duracion}`
     );
-    // Formato de fecha YYYYMMDD para Google Calendar (opcional, si quieres sugerir una fecha)
-    // const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    // const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${taskTitle}&dates=${today}/${today}&details=${taskDetails}`;
     const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${taskTitle}&details=${taskDetails}`;
     
     window.open(calendarUrl, '_blank', 'noopener,noreferrer');
-    onMarkSchedulingAttempted(task.id); // Marcar como intento de programación
+    onMarkSchedulingAttempted(task.id);
   };
 
   return (
     <TableRow className={cn(
       task.completado && "opacity-60 bg-muted/30 hover:bg-muted/40",
-      // Aplicar estilo si se intentó programar y no está completada
       task.isSchedulingAttempted && !task.completado && "bg-accent/[.08] hover:bg-accent/[.12]" 
     )}>
       <TableCell className="w-px p-2 align-middle">
@@ -59,30 +61,40 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
           {task.tarea}
         </span>
       </TableCell>
-      <TableCell className="p-2 align-middle text-center whitespace-nowrap">
-        <div className="flex items-center justify-center space-x-1" title="Urgencia">
-          <Flame className="h-4 w-4 text-destructive shrink-0" />
-          <span>{task.urgencia}</span>
-        </div>
+      
+      <TableCell className="p-1 align-middle text-center whitespace-nowrap">
+        <EditableNumericCell
+          value={task.urgencia}
+          onSave={(newValue) => onUpdateTaskValue(task.id, 'urgencia', newValue)}
+          icon={<Flame className="h-4 w-4 text-destructive shrink-0" />}
+          title="Urgencia"
+        />
       </TableCell>
-      <TableCell className="p-2 align-middle text-center whitespace-nowrap">
-        <div className="flex items-center justify-center space-x-1" title="Necesidad">
-          <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-          <span>{task.necesidad}</span>
-        </div>
+      <TableCell className="p-1 align-middle text-center whitespace-nowrap">
+        <EditableNumericCell
+          value={task.necesidad}
+          onSave={(newValue) => onUpdateTaskValue(task.id, 'necesidad', newValue)}
+          icon={<ShieldCheck className="h-4 w-4 text-primary shrink-0" />}
+          title="Necesidad"
+        />
       </TableCell>
-      <TableCell className="p-2 align-middle text-center whitespace-nowrap">
-        <div className="flex items-center justify-center space-x-1" title="Costo">
-          <CircleDollarSign className="h-4 w-4 text-accent shrink-0" />
-          <span>{task.costo}</span>
-        </div>
+      <TableCell className="p-1 align-middle text-center whitespace-nowrap">
+        <EditableNumericCell
+          value={task.costo}
+          onSave={(newValue) => onUpdateTaskValue(task.id, 'costo', newValue)}
+          icon={<CircleDollarSign className="h-4 w-4 text-accent shrink-0" />}
+          title="Costo"
+        />
       </TableCell>
-      <TableCell className="p-2 align-middle text-center whitespace-nowrap">
-        <div className="flex items-center justify-center space-x-1" title="Duración">
-          <Hourglass className="h-4 w-4 text-muted-foreground shrink-0" />
-          <span>{task.duracion}</span>
-        </div>
+      <TableCell className="p-1 align-middle text-center whitespace-nowrap">
+        <EditableNumericCell
+          value={task.duracion}
+          onSave={(newValue) => onUpdateTaskValue(task.id, 'duracion', newValue)}
+          icon={<Hourglass className="h-4 w-4 text-muted-foreground shrink-0" />}
+          title="Duración"
+        />
       </TableCell>
+
       <TableCell className="p-2 align-middle text-center font-medium whitespace-nowrap">
         {isFinite(task.indice) ? task.indice.toFixed(2) : "∞"}
       </TableCell>
@@ -96,7 +108,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
             size="icon"
             onClick={handleScheduleOnCalendar}
             aria-label={`Programar tarea ${task.tarea} en Google Calendar`}
-            className="text-accent hover:bg-accent/10 h-7 w-7" // Usamos color de acento
+            className="text-accent hover:bg-accent/10 h-7 w-7"
             title="Programar en Google Calendar"
           >
             <CalendarPlus className="h-4 w-4" />
