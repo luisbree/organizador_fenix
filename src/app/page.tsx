@@ -13,6 +13,8 @@ import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { useMemoFirebase } from '@/firebase/provider';
 import { Loader2 } from 'lucide-react';
 
+const SHARED_USER_ID = "shared_user";
+
 export default function HomePage() {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -26,9 +28,9 @@ export default function HomePage() {
   }, [isUserLoading, user, auth]);
 
   const tasksQuery = useMemoFirebase(() => {
-    if (!firestore || !user?.uid) return null;
-    return collection(firestore, 'users', user.uid, 'tasks');
-  }, [firestore, user?.uid]);
+    if (!firestore) return null;
+    return collection(firestore, 'users', SHARED_USER_ID, 'tasks');
+  }, [firestore]);
 
   const { data: tasks, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
 
@@ -67,8 +69,8 @@ export default function HomePage() {
   };
 
   const handleToggleComplete = (id: string) => {
-    if (!firestore || !user?.uid) return;
-    const taskRef = doc(firestore, 'users', user.uid, 'tasks', id);
+    if (!firestore) return;
+    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
     const task = tasks?.find(t => t.id === id);
     if(task) {
       updateDocumentNonBlocking(taskRef, { completado: !task.completado });
@@ -76,8 +78,8 @@ export default function HomePage() {
   };
 
   const handleDeleteTask = (id: string) => {
-    if (!firestore || !user?.uid) return;
-    const taskRef = doc(firestore, 'users', user.uid, 'tasks', id);
+    if (!firestore) return;
+    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
     deleteDocumentNonBlocking(taskRef);
     toast({
       title: "Tarea eliminada",
@@ -86,8 +88,8 @@ export default function HomePage() {
   };
 
   const handleMarkSchedulingAttempted = (id: string) => {
-    if (!firestore || !user?.uid) return;
-    const taskRef = doc(firestore, 'users', user.uid, 'tasks', id);
+    if (!firestore) return;
+    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
     updateDocumentNonBlocking(taskRef, { isSchedulingAttempted: true });
   };
 
@@ -96,10 +98,10 @@ export default function HomePage() {
     field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
     newValue: number
   ) => {
-     if (!firestore || !user?.uid) return;
+     if (!firestore) return;
     const task = tasks?.find(t => t.id === taskId);
     if (task) {
-      const taskRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
+      const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', taskId);
       const updatedTask = { ...task, [field]: newValue };
 
       const num = updatedTask.urgencia + updatedTask.necesidad;
