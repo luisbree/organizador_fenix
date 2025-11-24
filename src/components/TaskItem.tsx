@@ -8,7 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Flame, ShieldCheck, CircleDollarSign, Hourglass, Trash2, CalendarPlus } from 'lucide-react';
 import type { Task } from '@/types/task';
 import { cn } from '@/lib/utils';
-import { EditableNumericCell } from './EditableNumericCell'; // Asegúrate que la ruta sea correcta
+import { EditableNumericCell } from './EditableNumericCell';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TaskItemProps {
   task: Task;
@@ -113,16 +124,35 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
           >
             <CalendarPlus className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDelete}
-            aria-label={`Eliminar tarea ${task.tarea}`}
-            className="text-destructive hover:bg-destructive/10 h-7 w-7"
-            title="Eliminar tarea"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={`Eliminar tarea ${task.tarea}`}
+                className="text-destructive hover:bg-destructive/10 h-7 w-7"
+                title="Eliminar tarea"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro que quieres eliminar la tarea?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción no se puede deshacer. Esto eliminará permanentemente la tarea de la lista.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className={cn(
+                  "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                )}>
+                  Eliminar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </TableCell>
     </TableRow>
