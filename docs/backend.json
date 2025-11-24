@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a task with its details, index, and completion status.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Task entity."
+        },
+        "description": {
+          "type": "string",
+          "description": "Textual description of the task."
+        },
+        "urgency": {
+          "type": "number",
+          "description": "Numerical value representing the urgency of the task."
+        },
+        "necessity": {
+          "type": "number",
+          "description": "Numerical value representing the necessity of the task."
+        },
+        "cost": {
+          "type": "number",
+          "description": "Numerical value representing the cost of the task."
+        },
+        "duration": {
+          "type": "number",
+          "description": "Numerical value representing the duration of the task."
+        },
+        "index": {
+          "type": "number",
+          "description": "Calculated index of the task, used for sorting."
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Boolean value indicating whether the task is completed or not."
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "urgency",
+        "necessity",
+        "cost",
+        "duration",
+        "index",
+        "completed"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/tasks/{taskId}",
+        "definition": {
+          "entityName": "Task",
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
+          "description": "Stores tasks for a specific user. Path-based ownership ensures only the authenticated user can access their tasks.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the task."
+            },
+            {
+              "name": "taskId",
+              "description": "The ID of the task."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to store tasks associated with individual users. Tasks are stored within a subcollection named `tasks` under each user's document in the `users` collection. This path-based ownership model ensures that only the authenticated user can access their tasks. The structure is simple and optimized for querying tasks based on their index and completion status. Authorization independence is achieved since each task is owned by the user based on its path (`/users/{userId}/tasks/{taskId}`). The structure also supports the required QAPs because listing operations are scoped to a user's tasks, enforcing ownership."
+  }
+}
