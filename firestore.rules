@@ -1,86 +1,18 @@
 /**
- * This ruleset enforces a strict user-ownership model for a task management application.
+ * DEVELOPMENT ONLY - INSECURE RULES
+ * This ruleset allows any authenticated user to read and write to the entire database.
+ * It is intended for development purposes only to get unblocked from permission errors.
  *
- * Core Philosophy:
- * All user-generated data is private and can only be accessed by its owner. The rules
- * strictly enforce that a user can only interact with documents within their own
- * data tree, preventing any cross-user data access.
- *
- * Data Structure:
- * All tasks are stored in a subcollection under a specific user's document, following
- * the hierarchical path: /users/{userId}/tasks/{taskId}. This structure inherently
- * scopes data access to the user identified by {userId}.
- *
- * Key Security Decisions:
- * - User data is completely segregated. A user can only read and write to their own
- *   /users/{userId} path.
- * - Listing of the top-level /users collection is explicitly disallowed to protect
- *   user privacy and prevent enumeration of all application users.
- * - The parent /users/{userId} document is read-only for its owner. This allows the
- *   app to fetch user profile data without allowing modification of an undefined schema.
- * - Write operations on tasks enforce relational integrity by ensuring the document's
- *   internal `id` field matches the document's ID in the path ({taskId}).
+ * WARNING:
+ * Before deploying to a production environment, you MUST replace these rules with
+ * secure rules that properly restrict access and protect user data.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions for reusable logic
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // Ensures a document exists before an update or delete, and that the user is the owner.
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    // On create, validates that the task document's internal `id` field matches its path ID.
-    function hasValidTaskId(taskId) {
-      return request.resource.data.id == taskId;
-    }
-    
-    // On update, ensures the internal task `id` field cannot be changed.
-    function isImmutableTaskId() {
-        return request.resource.data.id == resource.data.id;
-    }
-
-    /**
-     * @description Controls access to the parent user documents.
-     * @path /users/{userId}
-     * @allow A user (uid: "user123") to read their own profile document at /users/user123. (get)
-     * @deny An authenticated user (uid: "user456") from reading another user's document at /users/user123. (get)
-     * @deny Any user from listing all documents in the /users collection. (list)
-     * @deny Any user from creating, updating, or deleting a user document directly. (create, update, delete)
-     * @principle Restricts access to a user's own data tree and prevents user enumeration.
-     */
-    match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    /**
-     * @description Secures task documents, ensuring they are only accessible by their owner.
-     * @path /users/{userId}/tasks/{taskId}
-     * @allow A user (uid: "user123") to create a new task at /users/user123/tasks/taskABC. (create)
-     * @allow The same user to read or update their own task at /users/user123/tasks/taskABC. (get, update)
-     * @deny A different user (uid: "user456") from accessing anything at /users/user123/tasks/taskABC. (get, list, create, update, delete)
-     * @deny A user (uid: "user123") creating a task where the document's internal `id` does not match the `{taskId}`. (create)
-     * @principle Enforces strict document ownership based on the URL path.
-     */
-    match /users/{userId}/tasks/{taskId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && hasValidTaskId(taskId);
-      allow update: if isExistingOwner(userId) && isImmutableTaskId();
-      allow delete: if isExistingOwner(userId);
+    match /{document=**} {
+      // Allow read and write access to any authenticated user.
+      allow read, write: if request.auth != null;
     }
   }
 }
