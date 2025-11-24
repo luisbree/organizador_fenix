@@ -51,8 +51,10 @@ export default function HomePage() {
       indice = 0;
     }
     
+    const capitalizedTarea = taskData.rawTarea.charAt(0).toUpperCase() + taskData.rawTarea.slice(1);
+
     const newTask: Omit<Task, 'id' | 'createdAt'> = {
-      tarea: taskData.rawTarea,
+      tarea: capitalizedTarea,
       urgencia: taskData.urgencia,
       necesidad: taskData.necesidad,
       costo: taskData.costo,
