@@ -6,63 +6,35 @@ import type { Task } from '@/types/task';
 import { TaskForm } from '@/components/TaskForm';
 import { TaskList } from '@/components/TaskList';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth, useCollection, useFirestore, useUser } from '@/firebase';
+import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
+import { useMemoFirebase } from '@/firebase/provider';
+import { Loader2 } from 'lucide-react';
 
 export default function HomePage() {
-  const [tasks, setTasks] = React.useState<Task[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
   const { toast } = useToast();
+  const firestore = useFirestore();
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
 
   React.useEffect(() => {
-    const storedTasksRaw = localStorage.getItem('task-ranker-tasks');
-    let loadedTasks: Task[] = [];
-    if (storedTasksRaw) {
-      try {
-        const storedTasks = JSON.parse(storedTasksRaw);
-        loadedTasks = storedTasks.map((task: any) => ({
-          ...task,
-          createdAt: new Date(task.createdAt),
-          completado: task.completado || false,
-          isSchedulingAttempted: task.isSchedulingAttempted || false, 
-        }));
-      } catch (e) {
-        console.error("Failed to parse tasks from localStorage", e);
-        toast({
-          title: "Error al cargar tareas",
-          description: "No se pudieron cargar las tareas guardadas. Se iniciará con una lista vacía.",
-          variant: "destructive",
-        });
-        localStorage.removeItem('task-ranker-tasks');
-      }
+    if (!isUserLoading && !user) {
+      initiateAnonymousSignIn(auth);
     }
+  }, [isUserLoading, user, auth]);
 
-    if (loadedTasks.length === 0) {
-      const exampleTask: Task = {
-        id: crypto.randomUUID(),
-        tarea: "Pasear al perro",
-        urgencia: 4,
-        necesidad: 5,
-        costo: 1,
-        duracion: 2,
-        indice: (4 + 5) / (1 + 2),
-        completado: false,
-        createdAt: new Date(),
-        isSchedulingAttempted: false,
-      };
-      setTasks([exampleTask]);
-    } else {
-      setTasks(loadedTasks);
-    }
-    
-    setIsLoading(false);
-  }, [toast]);
+  const tasksQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return collection(firestore, 'users', user.uid, 'tasks');
+  }, [firestore, user?.uid]);
 
-  React.useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem('task-ranker-tasks', JSON.stringify(tasks));
-    }
-  }, [tasks, isLoading]);
+  const { data: tasks, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
 
   const handleAddTask = (taskData: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'isSchedulingAttempted'> & { rawTarea: string }) => {
+    if (!tasksQuery) return;
+    
     const num = taskData.urgencia + taskData.necesidad;
     const den = taskData.costo + taskData.duracion;
     let indice;
@@ -77,8 +49,7 @@ export default function HomePage() {
       indice = 0;
     }
     
-    const newTask: Task = {
-      id: crypto.randomUUID(),
+    const newTask: Omit<Task, 'id' | 'createdAt'> = {
       tarea: taskData.rawTarea,
       urgencia: taskData.urgencia,
       necesidad: taskData.necesidad,
@@ -86,22 +57,28 @@ export default function HomePage() {
       duracion: taskData.duracion,
       indice: indice,
       completado: false,
-      createdAt: new Date(),
       isSchedulingAttempted: false,
     };
-    setTasks((prevTasks) => [...prevTasks, newTask]);
+    
+    addDocumentNonBlocking(tasksQuery, {
+      ...newTask,
+      createdAt: serverTimestamp(),
+    });
   };
 
   const handleToggleComplete = (id: string) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === id ? { ...task, completado: !task.completado } : task
-      )
-    );
+    if (!firestore || !user?.uid) return;
+    const taskRef = doc(firestore, 'users', user.uid, 'tasks', id);
+    const task = tasks?.find(t => t.id === id);
+    if(task) {
+      updateDocumentNonBlocking(taskRef, { completado: !task.completado });
+    }
   };
 
   const handleDeleteTask = (id: string) => {
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+    if (!firestore || !user?.uid) return;
+    const taskRef = doc(firestore, 'users', user.uid, 'tasks', id);
+    deleteDocumentNonBlocking(taskRef);
     toast({
       title: "Tarea eliminada",
       description: "La tarea ha sido eliminada de la lista.",
@@ -109,11 +86,9 @@ export default function HomePage() {
   };
 
   const handleMarkSchedulingAttempted = (id: string) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === id ? { ...task, isSchedulingAttempted: true } : task
-      )
-    );
+    if (!firestore || !user?.uid) return;
+    const taskRef = doc(firestore, 'users', user.uid, 'tasks', id);
+    updateDocumentNonBlocking(taskRef, { isSchedulingAttempted: true });
   };
 
   const handleUpdateTaskValue = (
@@ -121,35 +96,46 @@ export default function HomePage() {
     field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
     newValue: number
   ) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) => {
-        if (task.id === taskId) {
-          const updatedTask = { ...task, [field]: newValue };
+     if (!firestore || !user?.uid) return;
+    const task = tasks?.find(t => t.id === taskId);
+    if (task) {
+      const taskRef = doc(firestore, 'users', user.uid, 'tasks', taskId);
+      const updatedTask = { ...task, [field]: newValue };
 
-          const num = updatedTask.urgencia + updatedTask.necesidad;
-          const den = updatedTask.costo + updatedTask.duracion;
-          let newIndice;
-          if (den === 0) {
-            newIndice = num > 0 ? Infinity : 0;
-          } else {
-            newIndice = num / den;
-          }
-          if (isNaN(newIndice)) {
-            newIndice = 0;
-          }
-          updatedTask.indice = newIndice;
+      const num = updatedTask.urgencia + updatedTask.necesidad;
+      const den = updatedTask.costo + updatedTask.duracion;
+      let newIndice;
+      if (den === 0) {
+        newIndice = num > 0 ? Infinity : 0;
+      } else {
+        newIndice = num / den;
+      }
+      if (isNaN(newIndice)) {
+        newIndice = 0;
+      }
+      updatedTask.indice = newIndice;
+      
+      updateDocumentNonBlocking(taskRef, {
+        [field]: newValue,
+        indice: newIndice,
+      });
 
-          toast({
-            title: "Tarea actualizada",
-            description: `El campo "${field}" de la tarea "${updatedTask.tarea}" ha sido actualizado a ${newValue}. Nuevo índice: ${newIndice.toFixed(2)}`,
-          });
-          return updatedTask;
-        }
-        return task;
-      })
-    );
+      toast({
+        title: "Tarea actualizada",
+        description: `El campo "${field}" ha sido actualizado. Nuevo índice: ${newIndice.toFixed(2)}`,
+      });
+    }
   };
 
+
+  if (isUserLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        <p className="ml-4 text-lg text-muted-foreground">Cargando...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
@@ -168,12 +154,12 @@ export default function HomePage() {
           <h2 className="text-xl font-semibold mb-3 text-foreground border-b pb-1.5">
             Lista de Tareas
           </h2>
-          {isLoading ? (
+          {isLoadingTasks ? (
             <p className="text-center text-muted-foreground py-4">Cargando tareas...</p>
           ) : (
             <div className="flex-grow">
               <TaskList
-                tasks={tasks}
+                tasks={tasks || []}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
                 onMarkSchedulingAttempted={handleMarkSchedulingAttempted}

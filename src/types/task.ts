@@ -1,4 +1,6 @@
 
+import type { Timestamp } from 'firebase/firestore';
+
 export interface Task {
   id: string;
   tarea: string;
@@ -8,6 +10,6 @@ export interface Task {
   duracion: number;
   indice: number;
   completado: boolean;
-  createdAt: Date;
-  isSchedulingAttempted?: boolean; // Aseguramos que este campo esté presente
+  createdAt: Timestamp | Date; // Can be a server timestamp or a Date object
+  isSchedulingAttempted?: boolean;
 }
