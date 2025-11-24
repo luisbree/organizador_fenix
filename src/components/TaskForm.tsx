@@ -251,21 +251,21 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
   let statusText;
 
   if (isProcessing) {
-    buttonContent = <Loader2 className="h-[70%] w-[70%] sm:h-[75%] sm:w-[75%] animate-spin" />; 
+    buttonContent = <Loader2 className="h-16 w-16 sm:h-20 sm:w-20 animate-spin" />; 
     statusText = "Procesando tarea...";
   } else if (isRecording) {
-    buttonContent = <Mic className="h-[70%] w-[70%] sm:h-[75%] sm:w-[75%] text-destructive animate-pulse" />; 
+    buttonContent = <Mic className="h-16 w-16 sm:h-20 sm:w-20 text-destructive animate-pulse" />; 
     statusText = "Escuchando... Presiona de nuevo para finalizar.";
   } else {
     if (hasMicPermission === null) {
       statusText = "Solicitando permiso para el micrófono...";
-      buttonContent = <Loader2 className="h-[70%] w-[70%] sm:h-[75%] sm:w-[75%] animate-spin" />;
+      buttonContent = <Loader2 className="h-16 w-16 sm:h-20 sm:w-20 animate-spin" />;
     } else if (hasMicPermission === false) {
       statusText = "Micrófono no disponible. Puedes usar el campo de texto.";
-      buttonContent = <Mic className="h-[70%] w-[70%] sm:h-[75%] sm:w-[75%] text-muted-foreground" />;
+      buttonContent = <Mic className="h-16 w-16 sm:h-20 sm:w-20 text-muted-foreground" />;
     } else {
       statusText = "Presiona el micrófono o escribe abajo para añadir una tarea.";
-      buttonContent = <Mic className="h-[70%] w-[70%] sm:h-[75%] sm:w-[75%]" />;
+      buttonContent = <Mic className="h-16 w-16 sm:h-20 smw-20" />;
     }
   }
   
@@ -320,3 +320,5 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
     </div>
   );
 }
+
+  
