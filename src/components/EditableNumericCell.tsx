@@ -14,8 +14,6 @@ interface EditableNumericCellProps {
   max?: number;
   className?: string;
   inputClassName?: string;
-  icon?: React.ReactNode;
-  title?: string;
 }
 
 export function EditableNumericCell({
@@ -25,8 +23,6 @@ export function EditableNumericCell({
   max = 5,
   className,
   inputClassName,
-  icon,
-  title,
 }: EditableNumericCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [currentValue, setCurrentValue] = useState(String(value));
@@ -41,9 +37,6 @@ export function EditableNumericCell({
   }, [isEditing]);
 
   useEffect(() => {
-    // If the parent component updates the value prop (e.g. after save),
-    // or if editing is cancelled, reflect it in the non-editing display
-    // and reset internal input state.
     if (!isEditing) {
       setCurrentValue(String(value));
     }
@@ -57,11 +50,11 @@ export function EditableNumericCell({
         description: `El valor debe ser un número entre ${min} y ${max}.`,
         variant: "destructive",
       });
-      setCurrentValue(String(value)); // Revert to original value on bad input
+      setCurrentValue(String(value)); 
       setIsEditing(false);
       return;
     }
-    if (numValue !== value) { // Only call onSave if value actually changed
+    if (numValue !== value) {
         onSave(numValue);
     }
     setIsEditing(false);
@@ -71,7 +64,7 @@ export function EditableNumericCell({
     if (e.key === 'Enter') {
       handleSave();
     } else if (e.key === 'Escape') {
-      setCurrentValue(String(value)); // Revert to original on escape
+      setCurrentValue(String(value)); 
       setIsEditing(false);
     }
   };
@@ -88,7 +81,7 @@ export function EditableNumericCell({
         className={cn("h-8 p-1 text-center tabular-nums", inputClassName)}
         min={min}
         max={max}
-        aria-label={`Editar ${title}`}
+        aria-label={`Editar valor`}
       />
     );
   }
@@ -96,10 +89,10 @@ export function EditableNumericCell({
   return (
     <div
       className={cn(
-        "flex items-center justify-center space-x-1 cursor-pointer p-1 rounded-md hover:bg-muted/80 min-h-[32px]", // min-h to match input height
+        "flex items-center justify-center space-x-1 cursor-pointer p-1 rounded-md hover:bg-muted/80 min-h-[32px]",
         className
       )}
-      title={title ? `${title}: ${value}. Click para editar.` : `Valor actual: ${value}. Click para editar.`}
+      title={`Valor actual: ${value}. Click para editar.`}
       onClick={() => {
         setCurrentValue(String(value)); 
         setIsEditing(true);
@@ -113,9 +106,7 @@ export function EditableNumericCell({
         }
       }}
     >
-      {icon}
-      <span className="tabular-nums font-semibold">{value}</span>
-      {title && <span className="text-xs text-muted-foreground -ml-0.5">{title}</span>}
+      <span className="tabular-nums font-semibold text-lg">{value}</span>
     </div>
   );
 }

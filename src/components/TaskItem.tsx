@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Flame, ShieldCheck, CircleDollarSign, Hourglass, Trash2, CalendarPlus, HelpCircle } from 'lucide-react';
+import { Trash2, CalendarPlus } from 'lucide-react';
 import type { Task } from '@/types/task';
 import { cn } from '@/lib/utils';
 import { EditableNumericCell } from './EditableNumericCell';
@@ -57,7 +57,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
     onMarkSchedulingAttempted(task.id);
   };
   
-  const createdDate = new Date(task.createdAt);
+  const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
 
   return (
     <TableRow className={cn(
@@ -84,37 +84,29 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
         <EditableNumericCell
           value={task.urgencia}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'urgencia', newValue)}
-          icon={<Flame className="h-4 w-4 text-destructive" />}
-          title="Urgencia"
         />
       </TableCell>
       <TableCell className="text-center">
         <EditableNumericCell
           value={task.necesidad}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'necesidad', newValue)}
-          icon={<ShieldCheck className="h-4 w-4 text-primary" />}
-          title="Necesidad"
         />
       </TableCell>
       <TableCell className="text-center">
         <EditableNumericCell
           value={task.costo}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'costo', newValue)}
-          icon={<CircleDollarSign className="h-4 w-4 text-accent" />}
-          title="Costo"
         />
       </TableCell>
       <TableCell className="text-center">
         <EditableNumericCell
           value={task.duracion}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'duracion', newValue)}
-          icon={<Hourglass className="h-4 w-4 text-muted-foreground" />}
-          title="Duración"
         />
       </TableCell>
       <TableCell className="text-center">
         <div className="flex flex-col items-center justify-center">
-           <p className="text-xl font-bold">
+           <p className="text-xl font-bold tabular-nums">
             {isFinite(task.indice) ? task.indice.toFixed(2) : "∞"}
           </p>
         </div>
@@ -149,11 +141,11 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
                     La tarea "{task.tarea}" será eliminada permanentemente.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="flex-col-reverse space-y-2 space-y-reverse w-full">
-                  <AlertDialogAction onClick={handleDelete} className={cn("w-full bg-destructive text-destructive-foreground hover:bg-destructive/90")}>
+                <AlertDialogFooter className="flex-col-reverse space-y-2 space-y-reverse w-full sm:flex-row sm:space-y-0">
+                   <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className={cn("w-full sm:w-auto")}>
                     Sí, eliminar
                   </AlertDialogAction>
-                  <AlertDialogCancel className="w-full">Cancelar</AlertDialogCancel>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
