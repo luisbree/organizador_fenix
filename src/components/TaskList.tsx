@@ -166,7 +166,11 @@ export function TaskList({
               )}
               style={task.completado ? {} : agingColorStyle}
             >
-              <div onClick={() => onSelectTask(task.id)} className="cursor-pointer">
+              <div onClick={() => onSelectTask(task.id)} className="cursor-pointer w-full">
+                <AccordionTrigger 
+                    className="p-0 hover:no-underline [&[data-state=open]>div>div>.chevron]:rotate-180" 
+                    disabled={!hasSubtasks}
+                >
                   <TaskItem
                     task={task}
                     onToggleComplete={onToggleComplete}
@@ -174,12 +178,12 @@ export function TaskList({
                     onMarkSchedulingAttempted={onMarkSchedulingAttempted}
                     onUpdateTaskValue={onUpdateTaskValue}
                     agingFactor={agingFactor}
-                    agingColorStyle={agingColorStyle}
                     hasSubtasks={hasSubtasks}
                   />
+                </AccordionTrigger>
               </div>
               {hasSubtasks && (
-                <AccordionContent className="bg-background/50">
+                <AccordionContent className="bg-transparent">
                   <div className="flex flex-col gap-1 px-2 py-2">
                     {sortedSubtasks(task.subtasks).map(subtask => (
                       <SubTaskItem

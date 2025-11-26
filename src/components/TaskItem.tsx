@@ -32,7 +32,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { AccordionTrigger } from '@/components/ui/accordion';
 
 interface TaskItemProps {
   task: Task;
@@ -45,7 +44,6 @@ interface TaskItemProps {
     newValue: number
   ) => void;
   agingFactor: number;
-  agingColorStyle: React.CSSProperties;
   hasSubtasks?: boolean;
 }
 
@@ -60,7 +58,6 @@ export function TaskItem({
     onMarkSchedulingAttempted, 
     onUpdateTaskValue,
     agingFactor,
-    agingColorStyle,
     hasSubtasks
 }: TaskItemProps) {
 
@@ -91,16 +88,13 @@ export function TaskItem({
   };
 
   return (
-    <div className="flex items-center w-full p-2"
-        style={task.completado ? {} : agingColorStyle}
-    >
+    <div className="flex items-center w-full p-2">
       <div className="w-[40px] flex-shrink-0 flex items-center justify-center">
         {task.completado ? (
           <Checkbox
             id={`complete-${task.id}`}
             checked={task.completado}
             onCheckedChange={(e) => {
-                // We need to simulate stopPropagation for the onCheckedChange event
                 const dummyEvent = { stopPropagation: () => {} };
                 handleToggle(dummyEvent as any);
             }}
@@ -223,9 +217,9 @@ export function TaskItem({
         </div>
       </div>
       {hasSubtasks && (
-          <AccordionTrigger onClick={(e) => e.stopPropagation()} className="w-[40px] flex-shrink-0 justify-center p-2 [&[data-state=open]>svg]:rotate-180">
+          <div className="chevron w-[40px] flex-shrink-0 flex justify-center p-2">
               <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
-          </AccordionTrigger>
+          </div>
       )}
        {!hasSubtasks && <div className="w-[40px] flex-shrink-0"></div>}
     </div>
