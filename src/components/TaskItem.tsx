@@ -140,6 +140,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
               />
             </AlertDialogTrigger>
             <AlertDialogContent className="max-w-[340px] rounded-lg" style={{backgroundColor: '#fdfdfd'}}>
+               <AlertDialogCancel className="absolute inset-0 bg-transparent border-0 cursor-default" />
               <AlertDialogHeader>
                   <AlertDialogTitle className="sr-only">Confirmar Tarea</AlertDialogTitle>
               </AlertDialogHeader>
