@@ -37,60 +37,44 @@ interface TaskItemProps {
   ) => void;
 }
 
-const getAgingFactor = (task: Task): number => {
+const calculateAgingFactor = (task: Task): number => {
     const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     createdDate.setHours(0, 0, 0, 0);
 
     const timeDiff = today.getTime() - createdDate.getTime();
-    const daysOld = Math.floor(timeDiff / (1000 * 3600 * 24));
+    const daysOld = Math.max(0, Math.floor(timeDiff / (1000 * 3600 * 24)));
 
     if (daysOld < 1) {
         return 0; // No aging factor for tasks less than a day old
     }
-    
-    let factor = (task.urgencia + task.necesidad) / (10 * daysOld);
+
+    // Use a logarithmic scale for a more gradual and cumulative-feeling aging effect.
+    // The (urgencia + necesidad) / 10 term weights the aging based on importance.
+    const factor = ((task.urgencia + task.necesidad) / 10) * Math.log(daysOld + 1);
     
     return isNaN(factor) ? 0 : factor;
 }
 
 const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
-  // Always apply a base green for tasks that are not aging yet (factor <= 0)
   if (agingFactor <= 0) {
-    return { backgroundColor: `hsla(120, 60%, 58%, 0.6)` }; // Green #5cd65c
+    return { backgroundColor: `hsla(120, 60%, 58%, 0)` }; // Transparent for no aging
   }
 
-  // Apply a much gentler logarithmic scale.
-  // Using a larger log base spreads the initial values out more.
-  // A base of 5 means the factor has to be 4 (5-1) to reach the next "step".
-  const scaledFactor = Math.log(agingFactor + 1) / Math.log(5); 
-  
-  // Normalize the factor, capping it at 1 for the color scale
-  const normalizedFactor = Math.min(scaledFactor, 1.0);
+  // Normalize the factor. Let's establish a "max" factor for color scaling, e.g., what we consider "fully red".
+  // A factor of around 2.5 (e.g. U+N=10 at ~11 days old) could be our cap for the gradient.
+  const maxFactorForColor = 2.5;
+  const normalizedFactor = Math.min(agingFactor / maxFactorForColor, 1.0);
 
-  const colors = [
-    { h: 120, s: 60, l: 58 }, // #5cd65c (Green)
-    { h: 56, s: 98, l: 70 }, // #fdf068 (Yellow)
-    { h: 30, s: 100, l: 60 }, // #ff9933 (Orange)
-    { h: 0, s: 96, l: 50 },   // #fa0505 (Red)
-  ];
+  // Linear interpolation between Green -> Yellow -> Red
+  // Green (hue 120), Yellow (hue 60), Red (hue 0)
+  const hue = 120 - (normalizedFactor * 120);
+  const saturation = 70 + (normalizedFactor * 30); // Go from 70% to 100% saturation
+  const lightness = 60 - (normalizedFactor * 10); // Slightly darken as it gets redder
+  const alpha = 0.5 + (normalizedFactor * 0.2); // Increase opacity from 0.5 to 0.7
 
-  const numSegments = colors.length - 1;
-  const segmentIndex = Math.min(Math.floor(normalizedFactor * numSegments), numSegments - 1);
-  const segmentStart = segmentIndex / numSegments;
-  
-  const segmentFactor = (normalizedFactor - segmentStart) * numSegments;
-
-  const startColor = colors[segmentIndex];
-  const endColor = colors[segmentIndex + 1];
-
-  const h = startColor.h + (endColor.h - startColor.h) * segmentFactor;
-  const s = startColor.s + (endColor.s - startColor.s) * segmentFactor;
-  const l = startColor.l + (endColor.l - startColor.l) * segmentFactor;
-
-  // Apply a consistent light transparency
-  return { backgroundColor: `hsla(${h}, ${s}%, ${l}%, 0.6)` };
+  return { backgroundColor: `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})` };
 };
 
 
@@ -117,26 +101,12 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
   const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
 
   const calculateDynamicIndex = (task: Task): number => {
-    const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    createdDate.setHours(0, 0, 0, 0);
-
-    const timeDiff = today.getTime() - createdDate.getTime();
-    const daysOld = Math.floor(timeDiff / (1000 * 3600 * 24));
-
-    let agingFactorValue = 0;
-    if (daysOld >= 1) {
-        agingFactorValue = (task.urgencia + task.necesidad) / (10 * daysOld);
-    }
-    
-    if(isNaN(agingFactorValue)) agingFactorValue = 0;
-
+    const agingFactorValue = calculateAgingFactor(task);
     return task.indice + agingFactorValue;
   };
 
-  const agingFactor = getAgingFactor(task);
-  const dynamicIndex = task.indice + agingFactor;
+  const dynamicIndex = calculateDynamicIndex(task);
+  const agingFactor = calculateAgingFactor(task);
   const agingColorStyle = getAgingColorStyle(agingFactor);
 
 

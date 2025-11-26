@@ -4,7 +4,7 @@
 import type * as React from 'react';
 import type { Task } from '@/types/task';
 import { TaskItem } from './TaskItem';
-import { ListChecks, Flame, ShieldCheck, CircleDollarSign, Hourglass } from 'lucide-react';
+import { ListChecks, Flame, ShieldCheck, CircleDollarSign, Hourglass, Hash } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -37,16 +37,16 @@ const headerCells = [
 const calculateDynamicIndex = (task: Task): number => {
     const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
     const today = new Date();
-    // Set hours to 0 to compare dates only
     today.setHours(0, 0, 0, 0);
     createdDate.setHours(0, 0, 0, 0);
     
     const timeDiff = today.getTime() - createdDate.getTime();
-    const daysOld = Math.floor(timeDiff / (1000 * 3600 * 24));
+    const daysOld = Math.max(0, Math.floor(timeDiff / (1000 * 3600 * 24)));
 
     let agingFactor = 0;
     if (daysOld >= 1) {
-        agingFactor = (task.urgencia + task.necesidad) / (10 * daysOld);
+        // Use a logarithmic scale for a more gradual and cumulative-feeling aging effect.
+        agingFactor = ((task.urgencia + task.necesidad) / 10) * Math.log(daysOld + 1);
     }
 
     if(isNaN(agingFactor)) agingFactor = 0;
