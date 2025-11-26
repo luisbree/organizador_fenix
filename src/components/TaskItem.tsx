@@ -122,7 +122,7 @@ export function TaskItem({
         )}
       </div>
       <div className="flex-grow min-w-0 grid grid-cols-[1fr_auto] items-center gap-2 pr-2">
-         <div className="flex-grow min-w-0">
+         <div className="flex-grow min-w-0 text-left">
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className={cn("font-medium whitespace-nowrap", task.completado && "line-through text-muted-foreground")}>
