@@ -8,7 +8,7 @@ import { TaskList } from '@/components/TaskList';
 import { TaskSearch } from '@/components/TaskSearch';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, doc, serverTimestamp, runTransaction, writeBatch } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, runTransaction, onSnapshot } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { useMemoFirebase } from '@/firebase/provider';
@@ -42,45 +42,37 @@ export default function HomePage() {
 
   useEffect(() => {
     if (tasksData) {
-      const fetchSubtasks = async () => {
-        if (!firestore) return;
-        const tasksWithSubtasks = await Promise.all(
-          tasksData.map(async (task) => {
-            const subtasksQuery = collection(firestore, 'users', SHARED_USER_ID, 'tasks', task.id, 'subtasks');
-            const subtasksSnapshot = await new Promise<any[]>((resolve) => {
-                const unsubscribe = useCollection<SubTask>(subtasksQuery);
-                if (!unsubscribe.isLoading) {
-                    resolve(unsubscribe.data || []);
-                } else {
-                    const checkLoading = setInterval(() => {
-                        if (!unsubscribe.isLoading) {
-                            clearInterval(checkLoading);
-                            resolve(unsubscribe.data || []);
-                        }
-                    }, 100);
-                }
-            });
-            // This is a simplified approach. For real-time updates, you'd integrate the hook differently.
-            const subtasksCol = collection(firestore, 'users', SHARED_USER_ID, 'tasks', task.id, 'subtasks');
-            const subtasksListener = onSnapshot(subtasksCol, (snapshot) => {
-                const fetchedSubtasks = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as SubTask[];
-                setTasks(currentTasks => 
-                    currentTasks?.map(t => 
-                        t.id === task.id ? { ...t, subtasks: fetchedSubtasks } : t
-                    ) || null
-                );
-            });
+        // Initially set tasks without subtasks
+        const initialTasks = tasksData.map(t => ({ ...t, subtasks: t.subtasks || [] }));
+        setTasks(initialTasks);
 
-            // Note: In a real app, you'd need to manage this listener's lifecycle, e.g., unsubscribing.
-            return { ...task, subtasks: [] }; // Initially empty, will be filled by listener
-          })
-        );
-        setTasks(tasksWithSubtasks);
-      };
-      
-      fetchSubtasks();
+        if (!firestore) return;
+
+        // Set up listeners for subtasks for each task
+        const unsubscribers = tasksData.map(task => {
+            const subtasksColRef = collection(firestore, 'users', SHARED_USER_ID, 'tasks', task.id, 'subtasks');
+            
+            return onSnapshot(subtasksColRef, (snapshot) => {
+                const fetchedSubtasks = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as SubTask[];
+                
+                setTasks(currentTasks => {
+                    // This check is important to avoid updating state if the component has unmounted
+                    if (!currentTasks) return null;
+                    return currentTasks.map(t =>
+                        t.id === task.id ? { ...t, subtasks: fetchedSubtasks } : t
+                    );
+                });
+            }, (error) => {
+                console.error(`Error fetching subtasks for task ${task.id}: `, error);
+            });
+        });
+
+        // Cleanup listeners on component unmount or when tasksData changes
+        return () => {
+            unsubscribers.forEach(unsub => unsub());
+        };
     } else {
-        setTasks(tasksData);
+        setTasks(null); // Clear tasks if tasksData is null
     }
   }, [tasksData, firestore]);
   
@@ -184,23 +176,17 @@ export default function HomePage() {
     if (!firestore) return;
 
     const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
-    const subtasksCollectionRef = collection(firestore, 'users', SHARED_USER_ID, 'tasks', id, 'subtasks');
-
+    
     try {
         await runTransaction(firestore, async (transaction) => {
-            // It's good practice to get the doc to ensure it exists before deleting.
             const taskDoc = await transaction.get(taskRef);
             if (!taskDoc.exists()) {
                 throw "Document does not exist!";
             }
 
-            // Although Firestore Console deletes subcollections, it's safer to do it manually in a transaction/batch.
-            // However, deleting collections from the client-side is not recommended. 
-            // The following is a placeholder for how one might start.
-            // For robust production apps, use a Cloud Function to clean up subcollections.
-            
-            // For now, we will just delete the main task document.
-            // Firestore rules should be set up to cascade deletes or a Cloud Function should handle cleanup.
+            // In a real production app, you'd use a Cloud Function to delete subcollections.
+            // Deleting from the client is not scalable or secure.
+            // For this app, we'll just delete the parent task.
             transaction.delete(taskRef);
         });
         toast({
@@ -208,11 +194,11 @@ export default function HomePage() {
             description: "La tarea principal ha sido eliminada.",
         });
     } catch (error) {
-        console.error("Error deleting task and subtasks: ", error);
+        console.error("Error deleting task: ", error);
         toast({
             variant: "destructive",
             title: "Error al eliminar",
-            description: "No se pudo eliminar la tarea y sus subtareas.",
+            description: "No se pudo eliminar la tarea.",
         });
     }
   };
