@@ -114,28 +114,6 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
   const handleToggle = () => {
     onToggleComplete(task.id);
   };
-  
-  const getScheduledInfo = () => {
-    if (!task.scheduledAt) return { isRecent: false, scheduledDate: null };
-    
-    const scheduledDate = task.scheduledAt && 'toDate' in task.scheduledAt ? task.scheduledAt.toDate() : new Date(task.scheduledAt);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const isToday = scheduledDate.getFullYear() === today.getFullYear() &&
-                    scheduledDate.getMonth() === today.getMonth() &&
-                    scheduledDate.getDate() === today.getDate();
-                    
-    const isYesterday = scheduledDate.getFullYear() === yesterday.getFullYear() &&
-                        scheduledDate.getMonth() === yesterday.getMonth() &&
-                        scheduledDate.getDate() === yesterday.getDate();
-
-    return { isRecent: isToday || isYesterday, scheduledDate };
-  };
-
-  const { isRecent: isRecentlyScheduled, scheduledDate } = getScheduledInfo();
-
 
   return (
     <TableRow 
@@ -195,14 +173,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
             </div>
           </div>
           {task.scheduledAt && (
-             <Tooltip>
-              <TooltipTrigger>
-                 <Clock className={cn("h-3 w-3 text-muted-foreground flex-shrink-0", isRecentlyScheduled && "animate-pulse text-destructive")} />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Programado el: {scheduledDate?.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} a las {scheduledDate?.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</p>
-              </TooltipContent>
-            </Tooltip>
+             <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" title="Se intentó programar en calendario" />
           )}
           <p className="text-lg font-bold tabular-nums pl-1">
             {isFinite(dynamicIndex) ? dynamicIndex.toFixed(2) : "∞"}
