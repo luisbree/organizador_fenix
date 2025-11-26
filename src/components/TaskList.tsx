@@ -87,8 +87,20 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
           </TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]"></TableHead>
-              <TableHead>Tarea</TableHead>
+              <TableHead className="w-[50px] pr-0"></TableHead>
+              <TableHead className="pl-0">Tarea</TableHead>
+              <TableHead className="text-center">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="flex justify-center items-center font-bold text-lg">
+                           <p>#</p>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Índice</p>
+                    </TooltipContent>
+                </Tooltip>
+              </TableHead>
               {headerCells.map(({ id, label, icon: Icon, className }) => (
                 <TableHead key={id} className="text-center">
                     <Tooltip>
@@ -103,18 +115,6 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
                     </Tooltip>
                 </TableHead>
               ))}
-              <TableHead className="text-center">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <div className="flex justify-center items-center font-bold text-lg">
-                           <p>#</p>
-                        </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Índice</p>
-                    </TooltipContent>
-                </Tooltip>
-              </TableHead>
               <TableHead className="text-right w-[120px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>

@@ -64,7 +64,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
         task.completado && "bg-muted/50 opacity-60",
         task.isSchedulingAttempted && !task.completado && "bg-accent/[.08]"
     )}>
-      <TableCell>
+      <TableCell className="w-[1%]">
         <Checkbox
             id={`complete-${task.id}`}
             checked={task.completado}
@@ -72,13 +72,22 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
             aria-label={`Marcar ${task.tarea} como completada`}
         />
       </TableCell>
-      <TableCell>
-        <div className={cn("font-medium", task.completado && "line-through text-muted-foreground")}>
-          {task.tarea}
+      <TableCell className="max-w-[150px] sm:max-w-xs">
+         <div className="flex items-center gap-3">
+          <div className="flex-grow min-w-0">
+            <div className={cn("font-medium truncate", task.completado && "line-through text-muted-foreground")} title={task.tarea}>
+              {task.tarea}
+            </div>
+            <div className="text-xs text-muted-foreground truncate">
+              {createdDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric'})}, {createdDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit'})}
+            </div>
+          </div>
         </div>
-        <div className="text-xs text-muted-foreground">
-          {createdDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric'})}, {createdDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit'})}
-        </div>
+      </TableCell>
+      <TableCell className="text-center">
+        <p className="text-lg font-bold tabular-nums">
+          {isFinite(task.indice) ? task.indice.toFixed(2) : "∞"}
+        </p>
       </TableCell>
       <TableCell className="text-center">
         <EditableNumericCell
@@ -104,15 +113,8 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
           onSave={(newValue) => onUpdateTaskValue(task.id, 'duracion', newValue)}
         />
       </TableCell>
-      <TableCell className="text-center">
-        <div className="flex flex-col items-center justify-center">
-           <p className="text-xl font-bold tabular-nums">
-            {isFinite(task.indice) ? task.indice.toFixed(2) : "∞"}
-          </p>
-        </div>
-      </TableCell>
       <TableCell className="text-right">
-        <div className="flex items-center justify-end space-x-2">
+        <div className="flex items-center justify-end space-x-1 sm:space-x-2">
             <Button
               variant="outline"
               size="sm"
