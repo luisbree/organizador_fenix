@@ -140,12 +140,6 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
               />
             </AlertDialogTrigger>
             <AlertDialogContent className="max-w-[340px] rounded-lg">
-              <AlertDialogHeader className="text-center items-center">
-                <AlertDialogTitle>¿Marcar como completada?</AlertDialogTitle>
-                <AlertDialogDescription className="text-center px-4">
-                  La tarea "{task.tarea}" se marcará como finalizada.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
               <AlertDialogFooter className="sm:justify-center">
                 <AlertDialogAction onClick={handleToggle} className={cn("w-full sm:w-auto")}>
                   Confirmar
