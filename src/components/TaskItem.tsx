@@ -155,13 +155,13 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
             aria-label={`Marcar ${task.tarea} como completada`}
         />
       </TableCell>
-      <TableCell className="max-w-[150px] sm:max-w-xs whitespace-nowrap overflow-hidden text-ellipsis">
+      <TableCell className="min-w-[200px] whitespace-normal">
          <div className="flex items-center gap-2">
           <div className="flex-grow min-w-0">
-            <div className={cn("font-medium truncate", task.completado && "line-through text-muted-foreground")} title={task.tarea}>
+            <div className={cn("font-medium", task.completado && "line-through text-muted-foreground")} title={task.tarea}>
               {task.tarea}
             </div>
-            <div className="text-xs text-muted-foreground truncate">
+            <div className="text-xs text-muted-foreground">
               {createdDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric'})}, {createdDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit'})}
             </div>
           </div>
