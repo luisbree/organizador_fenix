@@ -35,6 +35,7 @@ const headerCells = [
 ];
 
 const calculateDynamicIndex = (task: Task): number => {
+    if (!task.createdAt) return task.indice;
     const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
     const today = new Date();
     today.setHours(0, 0, 0, 0);

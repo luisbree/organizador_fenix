@@ -36,7 +36,7 @@ export default function HomePage() {
 
   const { data: tasks, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
 
-  const handleAddTask = (taskData: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'isSchedulingAttempted'> & { rawTarea: string }) => {
+  const handleAddTask = (taskData: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string }) => {
     if (!tasksQuery) return;
     
     const num = taskData.urgencia + taskData.necesidad;
@@ -63,7 +63,7 @@ export default function HomePage() {
       duracion: taskData.duracion,
       indice: indice,
       completado: false,
-      isSchedulingAttempted: false,
+      scheduledAt: null,
     };
     
     addDocumentNonBlocking(tasksQuery, {
@@ -111,7 +111,7 @@ export default function HomePage() {
   const handleMarkSchedulingAttempted = (id: string) => {
     if (!firestore) return;
     const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
-    updateDocumentNonBlocking(taskRef, { isSchedulingAttempted: true });
+    updateDocumentNonBlocking(taskRef, { scheduledAt: serverTimestamp() });
   };
 
   const handleUpdateTaskValue = (

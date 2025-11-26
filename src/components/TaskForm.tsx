@@ -12,7 +12,7 @@ import { Mic, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface TaskFormProps {
-  onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'isSchedulingAttempted'> & { rawTarea: string }) => void;
+  onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string }) => void;
 }
 
 export function TaskForm({ onAddTask }: TaskFormProps) {

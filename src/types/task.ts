@@ -11,5 +11,5 @@ export interface Task {
   indice: number;
   completado: boolean;
   createdAt: Timestamp | Date; // Can be a server timestamp or a Date object
-  isSchedulingAttempted?: boolean;
+  scheduledAt?: Timestamp | Date | null;
 }
