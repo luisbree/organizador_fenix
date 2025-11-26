@@ -59,6 +59,27 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
   
   const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
 
+  const calculateDynamicIndex = (task: Task): number => {
+    const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    createdDate.setHours(0, 0, 0, 0);
+
+    const timeDiff = today.getTime() - createdDate.getTime();
+    const daysOld = Math.floor(timeDiff / (1000 * 3600 * 24));
+
+    let agingFactor = 0;
+    if (daysOld >= 1) {
+        agingFactor = (task.urgencia + task.necesidad) / (10 * daysOld);
+    }
+    
+    if(isNaN(agingFactor)) agingFactor = 0;
+
+    return task.indice + agingFactor;
+  };
+
+  const dynamicIndex = calculateDynamicIndex(task);
+
   return (
     <TableRow className={cn(
         task.completado && "bg-muted/50 opacity-60",
@@ -72,7 +93,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
             aria-label={`Marcar ${task.tarea} como completada`}
         />
       </TableCell>
-      <TableCell className="max-w-[150px] sm:max-w-xs">
+      <TableCell className="max-w-[150px] sm:max-w-xs whitespace-nowrap overflow-hidden text-ellipsis">
          <div className="flex items-center gap-3">
           <div className="flex-grow min-w-0">
             <div className={cn("font-medium truncate", task.completado && "line-through text-muted-foreground")} title={task.tarea}>
@@ -82,13 +103,12 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
               {createdDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric'})}, {createdDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit'})}
             </div>
           </div>
+          <p className="text-lg font-bold tabular-nums pl-2">
+            {isFinite(dynamicIndex) ? dynamicIndex.toFixed(2) : "∞"}
+          </p>
         </div>
       </TableCell>
-      <TableCell className="text-center">
-        <p className="text-lg font-bold tabular-nums">
-          {isFinite(task.indice) ? task.indice.toFixed(2) : "∞"}
-        </p>
-      </TableCell>
+      
       <TableCell className="text-center">
         <EditableNumericCell
           value={task.urgencia}

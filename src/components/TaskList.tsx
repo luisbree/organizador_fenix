@@ -4,7 +4,7 @@
 import type * as React from 'react';
 import type { Task } from '@/types/task';
 import { TaskItem } from './TaskItem';
-import { ListChecks, Flame, ShieldCheck, CircleDollarSign, Hourglass, HelpCircle, Hash } from 'lucide-react';
+import { ListChecks, Flame, ShieldCheck, CircleDollarSign, Hourglass, Hash } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -13,8 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TaskListProps {
   tasks: Task[];
@@ -35,13 +34,34 @@ const headerCells = [
     { id: 'duracion', label: 'Duración', icon: Hourglass, className: 'text-muted-foreground' },
 ];
 
+const calculateDynamicIndex = (task: Task): number => {
+    const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
+    const today = new Date();
+    // Set hours to 0 to compare dates only
+    today.setHours(0, 0, 0, 0);
+    createdDate.setHours(0, 0, 0, 0);
+    
+    const timeDiff = today.getTime() - createdDate.getTime();
+    const daysOld = Math.floor(timeDiff / (1000 * 3600 * 24));
+
+    let agingFactor = 0;
+    if (daysOld >= 1) {
+        agingFactor = (task.urgencia + task.necesidad) / (10 * daysOld);
+    }
+
+    if(isNaN(agingFactor)) agingFactor = 0;
+
+    return task.indice + agingFactor;
+};
+
+
 export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted, onUpdateTaskValue }: TaskListProps) {
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.completado && !b.completado) return 1;
     if (!a.completado && b.completado) return -1;
 
-    const aIndex = a.indice;
-    const bIndex = b.indice;
+    const aIndex = calculateDynamicIndex(a);
+    const bIndex = calculateDynamicIndex(b);
 
     if (aIndex === Infinity && bIndex !== Infinity) return -1;
     if (bIndex === Infinity && aIndex !== Infinity) return 1;
@@ -88,19 +108,22 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px] pr-0"></TableHead>
-              <TableHead className="pl-0">Tarea</TableHead>
-              <TableHead className="text-center">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <div className="flex justify-center items-center font-bold text-lg">
-                           <p>#</p>
-                        </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Índice</p>
-                    </TooltipContent>
-                </Tooltip>
+              <TableHead className="pl-0">
+                 <div className="flex items-center">
+                    Tarea
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="flex justify-center items-center font-bold text-lg ml-3">
+                               <Hash className="h-4 w-4" />
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Índice</p>
+                        </TooltipContent>
+                    </Tooltip>
+                 </div>
               </TableHead>
+              
               {headerCells.map(({ id, label, icon: Icon, className }) => (
                 <TableHead key={id} className="text-center">
                     <Tooltip>
@@ -135,3 +158,4 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
     </TooltipProvider>
   );
 }
+
