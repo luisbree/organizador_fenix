@@ -80,7 +80,7 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }:
             </Dialog>
         </div>
 
-        <div className="flex-grow min-w-0">
+        <div className="flex-grow min-w-0 text-left">
             <div className={cn("font-medium", subtask.completado && "line-through text-muted-foreground")}>
                 {subtask.tarea}
             </div>
