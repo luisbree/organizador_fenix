@@ -2,18 +2,13 @@
 "use client";
 
 import type * as React from 'react';
-import type { Task } from '@/types/task';
+import type { Task, SubTask } from '@/types/task';
 import { TaskItem } from './TaskItem';
-import { ListChecks, Flame, ShieldCheck, CircleDollarSign, Hourglass, Hash } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ListChecks } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { SubTaskItem } from './SubTaskItem';
 
 interface TaskListProps {
   tasks: Task[];
@@ -25,14 +20,12 @@ interface TaskListProps {
     field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
     newValue: number
   ) => void;
+  onSelectTask: (taskId: string | null) => void;
+  selectedTaskId: string | null;
+  onToggleSubTaskComplete: (subTaskId: string, parentId: string) => void;
+  onDeleteSubTask: (subTaskId: string, parentId: string) => void;
+  onMarkSubTaskSchedulingAttempted: (subTaskId: string, parentId: string) => void;
 }
-
-const headerCells = [
-    { id: 'urgencia', label: 'Urgencia', icon: Flame, className: 'text-destructive' },
-    { id: 'necesidad', label: 'Necesidad', icon: ShieldCheck, className: 'text-primary' },
-    { id: 'costo', label: 'Costo', icon: CircleDollarSign, className: 'text-accent' },
-    { id: 'duracion', label: 'Duración', icon: Hourglass, className: 'text-muted-foreground' },
-];
 
 const calculateDynamicIndex = (task: Task): number => {
     if (!task.createdAt) return task.indice;
@@ -46,7 +39,6 @@ const calculateDynamicIndex = (task: Task): number => {
 
     let agingFactor = 0;
     if (daysOld >= 1) {
-        // Use a logarithmic scale for a more gradual and cumulative-feeling aging effect.
         agingFactor = ((task.urgencia + task.necesidad) / 10) * Math.log(daysOld + 1);
     }
 
@@ -55,8 +47,54 @@ const calculateDynamicIndex = (task: Task): number => {
     return task.indice + agingFactor;
 };
 
+const calculateAgingFactor = (task: Task): number => {
+    if (!task.createdAt) return 0;
+    const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    createdDate.setHours(0, 0, 0, 0);
 
-export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted, onUpdateTaskValue }: TaskListProps) {
+    const timeDiff = today.getTime() - createdDate.getTime();
+    const daysOld = Math.max(0, Math.floor(timeDiff / (1000 * 3600 * 24)));
+
+    if (daysOld < 1) {
+        return 0;
+    }
+
+    const factor = ((task.urgencia + task.necesidad) / 10) * Math.log(daysOld + 1);
+    
+    return isNaN(factor) ? 0 : factor;
+}
+
+const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
+  if (agingFactor <= 0) {
+    return { backgroundColor: `hsla(121, 63%, 58%, 0.5)` };
+  }
+
+  const maxFactorForColor = 2.5;
+  const normalizedFactor = Math.min(agingFactor / maxFactorForColor, 1.0);
+
+  const hue = 120 - (normalizedFactor * 120);
+  const saturation = 70 + (normalizedFactor * 30); 
+  const lightness = 60 - (normalizedFactor * 10); 
+  const alpha = 0.5 + (normalizedFactor * 0.2); 
+
+  return { backgroundColor: `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})` };
+};
+
+
+export function TaskList({ 
+    tasks, 
+    onToggleComplete, 
+    onDeleteTask, 
+    onMarkSchedulingAttempted, 
+    onUpdateTaskValue,
+    onSelectTask,
+    selectedTaskId,
+    onToggleSubTaskComplete,
+    onDeleteSubTask,
+    onMarkSubTaskSchedulingAttempted,
+}: TaskListProps) {
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.completado && !b.completado) return 1;
     if (!a.completado && b.completado) return -1;
@@ -88,6 +126,16 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
     const bDate = b.createdAt && 'toDate' in b.createdAt ? b.createdAt.toDate() : new Date(b.createdAt);
     return bDate.getTime() - aDate.getTime();
   });
+  
+  const sortedSubtasks = (subtasks: SubTask[] = []) => {
+    return [...subtasks].sort((a, b) => {
+        if (a.completado && !b.completado) return 1;
+        if (!a.completado && b.completado) return -1;
+        const aDate = a.createdAt && 'toDate' in a.createdAt ? a.createdAt.toDate() : new Date(a.createdAt);
+        const bDate = b.createdAt && 'toDate' in b.createdAt ? b.createdAt.toDate() : new Date(b.createdAt);
+        return aDate.getTime() - bDate.getTime();
+    });
+  };
 
   if (tasks.length === 0) {
     return (
@@ -101,51 +149,54 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
 
   return (
     <TooltipProvider>
-      <div className="rounded-lg border overflow-hidden bg-card">
-        <Table>
-          <TableCaption>
-            {tasks.filter(task => !task.completado).length} tarea(s) pendiente(s) de {tasks.length}.
-          </TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px] pr-0"></TableHead>
-              <TableHead className="pl-0">
-                 <div className="flex items-center">
-                    Tarea
-                 </div>
-              </TableHead>
-              
-              {headerCells.map(({ id, label, icon: Icon, className }) => (
-                <TableHead key={id} className="text-center">
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="flex justify-center items-center">
-                                <Icon className={`h-5 w-5 ${className}`} />
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>{label}</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TableHead>
-              ))}
-              <TableHead className="text-right w-[120px]">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                onToggleComplete={onToggleComplete}
-                onDeleteTask={onDeleteTask}
-                onMarkSchedulingAttempted={onMarkSchedulingAttempted}
-                onUpdateTaskValue={onUpdateTaskValue}
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <Accordion type="multiple" className="w-full space-y-2">
+        {sortedTasks.map((task) => {
+          const agingFactor = calculateAgingFactor(task);
+          const agingColorStyle = getAgingColorStyle(agingFactor);
+          const hasSubtasks = task.subtasks && task.subtasks.length > 0;
+
+          return (
+            <AccordionItem 
+              value={task.id} 
+              key={task.id} 
+              className={cn(
+                "border rounded-lg overflow-hidden transition-all duration-300",
+                selectedTaskId === task.id ? 'border-primary shadow-lg' : 'border-border',
+                task.completado ? "bg-muted/50 opacity-60" : ""
+              )}
+              style={task.completado ? {} : agingColorStyle}
+            >
+              <div onClick={() => onSelectTask(task.id)} className="cursor-pointer">
+                  <TaskItem
+                    task={task}
+                    onToggleComplete={onToggleComplete}
+                    onDeleteTask={onDeleteTask}
+                    onMarkSchedulingAttempted={onMarkSchedulingAttempted}
+                    onUpdateTaskValue={onUpdateTaskValue}
+                    agingFactor={agingFactor}
+                    agingColorStyle={agingColorStyle}
+                    hasSubtasks={hasSubtasks}
+                  />
+              </div>
+              {hasSubtasks && (
+                <AccordionContent className="bg-background/50">
+                  <div className="flex flex-col gap-1 px-2 py-2">
+                    {sortedSubtasks(task.subtasks).map(subtask => (
+                      <SubTaskItem
+                        key={subtask.id}
+                        subtask={subtask}
+                        onToggleComplete={() => onToggleSubTaskComplete(subtask.id, task.id)}
+                        onDelete={() => onDeleteSubTask(subtask.id, task.id)}
+                        onSchedule={() => onMarkSubTaskSchedulingAttempted(subtask.id, task.id)}
+                      />
+                    ))}
+                  </div>
+                </AccordionContent>
+              )}
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
     </TooltipProvider>
   );
 }

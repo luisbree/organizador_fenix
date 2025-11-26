@@ -1,4 +1,3 @@
-
 // @ts-nocheck
 // Using @ts-nocheck because SpeechRecognition and related event types are not standard in all TS lib versions.
 "use client";
@@ -13,12 +12,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface TaskFormProps {
   onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string }) => void;
+  onAddSubTask: (subtask: { tarea: string, parentId: string }) => void;
+  selectedTaskId: string | null;
 }
 
-export function TaskForm({ onAddTask }: TaskFormProps) {
+export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
-  const [isProcessing, setIsProcessing] = React.useState(false); // Used for both voice and text processing
+  const [isProcessing, setIsProcessing] = React.useState(false);
   const [hasMicPermission, setHasMicPermission] = React.useState<boolean | null>(null);
   const [textInputValue, setTextInputValue] = React.useState("");
   
@@ -41,6 +42,11 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
   }, []);
 
   const parseAndAddTask = (inputText: string): boolean => {
+    if (selectedTaskId) {
+        onAddSubTask({ tarea: inputText, parentId: selectedTaskId });
+        return true;
+    }
+
     let match = inputText.match(/^(.+?)\s+(\d)\s+(\d)\s+(\d)\s+(\d)$/);
 
     if (!match) {
@@ -187,7 +193,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
         recognitionRef.current.abort(); 
       }
     };
-  }, [hasMicPermission, toast, onAddTask]);
+  }, [hasMicPermission, toast, onAddTask, onAddSubTask, selectedTaskId]);
 
 
   const handleMicClick = () => {
@@ -252,7 +258,7 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
 
   if (isProcessing) {
     buttonContent = <Loader2 className="h-16 w-16 sm:h-20 sm:w-20 animate-spin" />; 
-    statusText = "Procesando tarea...";
+    statusText = "Procesando...";
   } else if (isRecording) {
     buttonContent = <Mic className="h-16 w-16 sm:h-20 sm:w-20 text-destructive animate-pulse" />; 
     statusText = "Escuchando... Presiona de nuevo para finalizar.";
@@ -264,11 +270,19 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
       statusText = "Micrófono no disponible. Puedes usar el campo de texto.";
       buttonContent = <Mic className="h-16 w-16 sm:h-20 sm:w-20 text-muted-foreground" />;
     } else {
-      statusText = "Presiona el micrófono o escribe abajo para añadir una tarea.";
+      statusText = selectedTaskId 
+        ? "Presiona el micrófono o escribe para añadir una subtarea."
+        : "Presiona el micrófono o escribe para añadir una tarea.";
       buttonContent = <Mic className="h-16 w-16 sm:h-20 smw-20" />;
     }
   }
   
+  const placeholderText = selectedTaskId 
+    ? "Ej: Comprar pasador..."
+    : "Ej: Comprar leche 5 4 1 2";
+
+  const buttonText = selectedTaskId ? "Añadir Subtarea con Texto" : "Añadir Tarea con Texto";
+
   return (
     <div className="flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full">
       {hasMicPermission === false && !isRecording && !isProcessing && (
@@ -294,14 +308,14 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
         {buttonContent}
       </Button>
       
-      <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2 max-w-xl mx-auto"> {/* Limita el ancho del formulario interno */}
+      <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2 max-w-xl mx-auto">
         <Input 
           type="text"
-          placeholder="Ej: Comprar leche 5 4 1 2"
+          placeholder={placeholderText}
           value={textInputValue}
           onChange={(e) => setTextInputValue(e.target.value)}
           disabled={isRecording || isProcessing || hasMicPermission === null}
-          aria-label="Ingresar tarea manualmente con descripción y cuatro números"
+          aria-label="Ingresar tarea manualmente"
           className="text-base text-center"
         />
         <Button 
@@ -309,16 +323,16 @@ export function TaskForm({ onAddTask }: TaskFormProps) {
           className="w-full" 
           disabled={isRecording || isProcessing || !textInputValue.trim() || hasMicPermission === null}
         >
-          Añadir Tarea con Texto
+          {buttonText}
         </Button>
       </form>
 
-       <p className="text-xs text-center text-muted-foreground px-4 pt-3 max-w-md">
-        <strong>Formato:</strong> "Descripción U N C D" (0-5).
-        <br/>Ej: "Pasear al perro 5312" o "Pasear al perro 5 3 1 2".
-      </p>
+      {!selectedTaskId && (
+        <p className="text-xs text-center text-muted-foreground px-4 pt-3 max-w-md">
+          <strong>Formato:</strong> "Descripción U N C D" (0-5).
+          <br/>Ej: "Pasear al perro 5312" o "Pasear al perro 5 3 1 2".
+        </p>
+      )}
     </div>
   );
 }
-
-  

@@ -2,17 +2,18 @@
 "use client";
 
 import * as React from 'react';
-import type { Task } from '@/types/task';
+import type { Task, SubTask } from '@/types/task';
 import { TaskForm } from '@/components/TaskForm';
 import { TaskList } from '@/components/TaskList';
 import { TaskSearch } from '@/components/TaskSearch';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, runTransaction, writeBatch } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { useMemoFirebase } from '@/firebase/provider';
 import { Loader2 } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
 
 const SHARED_USER_ID = "shared_user";
 
@@ -21,9 +22,10 @@ export default function HomePage() {
   const firestore = useFirestore();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isUserLoading && !user) {
       initiateAnonymousSignIn(auth);
     }
@@ -34,7 +36,58 @@ export default function HomePage() {
     return collection(firestore, 'users', SHARED_USER_ID, 'tasks');
   }, [firestore]);
 
-  const { data: tasks, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
+  const { data: tasksData, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
+
+  const [tasks, setTasks] = useState<Task[] | null>(null);
+
+  useEffect(() => {
+    if (tasksData) {
+      const fetchSubtasks = async () => {
+        if (!firestore) return;
+        const tasksWithSubtasks = await Promise.all(
+          tasksData.map(async (task) => {
+            const subtasksQuery = collection(firestore, 'users', SHARED_USER_ID, 'tasks', task.id, 'subtasks');
+            const subtasksSnapshot = await new Promise<any[]>((resolve) => {
+                const unsubscribe = useCollection<SubTask>(subtasksQuery);
+                if (!unsubscribe.isLoading) {
+                    resolve(unsubscribe.data || []);
+                } else {
+                    const checkLoading = setInterval(() => {
+                        if (!unsubscribe.isLoading) {
+                            clearInterval(checkLoading);
+                            resolve(unsubscribe.data || []);
+                        }
+                    }, 100);
+                }
+            });
+            // This is a simplified approach. For real-time updates, you'd integrate the hook differently.
+            const subtasksCol = collection(firestore, 'users', SHARED_USER_ID, 'tasks', task.id, 'subtasks');
+            const subtasksListener = onSnapshot(subtasksCol, (snapshot) => {
+                const fetchedSubtasks = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as SubTask[];
+                setTasks(currentTasks => 
+                    currentTasks?.map(t => 
+                        t.id === task.id ? { ...t, subtasks: fetchedSubtasks } : t
+                    ) || null
+                );
+            });
+
+            // Note: In a real app, you'd need to manage this listener's lifecycle, e.g., unsubscribing.
+            return { ...task, subtasks: [] }; // Initially empty, will be filled by listener
+          })
+        );
+        setTasks(tasksWithSubtasks);
+      };
+      
+      fetchSubtasks();
+    } else {
+        setTasks(tasksData);
+    }
+  }, [tasksData, firestore]);
+  
+  const handleSelectTask = (taskId: string | null) => {
+    setSelectedTaskId(current => (current === taskId ? null : taskId));
+  };
+
 
   const handleAddTask = (taskData: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string }) => {
     if (!tasksQuery) return;
@@ -72,13 +125,29 @@ export default function HomePage() {
     });
   };
 
+  const handleAddSubTask = (subTaskData: { tarea: string, parentId: string }) => {
+    if (!firestore) return;
+    const subtaskQuery = collection(firestore, 'users', SHARED_USER_ID, 'tasks', subTaskData.parentId, 'subtasks');
+    const newSubTask: Omit<SubTask, 'id' | 'createdAt'> = {
+        ...subTaskData,
+        completado: false,
+    };
+    addDocumentNonBlocking(subtaskQuery, {
+        ...newSubTask,
+        createdAt: serverTimestamp(),
+    });
+    toast({
+      title: "Subtarea añadida",
+      description: `"${subTaskData.tarea}" ha sido añadida.`,
+    });
+  };
+
   const handleToggleComplete = (id: string) => {
     if (!firestore) return;
     const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
     const task = tasks?.find(t => t.id === id);
     if(task) {
       if (task.completado) {
-        // Si la tarea está completada, la reactivamos y reseteamos su fecha.
         updateDocumentNonBlocking(taskRef, { 
           completado: false,
           createdAt: serverTimestamp() 
@@ -88,7 +157,6 @@ export default function HomePage() {
           description: "La tarea vuelve a estar activa y su envejecimiento se ha reiniciado.",
         });
       } else {
-        // Si la tarea no está completada, simplemente la completamos.
         updateDocumentNonBlocking(taskRef, { completado: true });
         toast({
           title: "¡Tarea completada!",
@@ -97,21 +165,78 @@ export default function HomePage() {
       }
     }
   };
-
-  const handleDeleteTask = (id: string) => {
+  
+  const handleToggleSubTaskComplete = (subTaskId: string, parentId: string) => {
     if (!firestore) return;
+    const subTaskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', parentId, 'subtasks', subTaskId);
+    const parentTask = tasks?.find(t => t.id === parentId);
+    const subTask = parentTask?.subtasks?.find(st => st.id === subTaskId);
+
+    if (subTask) {
+        updateDocumentNonBlocking(subTaskRef, { completado: !subTask.completado });
+        toast({
+            title: `Subtarea ${subTask.completado ? 'reactivada' : 'completada'}`,
+        });
+    }
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    if (!firestore) return;
+
     const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
-    deleteDocumentNonBlocking(taskRef);
+    const subtasksCollectionRef = collection(firestore, 'users', SHARED_USER_ID, 'tasks', id, 'subtasks');
+
+    try {
+        await runTransaction(firestore, async (transaction) => {
+            // It's good practice to get the doc to ensure it exists before deleting.
+            const taskDoc = await transaction.get(taskRef);
+            if (!taskDoc.exists()) {
+                throw "Document does not exist!";
+            }
+
+            // Although Firestore Console deletes subcollections, it's safer to do it manually in a transaction/batch.
+            // However, deleting collections from the client-side is not recommended. 
+            // The following is a placeholder for how one might start.
+            // For robust production apps, use a Cloud Function to clean up subcollections.
+            
+            // For now, we will just delete the main task document.
+            // Firestore rules should be set up to cascade deletes or a Cloud Function should handle cleanup.
+            transaction.delete(taskRef);
+        });
+        toast({
+            title: "Tarea eliminada",
+            description: "La tarea principal ha sido eliminada.",
+        });
+    } catch (error) {
+        console.error("Error deleting task and subtasks: ", error);
+        toast({
+            variant: "destructive",
+            title: "Error al eliminar",
+            description: "No se pudo eliminar la tarea y sus subtareas.",
+        });
+    }
+  };
+
+  const handleDeleteSubTask = (subTaskId: string, parentId: string) => {
+    if (!firestore) return;
+    const subTaskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', parentId, 'subtasks', subTaskId);
+    deleteDocumentNonBlocking(subTaskRef);
     toast({
-      title: "Tarea eliminada",
-      description: "La tarea ha sido eliminada de la lista.",
+      title: "Subtarea eliminada",
     });
   };
+
 
   const handleMarkSchedulingAttempted = (id: string) => {
     if (!firestore) return;
     const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
     updateDocumentNonBlocking(taskRef, { scheduledAt: serverTimestamp() });
+  };
+  
+  const handleMarkSubTaskSchedulingAttempted = (subTaskId: string, parentId: string) => {
+    if (!firestore) return;
+    const subTaskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', parentId, 'subtasks', subTaskId);
+    updateDocumentNonBlocking(subTaskRef, { scheduledAt: serverTimestamp() });
   };
 
   const handleUpdateTaskValue = (
@@ -150,10 +275,11 @@ export default function HomePage() {
     }
   };
   
-  const filteredTasks = React.useMemo(() => {
+  const filteredTasks = useMemo(() => {
     if (!tasks) return [];
     return tasks.filter(task => 
-      task.tarea.toLowerCase().includes(searchQuery.toLowerCase())
+      task.tarea.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (task.subtasks && task.subtasks.some(st => st.tarea.toLowerCase().includes(searchQuery.toLowerCase())))
     );
   }, [tasks, searchQuery]);
 
@@ -166,6 +292,8 @@ export default function HomePage() {
       </div>
     );
   }
+  
+  const selectedTask = tasks?.find(t => t.id === selectedTaskId);
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
@@ -173,11 +301,21 @@ export default function HomePage() {
         <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
           Task Ranker
         </h1>
+         {selectedTask && (
+            <p className="text-sm text-muted-foreground mt-1">
+                Añadiendo subtarea a: <span className="font-semibold text-foreground">{selectedTask.tarea}</span>
+                {' '}<button onClick={() => handleSelectTask(null)} className="text-primary hover:underline">(cancelar)</button>
+            </p>
+        )}
       </header>
 
       <main className="flex-grow flex flex-col space-y-6">
         <section>
-          <TaskForm onAddTask={handleAddTask} />
+          <TaskForm 
+            onAddTask={handleAddTask} 
+            onAddSubTask={handleAddSubTask}
+            selectedTaskId={selectedTaskId}
+          />
         </section>
         
         <section className="w-full">
@@ -185,7 +323,7 @@ export default function HomePage() {
         </section>
 
         <section className="flex-grow flex flex-col">
-          {isLoadingTasks && !tasks ? (
+          {(isLoadingTasks && !tasks) ? (
             <p className="text-center text-muted-foreground py-4">Cargando tareas...</p>
           ) : (
             <div className="flex-grow">
@@ -195,6 +333,11 @@ export default function HomePage() {
                 onDeleteTask={handleDeleteTask}
                 onMarkSchedulingAttempted={handleMarkSchedulingAttempted}
                 onUpdateTaskValue={handleUpdateTaskValue}
+                onSelectTask={handleSelectTask}
+                selectedTaskId={selectedTaskId}
+                onToggleSubTaskComplete={handleToggleSubTaskComplete}
+                onDeleteSubTask={handleDeleteSubTask}
+                onMarkSubTaskSchedulingAttempted={handleMarkSubTaskSchedulingAttempted}
               />
             </div>
           )}

@@ -10,45 +10,70 @@
           "type": "string",
           "description": "Unique identifier for the Task entity."
         },
-        "description": {
+        "tarea": {
           "type": "string",
           "description": "Textual description of the task."
         },
-        "urgency": {
+        "urgencia": {
           "type": "number",
           "description": "Numerical value representing the urgency of the task."
         },
-        "necessity": {
+        "necesidad": {
           "type": "number",
           "description": "Numerical value representing the necessity of the task."
         },
-        "cost": {
+        "costo": {
           "type": "number",
           "description": "Numerical value representing the cost of the task."
         },
-        "duration": {
+        "duracion": {
           "type": "number",
           "description": "Numerical value representing the duration of the task."
         },
-        "index": {
+        "indice": {
           "type": "number",
           "description": "Calculated index of the task, used for sorting."
         },
-        "completed": {
+        "completado": {
           "type": "boolean",
           "description": "Boolean value indicating whether the task is completed or not."
         }
       },
       "required": [
         "id",
-        "description",
-        "urgency",
-        "necessity",
-        "cost",
-        "duration",
-        "index",
-        "completed"
+        "tarea",
+        "urgencia",
+        "necesidad",
+        "costo",
+        "duracion",
+        "indice",
+        "completado"
       ]
+    },
+    "SubTask": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SubTask",
+      "type": "object",
+      "description": "Represents a sub-task linked to a parent task.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SubTask entity."
+        },
+        "parentId": {
+          "type": "string",
+          "description": "The ID of the parent Task."
+        },
+        "tarea": {
+          "type": "string",
+          "description": "Textual description of the sub-task."
+        },
+        "completado": {
+          "type": "boolean",
+          "description": "Boolean value indicating whether the sub-task is completed or not."
+        }
+      },
+      "required": ["id", "parentId", "tarea", "completado"]
     }
   },
   "auth": {
@@ -64,22 +89,21 @@
         "definition": {
           "entityName": "Task",
           "schema": {
-            "$ref": "#/backend/entities/Task"
+            "$ref": "#/entities/Task"
           },
-          "description": "Stores tasks for a specific user. Path-based ownership ensures only the authenticated user can access their tasks.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The ID of the user who owns the task."
-            },
-            {
-              "name": "taskId",
-              "description": "The ID of the task."
-            }
-          ]
+          "description": "Stores tasks for a specific user."
+        }
+      },
+      {
+        "path": "/users/{userId}/tasks/{taskId}/subtasks/{subtaskId}",
+        "definition": {
+          "entityName": "SubTask",
+          "schema": {
+            "$ref": "#/entities/SubTask"
+          },
+          "description": "Stores sub-tasks for a specific task."
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to store tasks associated with individual users. Tasks are stored within a subcollection named `tasks` under each user's document in the `users` collection. This path-based ownership model ensures that only the authenticated user can access their tasks. The structure is simple and optimized for querying tasks based on their index and completion status. Authorization independence is achieved since each task is owned by the user based on its path (`/users/{userId}/tasks/{taskId}`). The structure also supports the required QAPs because listing operations are scoped to a user's tasks, enforcing ownership."
+    ]
   }
 }

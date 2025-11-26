@@ -1,5 +1,13 @@
-
 import type { Timestamp } from 'firebase/firestore';
+
+export interface SubTask {
+  id: string;
+  parentId: string;
+  tarea: string;
+  completado: boolean;
+  createdAt: Timestamp | Date;
+  scheduledAt?: Timestamp | Date | null;
+}
 
 export interface Task {
   id: string;
@@ -12,4 +20,5 @@ export interface Task {
   completado: boolean;
   createdAt: Timestamp | Date; // Can be a server timestamp or a Date object
   scheduledAt?: Timestamp | Date | null;
+  subtasks?: SubTask[];
 }

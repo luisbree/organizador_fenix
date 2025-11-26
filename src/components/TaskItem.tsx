@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Trash2, CalendarPlus, Clock } from 'lucide-react';
+import { Trash2, CalendarPlus, Clock, ChevronDown } from 'lucide-react';
 import type { Task } from '@/types/task';
 import { cn } from '@/lib/utils';
 import { EditableNumericCell } from './EditableNumericCell';
@@ -32,7 +32,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-
+import { AccordionTrigger } from '@/components/ui/accordion';
 
 interface TaskItemProps {
   task: Task;
@@ -44,51 +44,33 @@ interface TaskItemProps {
     field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
     newValue: number
   ) => void;
+  agingFactor: number;
+  agingColorStyle: React.CSSProperties;
+  hasSubtasks?: boolean;
 }
 
-const calculateAgingFactor = (task: Task): number => {
-    if (!task.createdAt) return 0;
-    const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    createdDate.setHours(0, 0, 0, 0);
-
-    const timeDiff = today.getTime() - createdDate.getTime();
-    const daysOld = Math.max(0, Math.floor(timeDiff / (1000 * 3600 * 24)));
-
-    if (daysOld < 1) {
-        return 0; // No aging factor for tasks less than a day old
-    }
-
-    const factor = ((task.urgencia + task.necesidad) / 10) * Math.log(daysOld + 1);
-    
-    return isNaN(factor) ? 0 : factor;
-}
-
-const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
-  if (agingFactor <= 0) {
-    return { backgroundColor: `hsla(121, 63%, 58%, 0.5)` };
-  }
-
-  const maxFactorForColor = 2.5;
-  const normalizedFactor = Math.min(agingFactor / maxFactorForColor, 1.0);
-
-  const hue = 120 - (normalizedFactor * 120);
-  const saturation = 70 + (normalizedFactor * 30); 
-  const lightness = 60 - (normalizedFactor * 10); 
-  const alpha = 0.5 + (normalizedFactor * 0.2); 
-
-  return { backgroundColor: `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})` };
+const calculateDynamicIndex = (task: Task, agingFactor: number): number => {
+    return task.indice + agingFactor;
 };
 
+export function TaskItem({ 
+    task, 
+    onToggleComplete, 
+    onDeleteTask, 
+    onMarkSchedulingAttempted, 
+    onUpdateTaskValue,
+    agingFactor,
+    agingColorStyle,
+    hasSubtasks
+}: TaskItemProps) {
 
-export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted, onUpdateTaskValue }: TaskItemProps) {
-
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onDeleteTask(task.id);
   };
 
-  const handleScheduleOnCalendar = () => {
+  const handleScheduleOnCalendar = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const taskTitle = encodeURIComponent(task.tarea);
     const taskDetails = encodeURIComponent(
       `Urgencia: ${task.urgencia}\nNecesidad: ${task.necesidad}\nCosto: ${task.costo}\nDuración: ${task.duracion}`
@@ -101,38 +83,33 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
   
   const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
 
-  const calculateDynamicIndex = (task: Task): number => {
-    const agingFactorValue = calculateAgingFactor(task);
-    return task.indice + agingFactorValue;
-  };
+  const dynamicIndex = calculateDynamicIndex(task, agingFactor);
 
-  const dynamicIndex = calculateDynamicIndex(task);
-  const agingFactor = calculateAgingFactor(task);
-  const agingColorStyle = getAgingColorStyle(agingFactor);
-
-
-  const handleToggle = () => {
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onToggleComplete(task.id);
   };
 
   return (
-    <TableRow 
-      style={task.completado ? {} : agingColorStyle}
-      className={cn(
-        task.completado && "bg-muted/50 opacity-60",
-        "transition-colors duration-500"
-    )}>
-      <TableCell className="w-[1%] p-2">
+    <div className="flex items-center w-full p-2"
+        style={task.completado ? {} : agingColorStyle}
+    >
+      <div className="w-[40px] flex-shrink-0 flex items-center justify-center">
         {task.completado ? (
           <Checkbox
             id={`complete-${task.id}`}
             checked={task.completado}
-            onCheckedChange={handleToggle}
+            onCheckedChange={(e) => {
+                // We need to simulate stopPropagation for the onCheckedChange event
+                const dummyEvent = { stopPropagation: () => {} };
+                handleToggle(dummyEvent as any);
+            }}
+            onClick={(e) => e.stopPropagation()}
             aria-label={`Reactivar ${task.tarea}`}
           />
         ) : (
           <Dialog>
-            <DialogTrigger asChild>
+            <DialogTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Checkbox
                 id={`complete-${task.id}`}
                 checked={task.completado}
@@ -144,17 +121,16 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
                   <DialogTitle className="sr-only">Confirmar Tarea Completada</DialogTitle>
               </DialogHeader>
               <DialogFooter className="sm:justify-center">
-                <Button onClick={handleToggle} className={cn("w-full sm:w-auto")}>
+                <Button onClick={(e) => { e.stopPropagation(); handleToggle(e);}} className={cn("w-full sm:w-auto")}>
                   Confirmar
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         )}
-      </TableCell>
-      <TableCell className="min-w-[200px] whitespace-normal p-2">
-         <div className="flex items-center gap-2">
-          <div className="flex-grow min-w-0">
+      </div>
+      <div className="flex-grow min-w-0 grid grid-cols-[1fr_auto] items-center gap-2 pr-2">
+         <div className="flex-grow min-w-0">
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className={cn("font-medium", task.completado && "line-through text-muted-foreground")}>
@@ -172,40 +148,41 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
               {createdDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric'})}, {createdDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit'})}
             </div>
           </div>
-          {task.scheduledAt && (
-             <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" title="Se intentó programar en calendario" />
-          )}
-          <p className="text-lg font-bold tabular-nums pl-1">
-            {isFinite(dynamicIndex) ? dynamicIndex.toFixed(2) : "∞"}
-          </p>
-        </div>
-      </TableCell>
+          <div className="flex items-center gap-2">
+              {task.scheduledAt && (
+                <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" title="Se intentó programar en calendario" />
+              )}
+              <p className="text-lg font-bold tabular-nums pl-1">
+                {isFinite(dynamicIndex) ? dynamicIndex.toFixed(2) : "∞"}
+              </p>
+           </div>
+      </div>
       
-      <TableCell className="text-center p-2">
+      <div className="w-[50px] text-center flex-shrink-0">
         <EditableNumericCell
           value={task.urgencia}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'urgencia', newValue)}
         />
-      </TableCell>
-      <TableCell className="text-center p-2">
+      </div>
+      <div className="w-[50px] text-center flex-shrink-0">
         <EditableNumericCell
           value={task.necesidad}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'necesidad', newValue)}
         />
-      </TableCell>
-      <TableCell className="text-center p-2">
+      </div>
+      <div className="w-[50px] text-center flex-shrink-0">
         <EditableNumericCell
           value={task.costo}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'costo', newValue)}
         />
-      </TableCell>
-      <TableCell className="text-center p-2">
+      </div>
+      <div className="w-[50px] text-center flex-shrink-0">
         <EditableNumericCell
           value={task.duracion}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'duracion', newValue)}
         />
-      </TableCell>
-      <TableCell className="text-right p-2">
+      </div>
+      <div className="w-[80px] flex-shrink-0 text-right">
         <div className="flex items-center justify-end space-x-1 sm:space-x-2">
             <Button
               variant="outline"
@@ -217,7 +194,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
               <CalendarPlus className="h-4 w-4" />
             </Button>
             <AlertDialog>
-              <AlertDialogTrigger asChild>
+              <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="destructive"
                   size="icon"
@@ -244,7 +221,13 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
               </AlertDialogContent>
             </AlertDialog>
         </div>
-      </TableCell>
-    </TableRow>
+      </div>
+      {hasSubtasks && (
+          <AccordionTrigger onClick={(e) => e.stopPropagation()} className="w-[40px] flex-shrink-0 justify-center p-2 [&[data-state=open]>svg]:rotate-180">
+              <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
+          </AccordionTrigger>
+      )}
+       {!hasSubtasks && <div className="w-[40px] flex-shrink-0"></div>}
+    </div>
   );
 }
