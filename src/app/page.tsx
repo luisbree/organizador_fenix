@@ -5,6 +5,7 @@ import * as React from 'react';
 import type { Task } from '@/types/task';
 import { TaskForm } from '@/components/TaskForm';
 import { TaskList } from '@/components/TaskList';
+import { TaskSearch } from '@/components/TaskSearch';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useCollection, useFirestore, useUser } from '@/firebase';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
@@ -20,6 +21,7 @@ export default function HomePage() {
   const firestore = useFirestore();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   React.useEffect(() => {
     if (!isUserLoading && !user) {
@@ -130,6 +132,13 @@ export default function HomePage() {
       });
     }
   };
+  
+  const filteredTasks = React.useMemo(() => {
+    if (!tasks) return [];
+    return tasks.filter(task => 
+      task.tarea.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [tasks, searchQuery]);
 
 
   if (isUserLoading) {
@@ -153,14 +162,18 @@ export default function HomePage() {
         <section>
           <TaskForm onAddTask={handleAddTask} />
         </section>
+        
+        <section>
+          <TaskSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        </section>
 
         <section className="flex-grow flex flex-col">
-          {isLoadingTasks ? (
+          {isLoadingTasks && !tasks ? (
             <p className="text-center text-muted-foreground py-4">Cargando tareas...</p>
           ) : (
             <div className="flex-grow">
               <TaskList
-                tasks={tasks || []}
+                tasks={filteredTasks || []}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
                 onMarkSchedulingAttempted={handleMarkSchedulingAttempted}
