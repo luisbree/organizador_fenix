@@ -270,9 +270,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
       statusText = "Micrófono no disponible. Puedes usar el campo de texto.";
       buttonContent = <Mic className="h-16 w-16 sm:h-20 sm:w-20 text-muted-foreground" />;
     } else {
-      statusText = selectedTaskId 
-        ? "Presiona el micrófono o escribe para añadir una subtarea."
-        : "Presiona el micrófono o escribe para añadir una tarea.";
+      statusText = "Presiona el micrófono o escribe para añadir una tarea.";
       buttonContent = <Mic className="h-16 w-16 sm:h-20 smw-20" />;
     }
   }
@@ -281,7 +279,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
     ? "Ej: Comprar pasador..."
     : "Ej: Comprar leche 5 4 1 2";
 
-  const buttonText = selectedTaskId ? "Añadir Subtarea con Texto" : "Añadir Tarea con Texto";
+  const buttonText = selectedTaskId ? "Añadir Subtarea" : "Añadir Tarea";
 
   return (
     <div className="flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full">

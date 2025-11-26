@@ -287,12 +287,6 @@ export default function HomePage() {
         <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
           Task Ranker
         </h1>
-         {selectedTask && (
-            <p className="text-sm text-muted-foreground mt-1">
-                Añadiendo subtarea a: <span className="font-semibold text-foreground">{selectedTask.tarea}</span>
-                {' '}<button onClick={() => handleSelectTask(null)} className="text-primary hover:underline">(cancelar)</button>
-            </p>
-        )}
       </header>
 
       <main className="flex-grow flex flex-col space-y-6">
