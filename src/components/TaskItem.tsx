@@ -56,12 +56,15 @@ const getAgingFactor = (task: Task): number => {
 }
 
 const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
-  if (agingFactor <= 0) return {};
+  // Always apply a base green for tasks that are not aging yet (factor <= 0)
+  if (agingFactor <= 0) {
+    return { backgroundColor: `hsla(120, 60%, 58%, 0.6)` }; // Green #5cd65c
+  }
 
-  // Apply a non-linear (logarithmic) scale to the factor
-  // This makes the color change slower at the beginning and faster towards the end.
-  // The '+1' prevents log(0), and we adjust the divisor to keep the scale in a reasonable range.
-  const scaledFactor = Math.log(agingFactor + 1) / Math.log(1.5); // Using log base 1.5 for a gentle curve
+  // Apply a much gentler logarithmic scale.
+  // Using a larger log base spreads the initial values out more.
+  // A base of 5 means the factor has to be 4 (5-1) to reach the next "step".
+  const scaledFactor = Math.log(agingFactor + 1) / Math.log(5); 
   
   // Normalize the factor, capping it at 1 for the color scale
   const normalizedFactor = Math.min(scaledFactor, 1.0);
@@ -236,4 +239,3 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
     </TableRow>
   );
 }
-
