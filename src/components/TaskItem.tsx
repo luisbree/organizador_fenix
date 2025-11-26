@@ -122,7 +122,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
         task.completado && "bg-muted/50 opacity-60",
         "transition-colors duration-500"
     )}>
-      <TableCell className="w-[1%]">
+      <TableCell className="w-[1%] p-2">
         {task.completado ? (
           <Checkbox
             id={`complete-${task.id}`}
@@ -152,7 +152,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
           </Dialog>
         )}
       </TableCell>
-      <TableCell className="min-w-[200px] whitespace-normal">
+      <TableCell className="min-w-[200px] whitespace-normal p-2">
          <div className="flex items-center gap-2">
           <div className="flex-grow min-w-0">
             <Tooltip>
@@ -181,38 +181,38 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
         </div>
       </TableCell>
       
-      <TableCell className="text-center">
+      <TableCell className="text-center p-2">
         <EditableNumericCell
           value={task.urgencia}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'urgencia', newValue)}
         />
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center p-2">
         <EditableNumericCell
           value={task.necesidad}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'necesidad', newValue)}
         />
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center p-2">
         <EditableNumericCell
           value={task.costo}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'costo', newValue)}
         />
       </TableCell>
-      <TableCell className="text-center">
+      <TableCell className="text-center p-2">
         <EditableNumericCell
           value={task.duracion}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'duracion', newValue)}
         />
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="text-right p-2">
         <div className="flex items-center justify-end space-x-1 sm:space-x-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleScheduleOnCalendar}
               aria-label={`Programar tarea ${task.tarea} en Google Calendar`}
-              className="h-8"
+              className="h-7 w-7 p-0"
             >
               <CalendarPlus className="h-4 w-4" />
             </Button>
@@ -222,7 +222,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
                   variant="destructive"
                   size="icon"
                   aria-label={`Eliminar tarea ${task.tarea}`}
-                  className="h-8 w-8"
+                  className="h-7 w-7"
                   title="Eliminar tarea"
                 >
                   <Trash2 className="h-4 w-4" />
