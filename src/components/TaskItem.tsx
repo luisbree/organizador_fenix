@@ -52,16 +52,37 @@ const getAgingFactor = (task: Task): number => {
     return factor;
 }
 
-const getAgingColorClass = (agingFactor: number): string => {
-  if (agingFactor <= 0) return ""; 
+const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
+  // Normalize the factor, capping it at 1 for the color scale
+  const normalizedFactor = Math.min(agingFactor, 1.0);
+  if (normalizedFactor <= 0) return {};
 
-  // Ajustamos el factor para que sea más sensible en los valores bajos
-  const adjustedFactor = Math.min(agingFactor * 2, 1.0);
+  const colors = [
+    { h: 120, s: 60, l: 58 }, // #5cd65c (Green)
+    { h: 56, s: 98, l: 70 }, // #fdf068 (Yellow)
+    { h: 30, s: 100, l: 60 }, // #ff9933 (Orange)
+    { h: 0, s: 96, l: 50 },   // #fa0505 (Red)
+  ];
 
-  if (adjustedFactor < 0.25) return "bg-green-100/60 dark:bg-green-900/30"; // Verde muy claro
-  if (adjustedFactor < 0.5) return "bg-yellow-100/60 dark:bg-yellow-900/30"; // Amarillo
-  if (adjustedFactor < 0.75) return "bg-orange-200/60 dark:bg-orange-900/40"; // Naranja (Ocre)
-  return "bg-red-200/70 dark:bg-red-900/40"; // Rojo
+  const numSegments = colors.length - 1;
+  const segmentIndex = Math.floor(normalizedFactor * numSegments);
+  const segmentStart = segmentIndex / numSegments;
+  const segmentEnd = (segmentIndex + 1) / numSegments;
+  
+  // Ensure we don't go out of bounds
+  const safeSegmentIndex = Math.min(segmentIndex, numSegments - 1);
+  
+  const startColor = colors[safeSegmentIndex];
+  const endColor = colors[safeSegmentIndex + 1];
+
+  const segmentFactor = (normalizedFactor - segmentStart) / (segmentEnd - segmentStart);
+
+  const h = startColor.h + (endColor.h - startColor.h) * segmentFactor;
+  const s = startColor.s + (endColor.s - startColor.s) * segmentFactor;
+  const l = startColor.l + (endColor.l - startColor.l) * segmentFactor;
+
+  // Apply a consistent light transparency
+  return { backgroundColor: `hsla(${h}, ${s}%, ${l}%, 0.6)` };
 };
 
 
@@ -108,12 +129,14 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
 
   const agingFactor = getAgingFactor(task);
   const dynamicIndex = task.indice + agingFactor;
-  const agingColorClass = getAgingColorClass(agingFactor);
+  const agingColorStyle = getAgingColorStyle(agingFactor);
 
 
   return (
-    <TableRow className={cn(
-        task.completado ? "bg-muted/50 opacity-60" : agingColorClass,
+    <TableRow 
+      style={task.completado ? {} : agingColorStyle}
+      className={cn(
+        task.completado && "bg-muted/50 opacity-60",
         "transition-colors duration-500"
     )}>
       <TableCell className="w-[1%]">
