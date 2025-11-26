@@ -139,7 +139,10 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
                 aria-label={`Marcar ${task.tarea} como completada`}
               />
             </AlertDialogTrigger>
-            <AlertDialogContent className="max-w-[340px] rounded-lg">
+            <AlertDialogContent className="max-w-[340px] rounded-lg" style={{backgroundColor: '#fdfdfd'}}>
+              <AlertDialogHeader>
+                  <AlertDialogTitle className="sr-only">Confirmar Tarea</AlertDialogTitle>
+              </AlertDialogHeader>
               <AlertDialogFooter className="sm:justify-center">
                 <AlertDialogAction onClick={handleToggle} className={cn("w-full sm:w-auto")}>
                   Confirmar
@@ -243,3 +246,5 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
     </TableRow>
   );
 }
+
+    
