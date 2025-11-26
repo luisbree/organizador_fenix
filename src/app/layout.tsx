@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Task Ranker',
+  title: 'Fénix',
   description: 'Una app para guardar, ordenar y ver la tareas pendientes.',
 };
 

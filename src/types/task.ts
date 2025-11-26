@@ -18,7 +18,9 @@ export interface Task {
   duracion: number;
   indice: number;
   completado: boolean;
-  createdAt: Timestamp | Date; // Can be a server timestamp or a Date object
+  createdAt: Timestamp | Date;
   scheduledAt?: Timestamp | Date | null;
   subtasks?: SubTask[];
+  isFenix?: boolean;
+  fenixPeriod?: number;
 }

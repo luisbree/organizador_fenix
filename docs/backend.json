@@ -37,6 +37,14 @@
         "completado": {
           "type": "boolean",
           "description": "Boolean value indicating whether the task is completed or not."
+        },
+        "isFenix": {
+          "type": "boolean",
+          "description": "Indicates if the task should automatically be reborn after completion."
+        },
+        "fenixPeriod": {
+          "type": "number",
+          "description": "The period in days after which a Fenix task should be reborn."
         }
       },
       "required": [

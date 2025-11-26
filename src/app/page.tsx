@@ -81,7 +81,7 @@ export default function HomePage() {
   };
 
 
-  const handleAddTask = (taskData: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string }) => {
+  const handleAddTask = (taskData: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string; isFenix: boolean; fenixPeriod: number; }) => {
     if (!tasksQuery) return;
     
     const num = taskData.urgencia + taskData.necesidad;
@@ -109,6 +109,8 @@ export default function HomePage() {
       indice: indice,
       completado: false,
       scheduledAt: null,
+      isFenix: taskData.isFenix,
+      fenixPeriod: taskData.fenixPeriod,
     };
     
     addDocumentNonBlocking(tasksQuery, {
@@ -139,7 +141,7 @@ export default function HomePage() {
     const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
     const task = tasks?.find(t => t.id === id);
     if(task) {
-      if (task.completado) {
+      if (task.completado) { // Reactivating a task
         updateDocumentNonBlocking(taskRef, { 
           completado: false,
           createdAt: serverTimestamp() 
@@ -148,12 +150,25 @@ export default function HomePage() {
           title: "Tarea reactivada",
           description: "La tarea vuelve a estar activa y su envejecimiento se ha reiniciado.",
         });
-      } else {
-        updateDocumentNonBlocking(taskRef, { completado: true });
-        toast({
-          title: "¡Tarea completada!",
-          description: "¡Buen trabajo!",
-        });
+      } else { // Completing a task
+        if (task.isFenix) {
+            // For a "Fenix" task, we immediately "rebirth" it by resetting its creation date.
+            // A more complex implementation with actual delays would require server-side logic (e.g., Cloud Functions).
+            updateDocumentNonBlocking(taskRef, { 
+              createdAt: serverTimestamp(), // Reset aging
+              completado: false // It's immediately active again
+            });
+            toast({
+              title: "¡Tarea Fénix Renacida!",
+              description: `"${task.tarea}" ha renacido y está activa de nuevo.`,
+            });
+        } else {
+            updateDocumentNonBlocking(taskRef, { completado: true });
+            toast({
+              title: "¡Tarea completada!",
+              description: "¡Buen trabajo!",
+            });
+        }
       }
     }
   };
@@ -283,11 +298,12 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
-      <header className="my-2 md:my-4 text-center">
+       <header className="my-2 md:my-4 text-center">
         <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
-          Task Ranker
+          Fénix
         </h1>
       </header>
+
 
       <main className="flex-grow flex flex-col space-y-6">
         <section>

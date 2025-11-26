@@ -9,9 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 import type { Task } from '@/types/task';
 import { Mic, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface TaskFormProps {
-  onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string }) => void;
+  onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string; isFenix: boolean; fenixPeriod: number; }) => void;
   onAddSubTask: (subtask: { tarea: string, parentId: string }) => void;
   selectedTaskId: string | null;
 }
@@ -22,6 +24,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [hasMicPermission, setHasMicPermission] = React.useState<boolean | null>(null);
   const [textInputValue, setTextInputValue] = React.useState("");
+  const [isFenix, setIsFenix] = React.useState(false);
+  const [fenixPeriod, setFenixPeriod] = React.useState(30);
   
   const recognitionRef = React.useRef<SpeechRecognition | null>(null);
   const lastTranscriptRef = React.useRef<string>("");
@@ -75,7 +79,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
       const isValidNumber = (num: number) => !isNaN(num) && num >= 0 && num <= 5;
 
       if ([urgencia, necesidad, costo, duracion].every(isValidNumber)) {
-        onAddTask({ rawTarea, tarea: rawTarea, urgencia, necesidad, costo, duracion });
+        onAddTask({ rawTarea, tarea: rawTarea, urgencia, necesidad, costo, duracion, isFenix, fenixPeriod });
         toast({
           title: "Tarea añadida",
           description: `"${rawTarea}" ha sido añadida a la lista.`,
@@ -193,7 +197,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
         recognitionRef.current.abort(); 
       }
     };
-  }, [hasMicPermission, toast, onAddTask, onAddSubTask, selectedTaskId]);
+  }, [hasMicPermission, toast, onAddTask, onAddSubTask, selectedTaskId, isFenix, fenixPeriod]);
 
 
   const handleMicClick = () => {
@@ -254,23 +258,18 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
 
 
   let buttonContent;
-  let statusText;
+  const statusText = "Presiona el micrófono o escribe para añadir una tarea.";
 
   if (isProcessing) {
     buttonContent = <Loader2 className="h-16 w-16 sm:h-20 sm:w-20 animate-spin" />; 
-    statusText = "Procesando...";
   } else if (isRecording) {
     buttonContent = <Mic className="h-16 w-16 sm:h-20 sm:w-20 text-destructive animate-pulse" />; 
-    statusText = "Escuchando... Presiona de nuevo para finalizar.";
   } else {
     if (hasMicPermission === null) {
-      statusText = "Solicitando permiso para el micrófono...";
       buttonContent = <Loader2 className="h-16 w-16 sm:h-20 sm:w-20 animate-spin" />;
     } else if (hasMicPermission === false) {
-      statusText = "Micrófono no disponible. Puedes usar el campo de texto.";
       buttonContent = <Mic className="h-16 w-16 sm:h-20 sm:w-20 text-muted-foreground" />;
     } else {
-      statusText = "Presiona el micrófono o escribe para añadir una tarea.";
       buttonContent = <Mic className="h-16 w-16 sm:h-20 smw-20" />;
     }
   }
@@ -279,7 +278,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
     ? "Ej: Comprar pasador..."
     : "Ej: Comprar leche 5 4 1 2";
 
-  const buttonText = selectedTaskId ? "Añadir Subtarea" : "Añadir Tarea";
+  const buttonText = "Añadir Tarea con Texto";
 
   return (
     <div className="flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full">
@@ -316,6 +315,26 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
           aria-label="Ingresar tarea manualmente"
           className="text-base text-center"
         />
+        {!selectedTaskId && (
+            <div className="flex items-center justify-center space-x-4 pt-2">
+                <div className="flex items-center space-x-2">
+                    <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} />
+                    <Label htmlFor="fenix-checkbox" className="text-sm font-medium">Fénix</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Input
+                        id="fenix-period"
+                        type="number"
+                        value={fenixPeriod}
+                        onChange={(e) => setFenixPeriod(Number(e.target.value))}
+                        className="w-20 h-8 text-center"
+                        min="1"
+                        disabled={!isFenix}
+                    />
+                    <Label htmlFor="fenix-period" className="text-sm text-muted-foreground">días</Label>
+                </div>
+            </div>
+        )}
         <Button 
           type="submit" 
           className="w-full" 
