@@ -77,7 +77,24 @@ export default function HomePage() {
     const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
     const task = tasks?.find(t => t.id === id);
     if(task) {
-      updateDocumentNonBlocking(taskRef, { completado: !task.completado });
+      if (task.completado) {
+        // Si la tarea está completada, la reactivamos y reseteamos su fecha.
+        updateDocumentNonBlocking(taskRef, { 
+          completado: false,
+          createdAt: serverTimestamp() 
+        });
+        toast({
+          title: "Tarea reactivada",
+          description: "La tarea vuelve a estar activa y su envejecimiento se ha reiniciado.",
+        });
+      } else {
+        // Si la tarea no está completada, simplemente la completamos.
+        updateDocumentNonBlocking(taskRef, { completado: true });
+        toast({
+          title: "¡Tarea completada!",
+          description: "¡Buen trabajo!",
+        });
+      }
     }
   };
 
@@ -163,7 +180,7 @@ export default function HomePage() {
           <TaskForm onAddTask={handleAddTask} />
         </section>
         
-        <section>
+        <section className="w-full">
           <TaskSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
         </section>
 

@@ -81,9 +81,6 @@ const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
 
 
 export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted, onUpdateTaskValue }: TaskItemProps) {
-  const handleCheckboxChange = () => {
-    onToggleComplete(task.id);
-  };
 
   const handleDelete = () => {
     onDeleteTask(task.id);
@@ -112,6 +109,10 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
   const agingColorStyle = getAgingColorStyle(agingFactor);
 
 
+  const handleToggle = () => {
+    onToggleComplete(task.id);
+  };
+
   return (
     <TableRow 
       style={task.completado ? {} : agingColorStyle}
@@ -120,12 +121,39 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
         "transition-colors duration-500"
     )}>
       <TableCell className="w-[1%]">
-        <Checkbox
+        {task.completado ? (
+          <Checkbox
             id={`complete-${task.id}`}
             checked={task.completado}
-            onCheckedChange={handleCheckboxChange}
-            aria-label={`Marcar ${task.tarea} como completada`}
-        />
+            onCheckedChange={handleToggle}
+            aria-label={`Reactivar ${task.tarea}`}
+          />
+        ) : (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Checkbox
+                id={`complete-${task.id}`}
+                checked={task.completado}
+                // We prevent the default onCheckedChange and use the trigger
+                aria-label={`Marcar ${task.tarea} como completada`}
+              />
+            </AlertDialogTrigger>
+            <AlertDialogContent className="max-w-[340px] rounded-lg">
+              <AlertDialogHeader className="text-center items-center">
+                <AlertDialogTitle>¿Marcar como completada?</AlertDialogTitle>
+                <AlertDialogDescription className="text-center px-4">
+                  La tarea "{task.tarea}" se marcará como finalizada.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-col-reverse space-y-2 space-y-reverse w-full sm:flex-row sm:space-y-0 sm:justify-center sm:space-x-2 pt-2">
+                <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleToggle} className={cn("w-full sm:w-auto")}>
+                  Sí, completar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </TableCell>
       <TableCell className="min-w-[200px] whitespace-normal">
          <div className="flex items-center gap-2">
