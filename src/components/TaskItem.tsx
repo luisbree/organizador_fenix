@@ -44,18 +44,27 @@ const getAgingFactor = (task: Task): number => {
     createdDate.setHours(0, 0, 0, 0);
 
     const timeDiff = today.getTime() - createdDate.getTime();
-    const daysOld = Math.max(1, Math.floor(timeDiff / (1000 * 3600 * 24)));
+    const daysOld = Math.floor(timeDiff / (1000 * 3600 * 24));
 
-    let factor = (task.urgencia + task.necesidad) / (10 * daysOld);
-    if(isNaN(factor) || daysOld === 0) factor = 0;
+    if (daysOld < 1) {
+        return 0; // No aging factor for tasks less than a day old
+    }
     
-    return factor;
+    let factor = (task.urgencia + task.necesidad) / (10 * daysOld);
+    
+    return isNaN(factor) ? 0 : factor;
 }
 
 const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
+  if (agingFactor <= 0) return {};
+
+  // Apply a non-linear (logarithmic) scale to the factor
+  // This makes the color change slower at the beginning and faster towards the end.
+  // The '+1' prevents log(0), and we adjust the divisor to keep the scale in a reasonable range.
+  const scaledFactor = Math.log(agingFactor + 1) / Math.log(1.5); // Using log base 1.5 for a gentle curve
+  
   // Normalize the factor, capping it at 1 for the color scale
-  const normalizedFactor = Math.min(agingFactor, 1.0);
-  if (normalizedFactor <= 0) return {};
+  const normalizedFactor = Math.min(scaledFactor, 1.0);
 
   const colors = [
     { h: 120, s: 60, l: 58 }, // #5cd65c (Green)
@@ -65,17 +74,13 @@ const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
   ];
 
   const numSegments = colors.length - 1;
-  const segmentIndex = Math.floor(normalizedFactor * numSegments);
+  const segmentIndex = Math.min(Math.floor(normalizedFactor * numSegments), numSegments - 1);
   const segmentStart = segmentIndex / numSegments;
-  const segmentEnd = (segmentIndex + 1) / numSegments;
   
-  // Ensure we don't go out of bounds
-  const safeSegmentIndex = Math.min(segmentIndex, numSegments - 1);
-  
-  const startColor = colors[safeSegmentIndex];
-  const endColor = colors[safeSegmentIndex + 1];
+  const segmentFactor = (normalizedFactor - segmentStart) * numSegments;
 
-  const segmentFactor = (normalizedFactor - segmentStart) / (segmentEnd - segmentStart);
+  const startColor = colors[segmentIndex];
+  const endColor = colors[segmentIndex + 1];
 
   const h = startColor.h + (endColor.h - startColor.h) * segmentFactor;
   const s = startColor.s + (endColor.s - startColor.s) * segmentFactor;
@@ -231,3 +236,4 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
     </TableRow>
   );
 }
+
