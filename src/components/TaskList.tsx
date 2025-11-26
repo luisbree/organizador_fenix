@@ -149,7 +149,7 @@ export function TaskList({
 
   return (
     <TooltipProvider>
-      <Accordion type="multiple" className="w-full space-y-2">
+      <Accordion type="multiple" className="w-full border-t">
         {sortedTasks.map((task) => {
           const agingFactor = calculateAgingFactor(task);
           const agingColorStyle = getAgingColorStyle(agingFactor);
@@ -160,7 +160,7 @@ export function TaskList({
               value={task.id} 
               key={task.id} 
               className={cn(
-                "border rounded-lg overflow-hidden transition-all duration-300",
+                "border-b overflow-hidden transition-all duration-300",
                 selectedTaskId === task.id ? 'border-primary shadow-lg' : 'border-border',
                 task.completado ? "bg-muted/50 opacity-60" : ""
               )}
@@ -180,10 +180,10 @@ export function TaskList({
                 <AccordionTrigger 
                     className={cn(
                         "p-0 hover:no-underline w-[40px] flex-shrink-0 flex justify-center items-center",
-                        "[&[data-state=open]>.chevron]:rotate-180"
+                        "[&[data-state=open]>.chevron]:rotate-180",
+                        !hasSubtasks && "opacity-0 cursor-default"
                     )}
                     disabled={!hasSubtasks}
-                    onClick={(e) => e.stopPropagation()}
                 >
                     <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 chevron" />
                 </AccordionTrigger>
