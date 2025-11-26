@@ -306,17 +306,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
       </Button>
       
       <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2 max-w-xl mx-auto">
-        <Input 
-          type="text"
-          placeholder={placeholderText}
-          value={textInputValue}
-          onChange={(e) => setTextInputValue(e.target.value)}
-          disabled={isRecording || isProcessing || hasMicPermission === null}
-          aria-label="Ingresar tarea manualmente"
-          className="text-base text-center"
-        />
         {!selectedTaskId && (
-            <div className="flex items-center justify-center space-x-4 pt-2">
+            <div className="flex items-center justify-center space-x-4 pb-2">
                 <div className="flex items-center space-x-2">
                     <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} />
                     <Label htmlFor="fenix-checkbox" className="text-sm font-medium">Fénix</Label>
@@ -335,6 +326,15 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
                 </div>
             </div>
         )}
+        <Input 
+          type="text"
+          placeholder={placeholderText}
+          value={textInputValue}
+          onChange={(e) => setTextInputValue(e.target.value)}
+          disabled={isRecording || isProcessing || hasMicPermission === null}
+          aria-label="Ingresar tarea manualmente"
+          className="text-base text-center"
+        />
         <Button 
           type="submit" 
           className="w-full" 
