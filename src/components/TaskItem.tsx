@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Trash2, CalendarPlus } from 'lucide-react';
+import { Trash2, CalendarPlus, Clock } from 'lucide-react';
 import type { Task } from '@/types/task';
 import { cn } from '@/lib/utils';
 import { EditableNumericCell } from './EditableNumericCell';
@@ -36,6 +36,34 @@ interface TaskItemProps {
     newValue: number
   ) => void;
 }
+
+const getAgingFactor = (task: Task): number => {
+    const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    createdDate.setHours(0, 0, 0, 0);
+
+    const timeDiff = today.getTime() - createdDate.getTime();
+    const daysOld = Math.max(1, Math.floor(timeDiff / (1000 * 3600 * 24)));
+
+    let factor = (task.urgencia + task.necesidad) / (10 * daysOld);
+    if(isNaN(factor) || daysOld === 0) factor = 0;
+    
+    return factor;
+}
+
+const getAgingColorClass = (agingFactor: number): string => {
+  if (agingFactor <= 0) return ""; 
+
+  // Ajustamos el factor para que sea más sensible en los valores bajos
+  const adjustedFactor = Math.min(agingFactor * 2, 1.0);
+
+  if (adjustedFactor < 0.25) return "bg-green-100/60 dark:bg-green-900/30"; // Verde muy claro
+  if (adjustedFactor < 0.5) return "bg-yellow-100/60 dark:bg-yellow-900/30"; // Amarillo
+  if (adjustedFactor < 0.75) return "bg-orange-200/60 dark:bg-orange-900/40"; // Naranja (Ocre)
+  return "bg-red-200/70 dark:bg-red-900/40"; // Rojo
+};
+
 
 export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulingAttempted, onUpdateTaskValue }: TaskItemProps) {
   const handleCheckboxChange = () => {
@@ -68,22 +96,25 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
     const timeDiff = today.getTime() - createdDate.getTime();
     const daysOld = Math.floor(timeDiff / (1000 * 3600 * 24));
 
-    let agingFactor = 0;
+    let agingFactorValue = 0;
     if (daysOld >= 1) {
-        agingFactor = (task.urgencia + task.necesidad) / (10 * daysOld);
+        agingFactorValue = (task.urgencia + task.necesidad) / (10 * daysOld);
     }
     
-    if(isNaN(agingFactor)) agingFactor = 0;
+    if(isNaN(agingFactorValue)) agingFactorValue = 0;
 
-    return task.indice + agingFactor;
+    return task.indice + agingFactorValue;
   };
 
-  const dynamicIndex = calculateDynamicIndex(task);
+  const agingFactor = getAgingFactor(task);
+  const dynamicIndex = task.indice + agingFactor;
+  const agingColorClass = getAgingColorClass(agingFactor);
+
 
   return (
     <TableRow className={cn(
-        task.completado && "bg-muted/50 opacity-60",
-        task.isSchedulingAttempted && !task.completado && "bg-accent/[.08]"
+        task.completado ? "bg-muted/50 opacity-60" : agingColorClass,
+        "transition-colors duration-500"
     )}>
       <TableCell className="w-[1%]">
         <Checkbox
@@ -94,7 +125,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
         />
       </TableCell>
       <TableCell className="max-w-[150px] sm:max-w-xs whitespace-nowrap overflow-hidden text-ellipsis">
-         <div className="flex items-center gap-3">
+         <div className="flex items-center gap-2">
           <div className="flex-grow min-w-0">
             <div className={cn("font-medium truncate", task.completado && "line-through text-muted-foreground")} title={task.tarea}>
               {task.tarea}
@@ -103,7 +134,8 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
               {createdDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric'})}, {createdDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit'})}
             </div>
           </div>
-          <p className="text-lg font-bold tabular-nums pl-2">
+          {task.isSchedulingAttempted && <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" />}
+          <p className="text-lg font-bold tabular-nums pl-1">
             {isFinite(dynamicIndex) ? dynamicIndex.toFixed(2) : "∞"}
           </p>
         </div>
@@ -163,7 +195,7 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
                     La tarea "{task.tarea}" será eliminada permanentemente.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="flex-col-reverse space-y-2 space-y-reverse w-full sm:flex-row sm:space-y-0">
+                <AlertDialogFooter className="flex-col-reverse space-y-2 space-y-reverse w-full sm:flex-row sm:space-y-0 sm:justify-center sm:space-x-2 pt-2">
                    <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDelete} className={cn("w-full sm:w-auto")}>
                     Sí, eliminar
