@@ -4,7 +4,7 @@
 import type * as React from 'react';
 import type { Task, SubTask } from '@/types/task';
 import { TaskItem } from './TaskItem';
-import { ListChecks } from 'lucide-react';
+import { ListChecks, ChevronDown } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -166,20 +166,26 @@ export function TaskList({
               )}
               style={task.completado ? {} : agingColorStyle}
             >
-              <div onClick={() => onSelectTask(task.id)} className="cursor-pointer w-full">
+              <div className="flex items-center w-full relative">
+                <div onClick={() => onSelectTask(task.id)} className="flex-grow cursor-pointer">
+                    <TaskItem
+                        task={task}
+                        onToggleComplete={onToggleComplete}
+                        onDeleteTask={onDeleteTask}
+                        onMarkSchedulingAttempted={onMarkSchedulingAttempted}
+                        onUpdateTaskValue={onUpdateTaskValue}
+                        agingFactor={agingFactor}
+                    />
+                </div>
                 <AccordionTrigger 
-                    className="p-0 hover:no-underline [&[data-state=open]>div>div>.chevron]:rotate-180" 
+                    className={cn(
+                        "p-0 hover:no-underline w-[40px] flex-shrink-0 flex justify-center items-center",
+                        "[&[data-state=open]>.chevron]:rotate-180"
+                    )}
                     disabled={!hasSubtasks}
+                    onClick={(e) => e.stopPropagation()}
                 >
-                  <TaskItem
-                    task={task}
-                    onToggleComplete={onToggleComplete}
-                    onDeleteTask={onDeleteTask}
-                    onMarkSchedulingAttempted={onMarkSchedulingAttempted}
-                    onUpdateTaskValue={onUpdateTaskValue}
-                    agingFactor={agingFactor}
-                    hasSubtasks={hasSubtasks}
-                  />
+                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 chevron" />
                 </AccordionTrigger>
               </div>
               {hasSubtasks && (

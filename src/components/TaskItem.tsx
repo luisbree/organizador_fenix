@@ -44,7 +44,6 @@ interface TaskItemProps {
     newValue: number
   ) => void;
   agingFactor: number;
-  hasSubtasks?: boolean;
 }
 
 const calculateDynamicIndex = (task: Task, agingFactor: number): number => {
@@ -57,8 +56,7 @@ export function TaskItem({
     onDeleteTask, 
     onMarkSchedulingAttempted, 
     onUpdateTaskValue,
-    agingFactor,
-    hasSubtasks
+    agingFactor
 }: TaskItemProps) {
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -216,12 +214,6 @@ export function TaskItem({
             </AlertDialog>
         </div>
       </div>
-      {hasSubtasks && (
-          <div className="chevron w-[40px] flex-shrink-0 flex justify-center p-2">
-              <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
-          </div>
-      )}
-       {!hasSubtasks && <div className="w-[40px] flex-shrink-0"></div>}
     </div>
   );
 }
