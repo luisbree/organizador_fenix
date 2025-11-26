@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 
 interface TaskItemProps {
@@ -38,6 +39,7 @@ interface TaskItemProps {
 }
 
 const calculateAgingFactor = (task: Task): number => {
+    if (!task.createdAt) return 0;
     const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -128,9 +130,19 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
       <TableCell className="min-w-[200px] whitespace-normal">
          <div className="flex items-center gap-2">
           <div className="flex-grow min-w-0">
-            <div className={cn("font-medium", task.completado && "line-through text-muted-foreground")} title={task.tarea}>
-              {task.tarea}
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className={cn("font-medium", task.completado && "line-through text-muted-foreground")}>
+                  {task.tarea}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="font-bold">{task.tarea}</p>
+                <p className="text-sm text-muted-foreground">
+                  Factor de envejecimiento: {agingFactor.toFixed(2)}
+                </p>
+              </TooltipContent>
+            </Tooltip>
             <div className="text-xs text-muted-foreground">
               {createdDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric'})}, {createdDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit'})}
             </div>
