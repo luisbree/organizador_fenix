@@ -23,6 +23,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 
@@ -52,8 +60,6 @@ const calculateAgingFactor = (task: Task): number => {
         return 0; // No aging factor for tasks less than a day old
     }
 
-    // Use a logarithmic scale for a more gradual and cumulative-feeling aging effect.
-    // The (urgencia + necesidad) / 10 term weights the aging based on importance.
     const factor = ((task.urgencia + task.necesidad) / 10) * Math.log(daysOld + 1);
     
     return isNaN(factor) ? 0 : factor;
@@ -61,21 +67,16 @@ const calculateAgingFactor = (task: Task): number => {
 
 const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
   if (agingFactor <= 0) {
-     // #5cd65c in hsla with alpha
     return { backgroundColor: `hsla(121, 63%, 58%, 0.5)` };
   }
 
-  // Normalize the factor. Let's establish a "max" factor for color scaling, e.g., what we consider "fully red".
-  // A factor of around 2.5 (e.g. U+N=10 at ~11 days old) could be our cap for the gradient.
   const maxFactorForColor = 2.5;
   const normalizedFactor = Math.min(agingFactor / maxFactorForColor, 1.0);
 
-  // Linear interpolation between Green -> Yellow -> Red
-  // Green (hue 120), Yellow (hue 60), Red (hue 0)
   const hue = 120 - (normalizedFactor * 120);
-  const saturation = 70 + (normalizedFactor * 30); // Go from 70% to 100% saturation
-  const lightness = 60 - (normalizedFactor * 10); // Slightly darken as it gets redder
-  const alpha = 0.5 + (normalizedFactor * 0.2); // Increase opacity from 0.5 to 0.7
+  const saturation = 70 + (normalizedFactor * 30); 
+  const lightness = 60 - (normalizedFactor * 10); 
+  const alpha = 0.5 + (normalizedFactor * 0.2); 
 
   return { backgroundColor: `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})` };
 };
@@ -130,27 +131,25 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
             aria-label={`Reactivar ${task.tarea}`}
           />
         ) : (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
+          <Dialog>
+            <DialogTrigger asChild>
               <Checkbox
                 id={`complete-${task.id}`}
                 checked={task.completado}
-                // We prevent the default onCheckedChange and use the trigger
                 aria-label={`Marcar ${task.tarea} como completada`}
               />
-            </AlertDialogTrigger>
-            <AlertDialogContent className="max-w-[340px] rounded-lg" style={{backgroundColor: '#fdfdfd'}}>
-               <AlertDialogCancel className="absolute inset-0 bg-transparent border-0 cursor-default" />
-              <AlertDialogHeader>
-                  <AlertDialogTitle className="sr-only">Confirmar Tarea</AlertDialogTitle>
-              </AlertDialogHeader>
-              <AlertDialogFooter className="sm:justify-center">
-                <AlertDialogAction onClick={handleToggle} className={cn("w-full sm:w-auto")}>
+            </DialogTrigger>
+            <DialogContent className="max-w-[340px] rounded-lg" style={{backgroundColor: '#fdfdfd'}}>
+              <DialogHeader>
+                  <DialogTitle className="sr-only">Confirmar Tarea</DialogTitle>
+              </DialogHeader>
+              <DialogFooter className="sm:justify-center">
+                <Button onClick={handleToggle} className={cn("w-full sm:w-auto")}>
                   Confirmar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </TableCell>
       <TableCell className="min-w-[200px] whitespace-normal">
@@ -247,5 +246,3 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
     </TableRow>
   );
 }
-
-    
