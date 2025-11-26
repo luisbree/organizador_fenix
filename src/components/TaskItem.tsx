@@ -61,7 +61,8 @@ const calculateAgingFactor = (task: Task): number => {
 
 const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
   if (agingFactor <= 0) {
-    return { backgroundColor: `hsla(120, 60%, 58%, 0)` }; // Transparent for no aging
+     // #5cd65c in hsla with alpha
+    return { backgroundColor: `hsla(121, 63%, 58%, 0.5)` };
   }
 
   // Normalize the factor. Let's establish a "max" factor for color scaling, e.g., what we consider "fully red".
@@ -145,10 +146,9 @@ export function TaskItem({ task, onToggleComplete, onDeleteTask, onMarkSchedulin
                   La tarea "{task.tarea}" se marcará como finalizada.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <AlertDialogFooter className="flex-col-reverse space-y-2 space-y-reverse w-full sm:flex-row sm:space-y-0 sm:justify-center sm:space-x-2 pt-2">
-                <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+              <AlertDialogFooter className="sm:justify-center">
                 <AlertDialogAction onClick={handleToggle} className={cn("w-full sm:w-auto")}>
-                  Sí, completar
+                  Confirmar
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
