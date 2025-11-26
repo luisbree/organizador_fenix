@@ -155,9 +155,6 @@ export default function HomePage() {
         </section>
 
         <section className="flex-grow flex flex-col">
-          <h2 className="text-xl font-semibold mb-3 text-foreground border-b pb-1.5">
-            Lista de Tareas
-          </h2>
           {isLoadingTasks ? (
             <p className="text-center text-muted-foreground py-4">Cargando tareas...</p>
           ) : (

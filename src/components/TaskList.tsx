@@ -4,7 +4,7 @@
 import type * as React from 'react';
 import type { Task } from '@/types/task';
 import { TaskItem } from './TaskItem';
-import { ListChecks, Flame, ShieldCheck, CircleDollarSign, Hourglass, Hash } from 'lucide-react';
+import { ListChecks, Flame, ShieldCheck, CircleDollarSign, Hourglass } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -111,16 +111,6 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
               <TableHead className="pl-0">
                  <div className="flex items-center">
                     Tarea
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="flex justify-center items-center font-bold text-lg ml-3">
-                               <Hash className="h-4 w-4" />
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Índice</p>
-                        </TooltipContent>
-                    </Tooltip>
                  </div>
               </TableHead>
               
@@ -158,4 +148,3 @@ export function TaskList({ tasks, onToggleComplete, onDeleteTask, onMarkScheduli
     </TooltipProvider>
   );
 }
-
