@@ -148,65 +148,67 @@ export function TaskList({
   }
 
   return (
-    <TooltipProvider>
-      <Accordion type="multiple" className="w-full border-t">
-        {sortedTasks.map((task) => {
-          const agingFactor = calculateAgingFactor(task);
-          const agingColorStyle = getAgingColorStyle(agingFactor);
-          const hasSubtasks = task.subtasks && task.subtasks.length > 0;
+    <div className="overflow-x-auto">
+      <TooltipProvider>
+        <Accordion type="multiple" className="w-full border-t">
+          {sortedTasks.map((task) => {
+            const agingFactor = calculateAgingFactor(task);
+            const agingColorStyle = getAgingColorStyle(agingFactor);
+            const hasSubtasks = task.subtasks && task.subtasks.length > 0;
 
-          return (
-            <AccordionItem 
-              value={task.id} 
-              key={task.id} 
-              className={cn(
-                "border-b overflow-hidden transition-all duration-300",
-                selectedTaskId === task.id ? 'border-primary shadow-lg' : 'border-border',
-                task.completado ? "bg-muted/50 opacity-60" : ""
-              )}
-              style={task.completado ? {} : agingColorStyle}
-            >
-              <div className="flex items-center w-full relative">
-                <div onClick={() => onSelectTask(task.id)} className="flex-grow cursor-pointer">
-                    <TaskItem
-                        task={task}
-                        onToggleComplete={onToggleComplete}
-                        onDeleteTask={onDeleteTask}
-                        onMarkSchedulingAttempted={onMarkSchedulingAttempted}
-                        onUpdateTaskValue={onUpdateTaskValue}
-                        agingFactor={agingFactor}
-                    />
-                </div>
-                <AccordionTrigger 
-                    className={cn(
-                        "p-0 hover:no-underline w-[40px] flex-shrink-0 flex justify-center items-center",
-                        "[&[data-state=open]>.chevron]:rotate-180",
-                        !hasSubtasks && "opacity-0 cursor-default"
-                    )}
-                    disabled={!hasSubtasks}
-                >
-                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 chevron" />
-                </AccordionTrigger>
-              </div>
-              {hasSubtasks && (
-                <AccordionContent className="bg-transparent">
-                  <div className="flex flex-col gap-1 px-2 py-2">
-                    {sortedSubtasks(task.subtasks).map(subtask => (
-                      <SubTaskItem
-                        key={subtask.id}
-                        subtask={subtask}
-                        onToggleComplete={() => onToggleSubTaskComplete(subtask.id, task.id)}
-                        onDelete={() => onDeleteSubTask(subtask.id, task.id)}
-                        onSchedule={() => onMarkSubTaskSchedulingAttempted(subtask.id, task.id)}
+            return (
+              <AccordionItem 
+                value={task.id} 
+                key={task.id} 
+                className={cn(
+                  "border-b overflow-hidden transition-all duration-300",
+                  selectedTaskId === task.id ? 'border-primary shadow-lg' : 'border-border',
+                  task.completado ? "bg-muted/50 opacity-60" : ""
+                )}
+                style={task.completado ? {} : agingColorStyle}
+              >
+                <div className="flex items-center w-full relative">
+                  <div onClick={() => onSelectTask(task.id)} className="flex-grow cursor-pointer">
+                      <TaskItem
+                          task={task}
+                          onToggleComplete={onToggleComplete}
+                          onDeleteTask={onDeleteTask}
+                          onMarkSchedulingAttempted={onMarkSchedulingAttempted}
+                          onUpdateTaskValue={onUpdateTaskValue}
+                          agingFactor={agingFactor}
                       />
-                    ))}
                   </div>
-                </AccordionContent>
-              )}
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
-    </TooltipProvider>
+                  <AccordionTrigger 
+                      className={cn(
+                          "p-0 hover:no-underline w-[40px] flex-shrink-0 flex justify-center items-center",
+                          "[&[data-state=open]>.chevron]:rotate-180",
+                          !hasSubtasks && "opacity-0 cursor-default"
+                      )}
+                      disabled={!hasSubtasks}
+                  >
+                      <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 chevron" />
+                  </AccordionTrigger>
+                </div>
+                {hasSubtasks && (
+                  <AccordionContent className="bg-transparent">
+                    <div className="flex flex-col gap-1 px-2 py-2">
+                      {sortedSubtasks(task.subtasks).map(subtask => (
+                        <SubTaskItem
+                          key={subtask.id}
+                          subtask={subtask}
+                          onToggleComplete={() => onToggleSubTaskComplete(subtask.id, task.id)}
+                          onDelete={() => onDeleteSubTask(subtask.id, task.id)}
+                          onSchedule={() => onMarkSubTaskSchedulingAttempted(subtask.id, task.id)}
+                        />
+                      ))}
+                    </div>
+                  </AccordionContent>
+                )}
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      </TooltipProvider>
+    </div>
   );
 }

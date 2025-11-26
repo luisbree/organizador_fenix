@@ -86,7 +86,7 @@ export function TaskItem({
   };
 
   return (
-    <div className="flex items-center w-full p-2">
+    <div className="flex items-center w-full p-2 min-w-[600px]">
       <div className="w-[40px] flex-shrink-0 flex items-center justify-center">
         {task.completado ? (
           <Checkbox
@@ -125,7 +125,7 @@ export function TaskItem({
          <div className="flex-grow min-w-0">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className={cn("font-medium", task.completado && "line-through text-muted-foreground")}>
+                <div className={cn("font-medium whitespace-nowrap", task.completado && "line-through text-muted-foreground")}>
                   {task.tarea}
                 </div>
               </TooltipTrigger>

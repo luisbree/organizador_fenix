@@ -53,7 +53,7 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }:
 
   return (
     <div className={cn(
-        "flex items-center w-full p-1.5 rounded-md hover:bg-muted/50",
+        "flex items-center w-full p-1.5 rounded-md hover:bg-muted/50 min-w-[600px]",
         subtask.completado && "opacity-50"
     )}>
         <div className="w-[40px] flex-shrink-0 flex items-center justify-center">
@@ -81,7 +81,7 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }:
         </div>
 
         <div className="flex-grow min-w-0 text-left">
-            <div className={cn("font-medium", subtask.completado && "line-through text-muted-foreground")}>
+            <div className={cn("font-medium whitespace-nowrap", subtask.completado && "line-through text-muted-foreground")}>
                 {subtask.tarea}
             </div>
         </div>
