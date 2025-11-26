@@ -150,7 +150,7 @@ export function TaskList({
   return (
     <div className="overflow-x-auto">
       <TooltipProvider>
-        <Accordion type="multiple" className="w-full border-t">
+        <Accordion type="multiple" className="w-full border-t-0 rounded-none min-w-[600px]">
           {sortedTasks.map((task) => {
             const agingFactor = calculateAgingFactor(task);
             const agingColorStyle = getAgingColorStyle(agingFactor);

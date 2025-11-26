@@ -142,7 +142,7 @@ export function TaskItem({
           </div>
           <div className="flex items-center gap-2">
               {task.scheduledAt && (
-                <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" title="Se intentó programar en calendario" />
+                <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               )}
               <p className="text-lg font-bold tabular-nums pl-1">
                 {isFinite(dynamicIndex) ? dynamicIndex.toFixed(2) : "∞"}

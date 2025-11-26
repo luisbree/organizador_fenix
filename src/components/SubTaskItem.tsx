@@ -86,7 +86,7 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }:
             </div>
         </div>
 
-        <div className="w-[80px] flex-shrink-0 text-right">
+        <div className="w-[280px] flex-shrink-0 text-right">
             <div className="flex items-center justify-end space-x-1 sm:space-x-2">
                 {subtask.scheduledAt && (
                     <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" title="Se intentó programar en calendario" />
