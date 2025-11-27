@@ -111,7 +111,7 @@ export function TaskItem({
     onToggleScheduled(task.id, task.scheduledAt);
   };
   
-  const formattedCreationDate = createdDate.toLocaleDateString(t.locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const formattedCreationDate = createdDate.toLocaleDateString(t.locale, { month: 'short', day: 'numeric' });
 
   return (
     <div className={cn("flex items-center w-full p-1.5 min-w-[600px]", task.completado && "opacity-70")}>
