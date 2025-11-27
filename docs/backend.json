@@ -38,6 +38,11 @@
           "type": "boolean",
           "description": "Boolean value indicating whether the task is completed or not."
         },
+        "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the task was completed."
+        },
         "isFenix": {
           "type": "boolean",
           "description": "Indicates if the task should automatically be reborn after completion."

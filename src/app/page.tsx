@@ -8,7 +8,7 @@ import { TaskList } from '@/components/TaskList';
 import { TaskSearch } from '@/components/TaskSearch';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, doc, serverTimestamp, runTransaction, onSnapshot } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, runTransaction, onSnapshot, writeBatch } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { useMemoFirebase } from '@/firebase/provider';
@@ -40,15 +40,51 @@ export default function HomePage() {
 
   const [tasks, setTasks] = useState<Task[] | null>(null);
 
+  // Effect to check for and rebirth Fenix tasks
+  useEffect(() => {
+    if (tasks && firestore) {
+      const batch = writeBatch(firestore);
+      let batchHasWrites = false;
+
+      tasks.forEach(task => {
+        if (task.isFenix && task.completado && task.completedAt && task.fenixPeriod) {
+          const completedAtDate = 'toDate' in task.completedAt ? task.completedAt.toDate() : new Date(task.completedAt);
+          const rebirthDate = new Date(completedAtDate.getTime());
+          rebirthDate.setDate(rebirthDate.getDate() + task.fenixPeriod);
+
+          if (new Date() >= rebirthDate) {
+            const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', task.id);
+            batch.update(taskRef, {
+              completado: false,
+              completedAt: null,
+              createdAt: serverTimestamp(), // Reset aging
+            });
+            batchHasWrites = true;
+            console.log(`Task ${task.tarea} has been reborn!`);
+          }
+        }
+      });
+      
+      if (batchHasWrites) {
+        batch.commit().then(() => {
+           toast({
+              title: "¡Tareas Fénix han renacido!",
+              description: "Algunas de tus tareas recurrentes han vuelto a la vida.",
+            });
+        }).catch(error => {
+            console.error("Error rebirthing Fenix tasks: ", error);
+        });
+      }
+    }
+  }, [tasks, firestore, toast]);
+
   useEffect(() => {
     if (tasksData) {
-        // Initially set tasks without subtasks
         const initialTasks = tasksData.map(t => ({ ...t, subtasks: t.subtasks || [] }));
         setTasks(initialTasks);
 
         if (!firestore) return;
 
-        // Set up listeners for subtasks for each task
         const unsubscribers = tasksData.map(task => {
             const subtasksColRef = collection(firestore, 'users', SHARED_USER_ID, 'tasks', task.id, 'subtasks');
             
@@ -56,7 +92,6 @@ export default function HomePage() {
                 const fetchedSubtasks = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as SubTask[];
                 
                 setTasks(currentTasks => {
-                    // This check is important to avoid updating state if the component has unmounted
                     if (!currentTasks) return null;
                     return currentTasks.map(t =>
                         t.id === task.id ? { ...t, subtasks: fetchedSubtasks } : t
@@ -67,12 +102,11 @@ export default function HomePage() {
             });
         });
 
-        // Cleanup listeners on component unmount or when tasksData changes
         return () => {
             unsubscribers.forEach(unsub => unsub());
         };
     } else {
-        setTasks(null); // Clear tasks if tasksData is null
+        setTasks(null);
     }
   }, [tasksData, firestore]);
   
@@ -109,6 +143,7 @@ export default function HomePage() {
       indice: indice,
       completado: false,
       scheduledAt: null,
+      completedAt: null,
       isFenix: taskData.isFenix,
       fenixPeriod: taskData.fenixPeriod,
     };
@@ -141,10 +176,11 @@ export default function HomePage() {
     const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
     const task = tasks?.find(t => t.id === id);
     if(task) {
-      if (task.completado) { // Reactivating a task
+      if (task.completado) { // Reactivating a task (manually)
         updateDocumentNonBlocking(taskRef, { 
           completado: false,
-          createdAt: serverTimestamp() 
+          createdAt: serverTimestamp(),
+          completedAt: null 
         });
         toast({
           title: "Tarea reactivada",
@@ -152,18 +188,17 @@ export default function HomePage() {
         });
       } else { // Completing a task
         if (task.isFenix) {
-            // For a "Fenix" task, we immediately "rebirth" it by resetting its creation date.
-            // A more complex implementation with actual delays would require server-side logic (e.g., Cloud Functions).
+            // For a Fenix task, just mark as complete and set the completion date
             updateDocumentNonBlocking(taskRef, { 
-              createdAt: serverTimestamp(), // Reset aging
-              completado: false // It's immediately active again
+              completado: true,
+              completedAt: serverTimestamp()
             });
             toast({
-              title: "¡Tarea Fénix Renacida!",
-              description: `"${task.tarea}" ha renacido y está activa de nuevo.`,
+              title: "Tarea Fénix completada",
+              description: `"${task.tarea}" renacerá en ${task.fenixPeriod} días.`,
             });
         } else {
-            updateDocumentNonBlocking(taskRef, { completado: true });
+            updateDocumentNonBlocking(taskRef, { completado: true, completedAt: serverTimestamp() });
             toast({
               title: "¡Tarea completada!",
               description: "¡Buen trabajo!",
@@ -198,10 +233,6 @@ export default function HomePage() {
             if (!taskDoc.exists()) {
                 throw "Document does not exist!";
             }
-
-            // In a real production app, you'd use a Cloud Function to delete subcollections.
-            // Deleting from the client is not scalable or secure.
-            // For this app, we'll just delete the parent task.
             transaction.delete(taskRef);
         });
         toast({
@@ -345,5 +376,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    

@@ -19,6 +19,7 @@ export interface Task {
   indice: number;
   completado: boolean;
   createdAt: Timestamp | Date;
+  completedAt?: Timestamp | Date | null;
   scheduledAt?: Timestamp | Date | null;
   subtasks?: SubTask[];
   isFenix?: boolean;
