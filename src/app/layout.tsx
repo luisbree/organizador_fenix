@@ -1,17 +1,13 @@
 import type {Metadata} from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Encode_Sans_Condensed } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const encodeSansCondensed = Encode_Sans_Condensed({
   subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-sans',
 });
 
 export const metadata: Metadata = {
@@ -26,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${encodeSansCondensed.variable} font-sans antialiased`}>
         <FirebaseClientProvider>
           {children}
         </FirebaseClientProvider>
