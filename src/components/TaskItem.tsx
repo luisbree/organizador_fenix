@@ -33,6 +33,24 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
+// A simple, inline SVG for the Phoenix icon
+const PhoenixIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={cn("h-3.5 w-3.5", className)}
+  >
+    <path d="M12 2a5 5 0 0 0-5 5c0 2.5-1.5 4.5-4 5.5 2.5 1 4 3 4 5.5a5 5 0 0 0 10 0c0-2.5 1.5-4.5 4-5.5-2.5-1-4-3-4-5.5a5 5 0 0 0-5-5z" />
+    <path d="M6 16c0 2 1 4 4 4s4-2 4-4" />
+  </svg>
+);
+
+
 interface TaskItemProps {
   task: Task;
   onToggleComplete: (id: string) => void;
@@ -141,6 +159,11 @@ export function TaskItem({
             </Tooltip>
           </div>
           <div className="flex items-center gap-2">
+              {task.isFenix && (
+                  <div title={`Tarea Fénix (renace cada ${task.fenixPeriod} días)`}>
+                      <PhoenixIcon className="h-3.5 w-3.5 flex-shrink-0 text-amber-600" />
+                  </div>
+              )}
               <div onClick={handleClockClick} className="cursor-pointer p-1" title="Marcar como agendado">
                   <Clock
                       className={cn(

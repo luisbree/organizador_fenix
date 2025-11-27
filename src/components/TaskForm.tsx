@@ -84,6 +84,11 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
           title: "Tarea añadida",
           description: `"${rawTarea}" ha sido añadida a la lista.`,
         });
+        
+        // Reset Fenix controls after adding a task
+        setIsFenix(false);
+        setFenixPeriod(30);
+
         return true; 
       } else {
          toast({
@@ -258,7 +263,9 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
 
 
   let buttonContent;
-  const statusText = "Presiona el micrófono o escribe para añadir una tarea.";
+  const statusText = selectedTaskId 
+    ? "Presiona para dictar una subtarea."
+    : "Presiona el micrófono o escribe para añadir una tarea.";
 
   if (isProcessing) {
     buttonContent = <Loader2 className="h-16 w-16 sm:h-20 sm:w-20 animate-spin" />; 
@@ -278,7 +285,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
     ? "Ej: Comprar pasador..."
     : "Ej: Comprar leche 5 4 1 2";
 
-  const buttonText = "Añadir Tarea con Texto";
+  const buttonText = selectedTaskId ? "Añadir Subtarea" : "Añadir Tarea";
 
   return (
     <div className="flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full">
