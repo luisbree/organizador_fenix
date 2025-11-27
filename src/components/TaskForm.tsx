@@ -13,6 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import type { LanguageStrings } from '@/lib/translations';
+import { cn } from '@/lib/utils';
 
 interface TaskFormProps {
   onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string; isFenix: boolean; fenixPeriod: number; }) => void;
@@ -327,26 +328,24 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormP
       </Button>
       
       <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2 max-w-xl mx-auto">
-        {!isSubtaskMode && (
-            <div className="flex items-center justify-center space-x-4 pb-2">
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} />
-                    <Label htmlFor="fenix-checkbox" className="text-sm font-medium">{t.fenix}</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Input
-                        id="fenix-period"
-                        type="number"
-                        value={fenixPeriod}
-                        onChange={(e) => setFenixPeriod(Number(e.target.value))}
-                        className="w-20 h-8 text-center"
-                        min="1"
-                        disabled={!isFenix}
-                    />
-                    <Label htmlFor="fenix-period" className="text-sm text-muted-foreground">{t.days}</Label>
-                </div>
+        <div className={cn("flex items-center justify-center space-x-4 pb-2", isSubtaskMode && "invisible")}>
+            <div className="flex items-center space-x-2">
+                <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} disabled={isSubtaskMode} />
+                <Label htmlFor="fenix-checkbox" className="text-sm font-medium">{t.fenix}</Label>
             </div>
-        )}
+            <div className="flex items-center space-x-2">
+                <Input
+                    id="fenix-period"
+                    type="number"
+                    value={fenixPeriod}
+                    onChange={(e) => setFenixPeriod(Number(e.target.value))}
+                    className="w-20 h-8 text-center"
+                    min="1"
+                    disabled={!isFenix || isSubtaskMode}
+                />
+                <Label htmlFor="fenix-period" className="text-sm text-muted-foreground">{t.days}</Label>
+            </div>
+        </div>
         <Input 
           type="text"
           placeholder={placeholderText}
@@ -365,12 +364,15 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormP
         </Button>
       </form>
 
-      {!isSubtaskMode && (
-        <p className="text-xs text-center text-muted-foreground px-4 pt-3 max-w-md">
-          <strong>{t.formatTitle}:</strong> {t.formatDescription}
-          <br/>{t.formatExample}
-        </p>
-      )}
+      <p className={cn(
+        "text-xs text-center text-muted-foreground px-4 pt-3 max-w-md",
+        isSubtaskMode && "invisible"
+      )}>
+        <strong>{t.formatTitle}:</strong> {t.formatDescription}
+        <br/>{t.formatExample}
+      </p>
     </div>
   );
 }
+
+    
