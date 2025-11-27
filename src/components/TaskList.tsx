@@ -169,7 +169,7 @@ export function TaskList({
                 key={task.id} 
                 className={cn(
                   "border-b overflow-hidden transition-all duration-300",
-                  isSelected ? 'border-2 shadow-lg' : 'border-border',
+                  isSelected ? 'border-4 shadow-lg' : 'border-border',
                   task.completado ? "bg-muted/50 opacity-60" : ""
                 )}
                 style={{
@@ -230,5 +230,3 @@ export function TaskList({
     </div>
   );
 }
-
-    
