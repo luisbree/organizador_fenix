@@ -9,6 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { SubTaskItem } from './SubTaskItem';
+import type { LanguageStrings } from '@/lib/translations';
 
 interface TaskListProps {
   tasks: Task[];
@@ -25,6 +26,7 @@ interface TaskListProps {
   onToggleSubTaskComplete: (subTaskId: string, parentId: string) => void;
   onDeleteSubTask: (subTaskId: string, parentId: string) => void;
   onToggleSubTaskScheduled: (subTaskId: string, parentId: string, currentScheduledAt: any) => void;
+  t: LanguageStrings;
 }
 
 const calculateDynamicIndex = (task: Task): number => {
@@ -100,6 +102,7 @@ export function TaskList({
     onToggleSubTaskComplete,
     onDeleteSubTask,
     onToggleSubTaskScheduled,
+    t
 }: TaskListProps) {
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.completado && !b.completado) return 1;
@@ -147,8 +150,8 @@ export function TaskList({
     return (
       <div className="text-center py-10 border-2 border-dashed rounded-xl bg-card">
         <ListChecks className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <p className="text-xl text-foreground font-semibold">No hay tareas pendientes.</p>
-        <p className="text-md text-muted-foreground">¡Añade una nueva tarea para empezar!</p>
+        <p className="text-xl text-foreground font-semibold">{t.noTasksTitle}</p>
+        <p className="text-md text-muted-foreground">{t.noTasksDescription}</p>
       </div>
     );
   }
@@ -189,6 +192,7 @@ export function TaskList({
                           onToggleScheduled={onToggleScheduled}
                           onUpdateTaskValue={onUpdateTaskValue}
                           agingFactor={agingFactor}
+                          t={t}
                       />
                   </div>
                   <AccordionTrigger 
@@ -217,6 +221,7 @@ export function TaskList({
                           onToggleComplete={() => onToggleSubTaskComplete(subtask.id, task.id)}
                           onDelete={() => onDeleteSubTask(subtask.id, task.id)}
                           onToggleScheduled={() => onToggleSubTaskScheduled(subtask.id, task.id, subtask.scheduledAt)}
+                          t={t}
                         />
                       ))}
                     </div>

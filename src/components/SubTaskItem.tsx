@@ -26,15 +26,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { LanguageStrings } from '@/lib/translations';
 
 interface SubTaskItemProps {
   subtask: SubTask;
   onToggleComplete: () => void;
   onDelete: () => void;
   onToggleScheduled: () => void;
+  t: LanguageStrings;
 }
 
-export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleScheduled }: SubTaskItemProps) {
+export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleScheduled, t }: SubTaskItemProps) {
 
   const handleScheduleOnCalendar = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -44,8 +46,6 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleSched
     // We no longer automatically mark as scheduled. The user does it by clicking the clock.
   };
   
-  const createdDate = subtask.createdAt && 'toDate' in subtask.createdAt ? subtask.createdAt.toDate() : new Date(subtask.createdAt);
-
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleComplete();
@@ -67,17 +67,17 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleSched
                 <Checkbox
                     id={`complete-subtask-${subtask.id}`}
                     checked={subtask.completado}
-                    aria-label={`Marcar ${subtask.tarea} como completada`}
+                    aria-label={t.completeSubtaskAriaLabel(subtask.tarea)}
                 />
                 </DialogTrigger>
                 {!subtask.completado && (
                     <DialogContent className="max-w-[340px] rounded-lg" style={{backgroundColor: '#fdfdfd'}}>
                         <DialogHeader>
-                            <DialogTitle className="sr-only">Confirmar Tarea Completada</DialogTitle>
+                            <DialogTitle className="sr-only">{t.confirmCompletionTitle}</DialogTitle>
                         </DialogHeader>
                         <DialogFooter className="sm:justify-center">
                             <Button onClick={handleToggle} className={cn("w-full sm:w-auto")}>
-                            Confirmar
+                            {t.confirm}
                             </Button>
                         </DialogFooter>
                     </DialogContent>
@@ -93,7 +93,7 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleSched
 
         <div className="w-[80px] flex-shrink-0 text-right">
             <div className="flex items-center justify-end space-x-1 sm:space-x-2">
-                <div onClick={handleClockClick} className="cursor-pointer p-1" title="Marcar como agendado">
+                <div onClick={handleClockClick} className="cursor-pointer p-1" title={t.toggleScheduledTooltip}>
                   <Clock
                     className={cn(
                       "h-3.5 w-3.5 flex-shrink-0 transition-colors",
@@ -105,7 +105,7 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleSched
                     variant="outline"
                     size="sm"
                     onClick={handleScheduleOnCalendar}
-                    aria-label={`Programar subtarea ${subtask.tarea} en Google Calendar`}
+                    aria-label={t.scheduleSubtaskAriaLabel(subtask.tarea)}
                     className="h-6 w-6 p-0"
                 >
                     <CalendarPlus className="h-3.5 w-3.5" />
@@ -115,24 +115,24 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleSched
                         <Button
                             variant="destructive"
                             size="icon"
-                            aria-label={`Eliminar subtarea ${subtask.tarea}`}
+                            aria-label={t.deleteSubtaskAriaLabel(subtask.tarea)}
                             className="h-6 w-6"
-                            title="Eliminar subtarea"
+                            title={t.deleteSubtaskTooltip}
                         >
                             <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent className="max-w-[340px] rounded-lg">
                         <AlertDialogHeader className="text-center items-center">
-                            <AlertDialogTitle>¿Eliminar esta subtarea?</AlertDialogTitle>
+                            <AlertDialogTitle>{t.confirmDeleteSubtaskTitle}</AlertDialogTitle>
                             <AlertDialogDescription className="text-center px-4">
-                                La subtarea "{subtask.tarea}" será eliminada permanentemente.
+                                {t.confirmDeleteSubtaskDescription(subtask.tarea)}
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter className="flex-col-reverse space-y-2 space-y-reverse w-full sm:flex-row sm:space-y-0 sm:justify-center sm:space-x-2 pt-2">
-                            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                            <AlertDialogCancel className="w-full sm:w-auto">{t.cancel}</AlertDialogCancel>
                             <AlertDialogAction onClick={() => onDelete()} className={cn("w-full sm:w-auto")}>
-                                Sí, eliminar
+                                {t.confirmDelete}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -142,5 +142,3 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleSched
     </div>
   );
 }
-
-    

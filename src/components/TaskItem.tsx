@@ -32,6 +32,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import type { LanguageStrings } from '@/lib/translations';
 
 // A simple, inline SVG for the Phoenix icon
 const PhoenixIcon = ({ className }: { className?: string }) => (
@@ -62,6 +63,7 @@ interface TaskItemProps {
     newValue: number
   ) => void;
   agingFactor: number;
+  t: LanguageStrings;
 }
 
 const calculateDynamicIndex = (task: Task, agingFactor: number): number => {
@@ -74,7 +76,8 @@ export function TaskItem({
     onDeleteTask, 
     onToggleScheduled, 
     onUpdateTaskValue,
-    agingFactor
+    agingFactor,
+    t
 }: TaskItemProps) {
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -86,7 +89,7 @@ export function TaskItem({
     e.stopPropagation();
     const taskTitle = encodeURIComponent(task.tarea);
     const taskDetails = encodeURIComponent(
-      `Urgencia: ${task.urgencia}\nNecesidad: ${task.necesidad}\nCosto: ${task.costo}\nDuración: ${task.duracion}`
+      `${t.urgency}: ${task.urgencia}\n${t.necessity}: ${task.necesidad}\n${t.cost}: ${task.costo}\n${t.duration}: ${task.duracion}`
     );
     const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${taskTitle}&details=${taskDetails}`;
     
@@ -107,7 +110,7 @@ export function TaskItem({
     onToggleScheduled(task.id, task.scheduledAt);
   };
   
-  const formattedCreationDate = createdDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const formattedCreationDate = createdDate.toLocaleDateString(t.locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   return (
     <div className="flex items-center w-full p-1.5 min-w-[600px]">
@@ -121,7 +124,7 @@ export function TaskItem({
                 handleToggle(dummyEvent as any);
             }}
             onClick={(e) => e.stopPropagation()}
-            aria-label={`Reactivar ${task.tarea}`}
+            aria-label={t.reactivateTaskAriaLabel(task.tarea)}
           />
         ) : (
           <Dialog>
@@ -129,16 +132,16 @@ export function TaskItem({
               <Checkbox
                 id={`complete-${task.id}`}
                 checked={task.completado}
-                aria-label={`Marcar ${task.tarea} como completada`}
+                aria-label={t.completeTaskAriaLabel(task.tarea)}
               />
             </DialogTrigger>
             <DialogContent className="max-w-[340px] rounded-lg" style={{backgroundColor: '#fdfdfd'}}>
                <DialogHeader>
-                  <DialogTitle className="sr-only">Confirmar Tarea Completada</DialogTitle>
+                  <DialogTitle className="sr-only">{t.confirmCompletionTitle}</DialogTitle>
               </DialogHeader>
               <DialogFooter className="sm:justify-center">
                 <Button onClick={(e) => { e.stopPropagation(); handleToggle(e);}} className={cn("w-full sm:w-auto")}>
-                  Confirmar
+                  {t.confirm}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -160,11 +163,11 @@ export function TaskItem({
           </div>
           <div className="flex items-center gap-2">
               {task.isFenix && (
-                  <div title={`Tarea Fénix (renace cada ${task.fenixPeriod} días)`}>
+                  <div title={t.fenixTaskTooltip(task.fenixPeriod || 0)}>
                       <PhoenixIcon className="h-3.5 w-3.5 flex-shrink-0 text-amber-600" />
                   </div>
               )}
-              <div onClick={handleClockClick} className="cursor-pointer p-1" title="Marcar como agendado">
+              <div onClick={handleClockClick} className="cursor-pointer p-1" title={t.toggleScheduledTooltip}>
                   <Clock
                       className={cn(
                           "h-3.5 w-3.5 flex-shrink-0 transition-colors",
@@ -182,24 +185,28 @@ export function TaskItem({
         <EditableNumericCell
           value={task.urgencia}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'urgencia', newValue)}
+          t={t}
         />
       </div>
       <div className="w-[50px] text-center flex-shrink-0">
         <EditableNumericCell
           value={task.necesidad}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'necesidad', newValue)}
+          t={t}
         />
       </div>
       <div className="w-[50px] text-center flex-shrink-0">
         <EditableNumericCell
           value={task.costo}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'costo', newValue)}
+          t={t}
         />
       </div>
       <div className="w-[50px] text-center flex-shrink-0">
         <EditableNumericCell
           value={task.duracion}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'duracion', newValue)}
+          t={t}
         />
       </div>
       <div className="w-[80px] flex-shrink-0 text-right">
@@ -208,7 +215,7 @@ export function TaskItem({
               variant="outline"
               size="sm"
               onClick={handleScheduleOnCalendar}
-              aria-label={`Programar tarea ${task.tarea} en Google Calendar`}
+              aria-label={t.scheduleTaskAriaLabel(task.tarea)}
               className="h-6 w-6 p-0"
             >
               <CalendarPlus className="h-3.5 w-3.5" />
@@ -218,24 +225,24 @@ export function TaskItem({
                 <Button
                   variant="destructive"
                   size="icon"
-                  aria-label={`Eliminar tarea ${task.tarea}`}
+                  aria-label={t.deleteTaskAriaLabel(task.tarea)}
                   className="h-6 w-6"
-                  title="Eliminar tarea"
+                  title={t.deleteTaskTooltip}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="max-w-[340px] rounded-lg">
                 <AlertDialogHeader className="text-center items-center">
-                  <AlertDialogTitle>¿Eliminar esta tarea?</AlertDialogTitle>
+                  <AlertDialogTitle>{t.confirmDeleteTaskTitle}</AlertDialogTitle>
                   <AlertDialogDescription className="text-center px-4">
-                    La tarea "{task.tarea}" será eliminada permanentemente.
+                    {t.confirmDeleteTaskDescription(task.tarea)}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-col-reverse space-y-2 space-y-reverse w-full sm:flex-row sm:space-y-0 sm:justify-center sm:space-x-2 pt-2">
-                   <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                   <AlertDialogCancel className="w-full sm:w-auto">{t.cancel}</AlertDialogCancel>
                   <AlertDialogAction onClick={handleDelete} className={cn("w-full sm:w-auto")}>
-                    Sí, eliminar
+                    {t.confirmDelete}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

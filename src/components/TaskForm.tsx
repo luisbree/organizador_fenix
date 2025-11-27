@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 // Using @ts-nocheck because SpeechRecognition and related event types are not standard in all TS lib versions.
 "use client";
@@ -11,14 +12,16 @@ import { Mic, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import type { LanguageStrings } from '@/lib/translations';
 
 interface TaskFormProps {
   onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string; isFenix: boolean; fenixPeriod: number; }) => void;
   onAddSubTask: (subtask: { tarea: string, parentId: string }) => void;
   selectedTask?: Task | null;
+  t: LanguageStrings;
 }
 
-export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProps) {
+export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -49,8 +52,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
     if (selectedTask?.id) {
         if(selectedTask.completado) {
             toast({
-                title: "Tarea completada",
-                description: "No se pueden añadir subtareas a una tarea completada.",
+                title: t.taskCompletedTitle,
+                description: t.cannotAddSubtaskDescription,
                 variant: "destructive",
             });
             return false;
@@ -89,8 +92,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
       if ([urgencia, necesidad, costo, duracion].every(isValidNumber)) {
         onAddTask({ rawTarea, tarea: rawTarea, urgencia, necesidad, costo, duracion, isFenix, fenixPeriod });
         toast({
-          title: "Tarea añadida",
-          description: `"${rawTarea}" ha sido añadida a la lista.`,
+          title: t.taskAddedTitle,
+          description: `"${rawTarea}" ${t.taskAddedDescription}`,
         });
         
         // Reset Fenix controls after adding a task
@@ -100,16 +103,16 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
         return true; 
       } else {
          toast({
-          title: "Error en los valores",
-          description: "Los valores numéricos (urgencia, necesidad, costo, duración) deben ser números entre 0 y 5. El formato detectado no es válido.",
+          title: t.invalidValuesErrorTitle,
+          description: t.invalidValuesErrorDescription,
           variant: "destructive",
           duration: 7000,
         });
       }
     } else {
       toast({
-        title: "Formato no reconocido",
-        description: `No se pudo entender: "${inputText}". Asegúrate de usar el formato: descripción, seguido de los cuatro números (0-5) separados o juntos. Por ejemplo: "limpiar la pecera 5 2 1 2" o "limpiar la pecera 5212".`,
+        title: t.formatNotRecognizedTitle,
+        description: t.formatNotRecognizedDescription(inputText),
         variant: "destructive",
         duration: 10000, 
       });
@@ -124,8 +127,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
     if (!SpeechRecognitionAPI) {
       toast({
         variant: 'destructive',
-        title: 'Navegador no compatible',
-        description: 'Tu navegador no soporta el reconocimiento de voz.',
+        title: t.unsupportedBrowserTitle,
+        description: t.unsupportedBrowserDescription,
       });
       setHasMicPermission(false);
       return;
@@ -134,14 +137,13 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
     const recognitionInstance = new SpeechRecognitionAPI();
     recognitionInstance.continuous = true; 
     recognitionInstance.interimResults = false; 
-    recognitionInstance.lang = 'es-ES';
+    recognitionInstance.lang = t.speechLang;
     
-    // Extended timeouts for speech recognition
-    recognitionInstance.maxSpeechInputLength = 20000; // Extend the maximum length of speech input if supported (non-standard)
-    if ('speechRecognitionTimeout' in recognitionInstance) { (recognitionInstance as any).speechRecognitionTimeout = 20000; } // W3C Speech API draft
-    if ('endpointerTimeout' in recognitionInstance) { (recognitionInstance as any).endpointerTimeout = 10000; } // Specific to some implementations
-    if ('silenceTimeout' in recognitionInstance) { (recognitionInstance as any).silenceTimeout = 10000; } // Web Speech API by Google
-    if ('longSilenceTimeout' in recognitionInstance) { (recognitionInstance as any).longSilenceTimeout = 10000; } // Experimental property
+    recognitionInstance.maxSpeechInputLength = 20000;
+    if ('speechRecognitionTimeout' in recognitionInstance) { (recognitionInstance as any).speechRecognitionTimeout = 20000; }
+    if ('endpointerTimeout' in recognitionInstance) { (recognitionInstance as any).endpointerTimeout = 10000; }
+    if ('silenceTimeout' in recognitionInstance) { (recognitionInstance as any).silenceTimeout = 10000; }
+    if ('longSilenceTimeout' in recognitionInstance) { (recognitionInstance as any).longSilenceTimeout = 10000; }
 
     recognitionInstance.onstart = () => {
       setIsRecording(true);
@@ -160,11 +162,11 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
     recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error', event.error);
       errorFlagRef.current = true;
-      let description = 'Ocurrió un error durante el reconocimiento de voz.';
-      if (event.error === 'no-speech') { description = 'No se detectó voz. Inténtalo de nuevo.'; }
-      else if (event.error === 'audio-capture') { description = 'Problema con la captura de audio. Asegúrate que el micrófono funciona.'; }
-      else if (event.error === 'not-allowed') { description = 'Acceso al micrófono denegado. Habilítalo en la configuración.'; setHasMicPermission(false); }
-      toast({ variant: 'destructive', title: 'Error de Reconocimiento', description });
+      let description = t.speechErrorGeneric;
+      if (event.error === 'no-speech') { description = t.speechErrorNoSpeech; }
+      else if (event.error === 'audio-capture') { description = t.speechErrorAudioCapture; }
+      else if (event.error === 'not-allowed') { description = t.speechErrorNotAllowed; setHasMicPermission(false); }
+      toast({ variant: 'destructive', title: t.speechErrorTitle, description });
       setIsRecording(false);
       setIsProcessing(false);
     };
@@ -193,8 +195,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
         setIsProcessing(false); 
       } else if (wasActuallyRecording) { 
         toast({
-            title: "No se detectó voz",
-            description: "No se escuchó nada. Inténtalo de nuevo.",
+            title: t.noSpeechDetectedTitle,
+            description: t.noSpeechDetectedDescription,
             variant: "default", 
         });
         setIsProcessing(false);
@@ -210,22 +212,22 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
         recognitionRef.current.abort(); 
       }
     };
-  }, [hasMicPermission, toast, onAddTask, onAddSubTask, selectedTask, isFenix, fenixPeriod]);
+  }, [hasMicPermission, toast, onAddTask, onAddSubTask, selectedTask, isFenix, fenixPeriod, t]);
 
 
   const handleMicClick = () => {
     if (hasMicPermission === false) {
       toast({
         variant: 'destructive',
-        title: 'Micrófono no disponible',
-        description: 'Por favor, otorga permisos para el micrófono o actualiza la página si ya los diste.',
+        title: t.micUnavailableTitle,
+        description: t.micUnavailableDescription,
       });
       return;
     }
     if (hasMicPermission === null) {
        toast({
-        title: 'Permiso de Micrófono Pendiente',
-        description: 'Esperando confirmación del permiso para usar el micrófono.',
+        title: t.micPermissionPendingTitle,
+        description: t.micPermissionPendingDescription,
       });
       return;
     }
@@ -242,8 +244,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
          console.error("Error starting recognition:", e);
          toast({
            variant: 'destructive',
-           title: 'Error al iniciar grabación',
-           description: 'No se pudo iniciar el reconocimiento de voz. Intenta de nuevo.',
+           title: t.micStartErrorTitle,
+           description: t.micStartErrorDescription,
          });
          setIsRecording(false); 
          setIsProcessing(false);
@@ -255,8 +257,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
     event.preventDefault();
     if (!textInputValue.trim()) {
         toast({
-            title: "Campo vacío",
-            description: "Por favor, escribe la tarea y sus valores.",
+            title: t.emptyFieldTitle,
+            description: t.emptyFieldDescription,
             variant: "destructive",
         });
         return;
@@ -274,8 +276,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
 
   let buttonContent;
   const statusText = isSubtaskMode 
-    ? "Presiona para dictar una subtarea."
-    : "Presiona el micrófono o escribe para añadir una tarea.";
+    ? t.subtaskDictationPrompt
+    : t.taskDictationPrompt;
 
   if (isProcessing) {
     buttonContent = <Loader2 className="h-16 w-16 sm:h-20 sm:w-20 animate-spin" />; 
@@ -293,20 +295,20 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
   
   const placeholderText = isSubtaskMode
     ? isParentTaskCompleted
-        ? "La tarea está completada"
-        : "Ej: Comprar pasador..."
-    : "Ej: Comprar leche 5 4 1 2";
+        ? t.taskCompletedPlaceholder
+        : t.subtaskPlaceholder
+    : t.taskPlaceholder;
 
-  const buttonText = isSubtaskMode ? "Añadir Subtarea" : "Añadir Tarea";
+  const buttonText = isSubtaskMode ? t.addSubtaskButton : t.addTaskButton;
 
   return (
     <div className="flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full">
       {hasMicPermission === false && !isRecording && !isProcessing && (
          <Alert variant="destructive" className="w-full mb-2">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Acceso al Micrófono Requerido</AlertTitle>
+            <AlertTitle>{t.micAccessRequiredTitle}</AlertTitle>
             <AlertDescription>
-              Para usar el ingreso por voz, habilita el acceso al micrófono en la configuración de tu navegador y actualiza la página. Aún puedes ingresar tareas por texto.
+              {t.micAccessRequiredDescription}
             </AlertDescription>
         </Alert>
       )}
@@ -319,7 +321,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
         onClick={handleMicClick}
         disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording) || isParentTaskCompleted} 
         className="h-36 w-36 sm:h-40 sm:w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl flex items-center justify-center transition-all duration-150 ease-in-out hover:scale-105 active:scale-95"
-        aria-label={isRecording ? "Detener grabación" : "Iniciar grabación de tarea"}
+        aria-label={isRecording ? t.stopRecordingAriaLabel : t.startRecordingAriaLabel}
       >
         {buttonContent}
       </Button>
@@ -329,7 +331,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
             <div className="flex items-center justify-center space-x-4 pb-2">
                 <div className="flex items-center space-x-2">
                     <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} />
-                    <Label htmlFor="fenix-checkbox" className="text-sm font-medium">Fénix</Label>
+                    <Label htmlFor="fenix-checkbox" className="text-sm font-medium">{t.fenix}</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                     <Input
@@ -341,7 +343,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
                         min="1"
                         disabled={!isFenix}
                     />
-                    <Label htmlFor="fenix-period" className="text-sm text-muted-foreground">días</Label>
+                    <Label htmlFor="fenix-period" className="text-sm text-muted-foreground">{t.days}</Label>
                 </div>
             </div>
         )}
@@ -351,7 +353,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
           value={textInputValue}
           onChange={(e) => setTextInputValue(e.target.value)}
           disabled={isRecording || isProcessing || hasMicPermission === null || isParentTaskCompleted}
-          aria-label="Ingresar tarea manualmente"
+          aria-label={t.manualInputAriaLabel}
           className="text-base text-center"
         />
         <Button 
@@ -365,8 +367,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProp
 
       {!isSubtaskMode && (
         <p className="text-xs text-center text-muted-foreground px-4 pt-3 max-w-md">
-          <strong>Formato:</strong> "Descripción U N C D" (0-5).
-          <br/>Ej: "Pasear al perro 5312" o "Pasear al perro 5 3 1 2".
+          <strong>{t.formatTitle}:</strong> {t.formatDescription}
+          <br/>{t.formatExample}
         </p>
       )}
     </div>

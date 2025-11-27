@@ -6,10 +6,12 @@ import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import type { LanguageStrings } from '@/lib/translations';
 
 interface EditableNumericCellProps {
   value: number;
   onSave: (newValue: number) => void;
+  t: LanguageStrings;
   min?: number;
   max?: number;
   className?: string;
@@ -19,6 +21,7 @@ interface EditableNumericCellProps {
 export function EditableNumericCell({
   value,
   onSave,
+  t,
   min = 0,
   max = 5,
   className,
@@ -46,8 +49,8 @@ export function EditableNumericCell({
     const numValue = parseInt(currentValue, 10);
     if (isNaN(numValue) || numValue < min || numValue > max) {
       toast({
-        title: "Valor inválido",
-        description: `El valor debe ser un número entre ${min} y ${max}.`,
+        title: t.invalidValueTitle,
+        description: t.invalidValueDescription(min, max),
         variant: "destructive",
       });
       setCurrentValue(String(value)); 
@@ -81,7 +84,7 @@ export function EditableNumericCell({
         className={cn("h-7 p-1 text-center tabular-nums text-sm", inputClassName)}
         min={min}
         max={max}
-        aria-label={`Editar valor`}
+        aria-label={t.editValueAriaLabel}
       />
     );
   }
@@ -92,7 +95,7 @@ export function EditableNumericCell({
         "flex items-center justify-center space-x-1 cursor-pointer p-1 rounded-md hover:bg-muted/80 min-h-[28px]",
         className
       )}
-      title={`Valor actual: ${value}. Click para editar.`}
+      title={t.editValueTooltip(value)}
       onClick={() => {
         setCurrentValue(String(value)); 
         setIsEditing(true);

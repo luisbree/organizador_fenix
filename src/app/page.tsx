@@ -24,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { translations, type LanguageStrings } from '@/lib/translations';
 
 
 const SHARED_USER_ID = "shared_user";
@@ -35,7 +36,12 @@ export default function HomePage() {
   const { user, isUserLoading } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [language, setLanguage] = useState("es");
+  const [language, setLanguage] = useState<keyof typeof translations>("es");
+  const [t, setT] = useState<LanguageStrings>(translations.es);
+
+  useEffect(() => {
+    setT(translations[language]);
+  }, [language]);
 
 
   useEffect(() => {
@@ -81,15 +87,15 @@ export default function HomePage() {
       if (batchHasWrites) {
         batch.commit().then(() => {
            toast({
-              title: "¡Tareas Fénix han renacido!",
-              description: "Algunas de tus tareas recurrentes han vuelto a la vida.",
+              title: t.fenixRebornTitle,
+              description: t.fenixRebornDescription,
             });
         }).catch(error => {
             console.error("Error rebirthing Fenix tasks: ", error);
         });
       }
     }
-  }, [tasks, firestore, toast]);
+  }, [tasks, firestore, toast, t]);
 
   useEffect(() => {
     if (tasksData) {
@@ -179,8 +185,8 @@ export default function HomePage() {
         createdAt: serverTimestamp(),
     });
     toast({
-      title: "Subtarea añadida",
-      description: `"${subTaskData.tarea}" ha sido añadida.`,
+      title: t.subtaskAddedTitle,
+      description: `"${subTaskData.tarea}" ${t.subtaskAddedDescription}`,
     });
   };
 
@@ -196,8 +202,8 @@ export default function HomePage() {
           completedAt: null 
         });
         toast({
-          title: "Tarea reactivada",
-          description: "La tarea vuelve a estar activa y su envejecimiento se ha reiniciado.",
+          title: t.taskReactivatedTitle,
+          description: t.taskReactivatedDescription,
         });
       } else { // Completing a task
         if (task.isFenix) {
@@ -207,14 +213,14 @@ export default function HomePage() {
               completedAt: serverTimestamp()
             });
             toast({
-              title: "Tarea Fénix completada",
-              description: `"${task.tarea}" renacerá en ${task.fenixPeriod} días.`,
+              title: t.fenixTaskCompletedTitle,
+              description: `"${task.tarea}" ${t.fenixTaskCompletedDescription(task.fenixPeriod || 0)}`,
             });
         } else {
             updateDocumentNonBlocking(taskRef, { completado: true, completedAt: serverTimestamp() });
             toast({
-              title: "¡Tarea completada!",
-              description: "¡Buen trabajo!",
+              title: t.taskCompletedTitle,
+              description: t.taskCompletedDescription,
             });
         }
       }
@@ -230,7 +236,7 @@ export default function HomePage() {
     if (subTask) {
         updateDocumentNonBlocking(subTaskRef, { completado: !subTask.completado });
         toast({
-            title: `Subtarea ${subTask.completado ? 'reactivada' : 'completada'}`,
+            title: subTask.completado ? t.subtaskReactivatedTitle : t.subtaskCompletedTitle,
         });
     }
   };
@@ -249,15 +255,15 @@ export default function HomePage() {
             transaction.delete(taskRef);
         });
         toast({
-            title: "Tarea eliminada",
-            description: "La tarea principal ha sido eliminada.",
+            title: t.taskDeletedTitle,
+            description: t.taskDeletedDescription,
         });
     } catch (error) {
         console.error("Error deleting task: ", error);
         toast({
             variant: "destructive",
-            title: "Error al eliminar",
-            description: "No se pudo eliminar la tarea.",
+            title: t.deleteErrorTitle,
+            description: t.deleteErrorDescription,
         });
     }
   };
@@ -267,7 +273,7 @@ export default function HomePage() {
     const subTaskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', parentId, 'subtasks', subTaskId);
     deleteDocumentNonBlocking(subTaskRef);
     toast({
-      title: "Subtarea eliminada",
+      title: t.subtaskDeletedTitle,
     });
   };
 
@@ -317,8 +323,8 @@ export default function HomePage() {
       });
 
       toast({
-        title: "Tarea actualizada",
-        description: `El campo "${field}" ha sido actualizado. Nuevo índice: ${newIndice.toFixed(2)}`,
+        title: t.taskUpdatedTitle,
+        description: `${t.taskUpdatedDescription(field)} ${t.newIndex}: ${newIndice.toFixed(2)}`,
       });
     }
   };
@@ -336,7 +342,7 @@ export default function HomePage() {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        <p className="ml-4 text-lg text-muted-foreground">Cargando...</p>
+        <p className="ml-4 text-lg text-muted-foreground">{t.loading}</p>
       </div>
     );
   }
@@ -353,15 +359,16 @@ export default function HomePage() {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">
               <Settings className="h-[1.2rem] w-[1.2rem]" />
-              <span className="sr-only">Configuración</span>
+              <span className="sr-only">{t.settings}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Idioma</DropdownMenuLabel>
+            <DropdownMenuLabel>{t.language}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={language} onValueChange={setLanguage}>
+            <DropdownMenuRadioGroup value={language} onValueChange={(value) => setLanguage(value as keyof typeof translations)}>
               <DropdownMenuRadioItem value="es">Español</DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="en">English</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="pt">Português</DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -374,16 +381,21 @@ export default function HomePage() {
             onAddTask={handleAddTask} 
             onAddSubTask={handleAddSubTask}
             selectedTask={selectedTask}
+            t={t}
           />
         </section>
         
         <section className="w-full">
-          <TaskSearch searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          <TaskSearch 
+            searchQuery={searchQuery} 
+            setSearchQuery={setSearchQuery} 
+            t={t}
+          />
         </section>
 
         <section className="flex-grow flex flex-col">
           {(isLoadingTasks && !tasks) ? (
-            <p className="text-center text-muted-foreground py-4">Cargando tareas...</p>
+            <p className="text-center text-muted-foreground py-4">{t.loadingTasks}</p>
           ) : (
             <div className="flex-grow">
               <TaskList
@@ -397,6 +409,7 @@ export default function HomePage() {
                 onToggleSubTaskComplete={handleToggleSubTaskComplete}
                 onDeleteSubTask={handleDeleteSubTask}
                 onToggleSubTaskScheduled={handleToggleSubTaskScheduled}
+                t={t}
               />
             </div>
           )}

@@ -9,13 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Mic, X, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import type { LanguageStrings } from '@/lib/translations';
 
 interface TaskSearchProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  t: LanguageStrings;
 }
 
-export function TaskSearch({ searchQuery, setSearchQuery }: TaskSearchProps) {
+export function TaskSearch({ searchQuery, setSearchQuery, t }: TaskSearchProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
   const [hasMicPermission, setHasMicPermission] = React.useState<boolean | null>(null);
@@ -51,7 +53,7 @@ export function TaskSearch({ searchQuery, setSearchQuery }: TaskSearchProps) {
     const recognitionInstance = new SpeechRecognitionAPI();
     recognitionInstance.continuous = false;
     recognitionInstance.interimResults = false;
-    recognitionInstance.lang = 'es-ES';
+    recognitionInstance.lang = t.speechLang;
 
     recognitionInstance.onstart = () => {
       setIsRecording(true);
@@ -64,10 +66,10 @@ export function TaskSearch({ searchQuery, setSearchQuery }: TaskSearchProps) {
 
     recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error', event.error);
-      let description = 'Ocurrió un error durante el reconocimiento de voz.';
-      if (event.error === 'no-speech') description = 'No se detectó voz. Inténtalo de nuevo.';
-      else if (event.error === 'not-allowed') description = 'Acceso al micrófono denegado.';
-      toast({ variant: 'destructive', title: 'Error de Reconocimiento', description });
+      let description = t.speechErrorGeneric;
+      if (event.error === 'no-speech') description = t.speechErrorNoSpeech;
+      else if (event.error === 'not-allowed') description = t.speechErrorNotAllowed;
+      toast({ variant: 'destructive', title: t.speechErrorTitle, description });
     };
 
     recognitionInstance.onend = () => {
@@ -79,7 +81,7 @@ export function TaskSearch({ searchQuery, setSearchQuery }: TaskSearchProps) {
     return () => {
       recognitionRef.current?.abort();
     };
-  }, [hasMicPermission, setSearchQuery, toast]);
+  }, [hasMicPermission, setSearchQuery, toast, t]);
 
   const handleMicClick = () => {
     if (isRecording) {
@@ -93,8 +95,8 @@ export function TaskSearch({ searchQuery, setSearchQuery }: TaskSearchProps) {
     } else {
         toast({
             variant: 'destructive',
-            title: 'Micrófono no disponible',
-            description: 'El reconocimiento de voz no es compatible o no está permitido en este navegador.',
+            title: t.micUnavailableTitle,
+            description: t.micUnsupportedDescription,
         });
     }
   };
@@ -105,11 +107,11 @@ export function TaskSearch({ searchQuery, setSearchQuery }: TaskSearchProps) {
     <div className="relative w-full">
       <Input
         type="text"
-        placeholder="Buscar tareas..."
+        placeholder={t.searchPlaceholder}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         className={cn("w-full pr-20 text-base", showClearButton ? "pr-20" : "pr-10")}
-        aria-label="Buscar tareas"
+        aria-label={t.searchAriaLabel}
         style={{backgroundColor: '#fdfdfd'}}
       />
       <div className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -119,7 +121,7 @@ export function TaskSearch({ searchQuery, setSearchQuery }: TaskSearchProps) {
             size="icon"
             onClick={() => setSearchQuery('')}
             className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            aria-label="Limpiar búsqueda"
+            aria-label={t.clearSearchAriaLabel}
           >
             <X className="h-5 w-5" />
           </Button>
@@ -130,7 +132,7 @@ export function TaskSearch({ searchQuery, setSearchQuery }: TaskSearchProps) {
             onClick={handleMicClick}
             disabled={hasMicPermission === null || hasMicPermission === false}
             className="h-8 w-8"
-            aria-label={isRecording ? "Detener grabación" : "Buscar por voz"}
+            aria-label={isRecording ? t.stopRecordingAriaLabel : t.searchByVoiceAriaLabel}
         >
             {hasMicPermission === null ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
