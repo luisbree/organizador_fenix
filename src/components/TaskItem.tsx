@@ -73,7 +73,6 @@ export function TaskItem({
     const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${taskTitle}&details=${taskDetails}`;
     
     window.open(calendarUrl, '_blank', 'noopener,noreferrer');
-    // We no longer automatically mark as scheduled. The user does it by clicking the clock.
   };
   
   const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
@@ -142,7 +141,15 @@ export function TaskItem({
             </Tooltip>
           </div>
           <div className="flex items-center gap-2">
-              <p className="text-base font-bold tabular-nums pl-1">
+              <div onClick={handleClockClick} className="cursor-pointer p-1" title="Marcar como agendado">
+                  <Clock
+                      className={cn(
+                          "h-3.5 w-3.5 flex-shrink-0 transition-colors",
+                          task.scheduledAt ? 'text-muted-foreground' : 'text-muted-foreground/30'
+                      )}
+                  />
+              </div>
+              <p className="text-base font-bold tabular-nums">
                 {isFinite(dynamicIndex) ? dynamicIndex.toFixed(2) : "∞"}
               </p>
            </div>
@@ -174,14 +181,6 @@ export function TaskItem({
       </div>
       <div className="w-[80px] flex-shrink-0 text-right">
         <div className="flex items-center justify-end space-x-1 sm:space-x-2">
-            <div onClick={handleClockClick} className="cursor-pointer p-1" title="Marcar como agendado">
-                <Clock
-                    className={cn(
-                        "h-3.5 w-3.5 flex-shrink-0 transition-colors",
-                        task.scheduledAt ? 'text-muted-foreground' : 'text-muted-foreground/30'
-                    )}
-                />
-            </div>
             <Button
               variant="outline"
               size="sm"
@@ -223,5 +222,3 @@ export function TaskItem({
     </div>
   );
 }
-
-    
