@@ -127,7 +127,7 @@ export function TaskItem({
          <div className="flex-grow min-w-0 text-left">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className={cn("font-medium whitespace-nowrap text-sm", task.completado && "line-through text-muted-foreground")}>
+                <div className={cn("font-bold whitespace-nowrap text-sm", task.completado && "line-through text-muted-foreground")}>
                   {task.tarea}
                 </div>
               </TooltipTrigger>
@@ -140,7 +140,7 @@ export function TaskItem({
               {task.scheduledAt && (
                 <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               )}
-              <p className="text-lg font-bold tabular-nums pl-1">
+              <p className="text-base font-bold tabular-nums pl-1">
                 {isFinite(dynamicIndex) ? dynamicIndex.toFixed(2) : "∞"}
               </p>
            </div>

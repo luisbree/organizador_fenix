@@ -106,7 +106,7 @@ export function EditableNumericCell({
         }
       }}
     >
-      <span className="tabular-nums font-semibold text-base">{value}</span>
+      <span className="tabular-nums text-base">{value}</span>
     </div>
   );
 }
