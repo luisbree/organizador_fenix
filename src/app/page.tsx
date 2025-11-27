@@ -344,7 +344,7 @@ export default function HomePage() {
           <TaskForm 
             onAddTask={handleAddTask} 
             onAddSubTask={handleAddSubTask}
-            selectedTaskId={selectedTaskId}
+            selectedTask={selectedTask}
           />
         </section>
         

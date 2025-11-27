@@ -15,10 +15,10 @@ import { Label } from "@/components/ui/label";
 interface TaskFormProps {
   onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string; isFenix: boolean; fenixPeriod: number; }) => void;
   onAddSubTask: (subtask: { tarea: string, parentId: string }) => void;
-  selectedTaskId: string | null;
+  selectedTask?: Task | null;
 }
 
-export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormProps) {
+export function TaskForm({ onAddTask, onAddSubTask, selectedTask }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -46,8 +46,16 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
   }, []);
 
   const parseAndAddTask = (inputText: string): boolean => {
-    if (selectedTaskId) {
-        onAddSubTask({ tarea: inputText, parentId: selectedTaskId });
+    if (selectedTask?.id) {
+        if(selectedTask.completado) {
+            toast({
+                title: "Tarea completada",
+                description: "No se pueden añadir subtareas a una tarea completada.",
+                variant: "destructive",
+            });
+            return false;
+        }
+        onAddSubTask({ tarea: inputText, parentId: selectedTask.id });
         return true;
     }
 
@@ -202,7 +210,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
         recognitionRef.current.abort(); 
       }
     };
-  }, [hasMicPermission, toast, onAddTask, onAddSubTask, selectedTaskId, isFenix, fenixPeriod]);
+  }, [hasMicPermission, toast, onAddTask, onAddSubTask, selectedTask, isFenix, fenixPeriod]);
 
 
   const handleMicClick = () => {
@@ -261,9 +269,11 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
     setIsProcessing(false);
   };
 
+  const isSubtaskMode = !!selectedTask?.id;
+  const isParentTaskCompleted = isSubtaskMode && selectedTask?.completado;
 
   let buttonContent;
-  const statusText = selectedTaskId 
+  const statusText = isSubtaskMode 
     ? "Presiona para dictar una subtarea."
     : "Presiona el micrófono o escribe para añadir una tarea.";
 
@@ -281,11 +291,13 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
     }
   }
   
-  const placeholderText = selectedTaskId 
-    ? "Ej: Comprar pasador..."
+  const placeholderText = isSubtaskMode
+    ? isParentTaskCompleted
+        ? "La tarea está completada"
+        : "Ej: Comprar pasador..."
     : "Ej: Comprar leche 5 4 1 2";
 
-  const buttonText = selectedTaskId ? "Añadir Subtarea" : "Añadir Tarea";
+  const buttonText = isSubtaskMode ? "Añadir Subtarea" : "Añadir Tarea";
 
   return (
     <div className="flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full">
@@ -305,7 +317,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
 
       <Button
         onClick={handleMicClick}
-        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording)} 
+        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording) || isParentTaskCompleted} 
         className="h-36 w-36 sm:h-40 sm:w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl flex items-center justify-center transition-all duration-150 ease-in-out hover:scale-105 active:scale-95"
         aria-label={isRecording ? "Detener grabación" : "Iniciar grabación de tarea"}
       >
@@ -313,7 +325,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
       </Button>
       
       <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2 max-w-xl mx-auto">
-        {!selectedTaskId && (
+        {!isSubtaskMode && (
             <div className="flex items-center justify-center space-x-4 pb-2">
                 <div className="flex items-center space-x-2">
                     <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} />
@@ -338,20 +350,20 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTaskId }: TaskFormPr
           placeholder={placeholderText}
           value={textInputValue}
           onChange={(e) => setTextInputValue(e.target.value)}
-          disabled={isRecording || isProcessing || hasMicPermission === null}
+          disabled={isRecording || isProcessing || hasMicPermission === null || isParentTaskCompleted}
           aria-label="Ingresar tarea manualmente"
           className="text-base text-center"
         />
         <Button 
           type="submit" 
           className="w-full" 
-          disabled={isRecording || isProcessing || !textInputValue.trim() || hasMicPermission === null}
+          disabled={isRecording || isProcessing || !textInputValue.trim() || hasMicPermission === null || isParentTaskCompleted}
         >
           {buttonText}
         </Button>
       </form>
 
-      {!selectedTaskId && (
+      {!isSubtaskMode && (
         <p className="text-xs text-center text-muted-foreground px-4 pt-3 max-w-md">
           <strong>Formato:</strong> "Descripción U N C D" (0-5).
           <br/>Ej: "Pasear al perro 5312" o "Pasear al perro 5 3 1 2".
