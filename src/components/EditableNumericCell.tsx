@@ -78,7 +78,7 @@ export function EditableNumericCell({
         onChange={(e) => setCurrentValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
-        className={cn("h-8 p-1 text-center tabular-nums", inputClassName)}
+        className={cn("h-7 p-1 text-center tabular-nums text-sm", inputClassName)}
         min={min}
         max={max}
         aria-label={`Editar valor`}
@@ -89,7 +89,7 @@ export function EditableNumericCell({
   return (
     <div
       className={cn(
-        "flex items-center justify-center space-x-1 cursor-pointer p-1 rounded-md hover:bg-muted/80 min-h-[32px]",
+        "flex items-center justify-center space-x-1 cursor-pointer p-1 rounded-md hover:bg-muted/80 min-h-[28px]",
         className
       )}
       title={`Valor actual: ${value}. Click para editar.`}
@@ -106,7 +106,7 @@ export function EditableNumericCell({
         }
       }}
     >
-      <span className="tabular-nums font-semibold text-lg">{value}</span>
+      <span className="tabular-nums font-semibold text-base">{value}</span>
     </div>
   );
 }

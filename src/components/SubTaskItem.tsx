@@ -81,12 +81,12 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }:
         </div>
 
         <div className="flex-grow min-w-0 text-left">
-            <div className={cn("font-medium whitespace-nowrap", subtask.completado && "line-through text-muted-foreground")}>
+            <div className={cn("font-medium whitespace-nowrap text-sm", subtask.completado && "line-through text-muted-foreground")}>
                 {subtask.tarea}
             </div>
         </div>
 
-        <div className="w-[280px] flex-shrink-0 text-right">
+        <div className="w-[80px] flex-shrink-0 text-right">
             <div className="flex items-center justify-end space-x-1 sm:space-x-2">
                 {subtask.scheduledAt && (
                     <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" title="Se intentó programar en calendario" />
@@ -96,9 +96,9 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }:
                     size="sm"
                     onClick={handleScheduleOnCalendar}
                     aria-label={`Programar subtarea ${subtask.tarea} en Google Calendar`}
-                    className="h-7 w-7 p-0"
+                    className="h-6 w-6 p-0"
                 >
-                    <CalendarPlus className="h-4 w-4" />
+                    <CalendarPlus className="h-3.5 w-3.5" />
                 </Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -106,10 +106,10 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }:
                             variant="destructive"
                             size="icon"
                             aria-label={`Eliminar subtarea ${subtask.tarea}`}
-                            className="h-7 w-7"
+                            className="h-6 w-6"
                             title="Eliminar subtarea"
                         >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent className="max-w-[340px] rounded-lg">

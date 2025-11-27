@@ -84,9 +84,11 @@ export function TaskItem({
     e.stopPropagation();
     onToggleComplete(task.id);
   };
+  
+  const formattedCreationDate = createdDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="flex items-center w-full p-2 min-w-[600px]">
+    <div className="flex items-center w-full p-1.5 min-w-[600px]">
       <div className="w-[40px] flex-shrink-0 flex items-center justify-center">
         {task.completado ? (
           <Checkbox
@@ -125,15 +127,12 @@ export function TaskItem({
          <div className="flex-grow min-w-0 text-left">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className={cn("font-medium whitespace-nowrap", task.completado && "line-through text-muted-foreground")}>
+                <div className={cn("font-medium whitespace-nowrap text-sm", task.completado && "line-through text-muted-foreground")}>
                   {task.tarea}
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p className="font-bold">{task.tarea}</p>
-                <p className="text-sm text-muted-foreground">
-                  Factor de envejecimiento: {agingFactor.toFixed(2)}
-                </p>
+                 <p>{formattedCreationDate} ({agingFactor.toFixed(2)})</p>
               </TooltipContent>
             </Tooltip>
             <div className="text-xs text-muted-foreground">
@@ -181,9 +180,9 @@ export function TaskItem({
               size="sm"
               onClick={handleScheduleOnCalendar}
               aria-label={`Programar tarea ${task.tarea} en Google Calendar`}
-              className="h-7 w-7 p-0"
+              className="h-6 w-6 p-0"
             >
-              <CalendarPlus className="h-4 w-4" />
+              <CalendarPlus className="h-3.5 w-3.5" />
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -191,10 +190,10 @@ export function TaskItem({
                   variant="destructive"
                   size="icon"
                   aria-label={`Eliminar tarea ${task.tarea}`}
-                  className="h-7 w-7"
+                  className="h-6 w-6"
                   title="Eliminar tarea"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="max-w-[340px] rounded-lg">
