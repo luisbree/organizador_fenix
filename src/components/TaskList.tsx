@@ -68,7 +68,10 @@ const calculateAgingFactor = (task: Task): number => {
 
 const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
   if (agingFactor <= 0) {
-    return { backgroundColor: `hsla(121, 63%, 58%, 0.5)` };
+    return { 
+        backgroundColor: `hsla(121, 63%, 58%, 0.5)`,
+        borderColor: `hsla(121, 63%, 48%, 1)`
+    };
   }
 
   const maxFactorForColor = 2.5;
@@ -79,7 +82,10 @@ const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
   const lightness = 60 - (normalizedFactor * 10); 
   const alpha = 0.5 + (normalizedFactor * 0.2); 
 
-  return { backgroundColor: `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})` };
+  return { 
+      backgroundColor: `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`,
+      borderColor: `hsla(${hue}, ${saturation}%, ${lightness - 10}%, 1)` 
+  };
 };
 
 
@@ -155,6 +161,7 @@ export function TaskList({
             const agingFactor = calculateAgingFactor(task);
             const agingColorStyle = getAgingColorStyle(agingFactor);
             const hasSubtasks = task.subtasks && task.subtasks.length > 0;
+            const isSelected = selectedTaskId === task.id;
 
             return (
               <AccordionItem 
@@ -162,13 +169,19 @@ export function TaskList({
                 key={task.id} 
                 className={cn(
                   "border-b overflow-hidden transition-all duration-300",
-                  selectedTaskId === task.id ? 'border-primary shadow-lg' : 'border-border',
+                  isSelected ? 'border-2 shadow-lg' : 'border-border',
                   task.completado ? "bg-muted/50 opacity-60" : ""
                 )}
-                style={task.completado ? {} : agingColorStyle}
+                style={{
+                  ...(!task.completado && { backgroundColor: agingColorStyle.backgroundColor }),
+                  ...(isSelected && !task.completado && { borderColor: agingColorStyle.borderColor })
+                }}
               >
-                <div className="flex items-center w-full relative">
-                  <div onClick={() => onSelectTask(task.id)} className="flex-grow cursor-pointer">
+                <div 
+                   onClick={() => onSelectTask(task.id)} 
+                   className="flex items-center w-full relative cursor-pointer"
+                >
+                  <div className="flex-grow">
                       <TaskItem
                           task={task}
                           onToggleComplete={onToggleComplete}
@@ -185,6 +198,11 @@ export function TaskList({
                           !hasSubtasks && "opacity-0 cursor-default"
                       )}
                       disabled={!hasSubtasks}
+                      onClick={(e) => {
+                        if (hasSubtasks) {
+                          e.stopPropagation(); // Evita que onSelectTask se dispare al hacer clic en el trigger del acordeón
+                        }
+                      }}
                   >
                       <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 chevron" />
                   </AccordionTrigger>
