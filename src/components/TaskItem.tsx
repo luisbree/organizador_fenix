@@ -37,7 +37,7 @@ interface TaskItemProps {
   task: Task;
   onToggleComplete: (id: string) => void;
   onDeleteTask: (id: string) => void;
-  onMarkSchedulingAttempted: (id: string) => void;
+  onToggleScheduled: (id: string, currentScheduledAt: any) => void;
   onUpdateTaskValue: (
     taskId: string,
     field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
@@ -54,7 +54,7 @@ export function TaskItem({
     task, 
     onToggleComplete, 
     onDeleteTask, 
-    onMarkSchedulingAttempted, 
+    onToggleScheduled, 
     onUpdateTaskValue,
     agingFactor
 }: TaskItemProps) {
@@ -73,7 +73,7 @@ export function TaskItem({
     const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${taskTitle}&details=${taskDetails}`;
     
     window.open(calendarUrl, '_blank', 'noopener,noreferrer');
-    onMarkSchedulingAttempted(task.id);
+    // We no longer automatically mark as scheduled. The user does it by clicking the clock.
   };
   
   const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
@@ -83,6 +83,11 @@ export function TaskItem({
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleComplete(task.id);
+  };
+  
+  const handleClockClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleScheduled(task.id, task.scheduledAt);
   };
   
   const formattedCreationDate = createdDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -124,7 +129,7 @@ export function TaskItem({
         )}
       </div>
       <div className="flex-grow min-w-0 grid grid-cols-[1fr_auto] items-center gap-2 pr-2">
-         <div className="flex-grow min-w-0 text-left">
+         <div className="flex-grow min-w-0">
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className={cn("font-bold whitespace-nowrap text-sm", task.completado && "line-through text-muted-foreground")}>
@@ -137,9 +142,6 @@ export function TaskItem({
             </Tooltip>
           </div>
           <div className="flex items-center gap-2">
-              {task.scheduledAt && (
-                <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              )}
               <p className="text-base font-bold tabular-nums pl-1">
                 {isFinite(dynamicIndex) ? dynamicIndex.toFixed(2) : "∞"}
               </p>
@@ -172,6 +174,14 @@ export function TaskItem({
       </div>
       <div className="w-[80px] flex-shrink-0 text-right">
         <div className="flex items-center justify-end space-x-1 sm:space-x-2">
+            <div onClick={handleClockClick} className="cursor-pointer p-1" title="Marcar como agendado">
+                <Clock
+                    className={cn(
+                        "h-3.5 w-3.5 flex-shrink-0 transition-colors",
+                        task.scheduledAt ? 'text-muted-foreground' : 'text-muted-foreground/30'
+                    )}
+                />
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -213,3 +223,5 @@ export function TaskItem({
     </div>
   );
 }
+
+    

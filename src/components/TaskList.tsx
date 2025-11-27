@@ -14,7 +14,7 @@ interface TaskListProps {
   tasks: Task[];
   onToggleComplete: (id: string) => void;
   onDeleteTask: (id: string) => void;
-  onMarkSchedulingAttempted: (id: string) => void;
+  onToggleScheduled: (id: string, currentScheduledAt: any) => void;
   onUpdateTaskValue: (
     taskId: string,
     field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
@@ -24,7 +24,7 @@ interface TaskListProps {
   selectedTaskId: string | null;
   onToggleSubTaskComplete: (subTaskId: string, parentId: string) => void;
   onDeleteSubTask: (subTaskId: string, parentId: string) => void;
-  onMarkSubTaskSchedulingAttempted: (subTaskId: string, parentId: string) => void;
+  onToggleSubTaskScheduled: (subTaskId: string, parentId: string, currentScheduledAt: any) => void;
 }
 
 const calculateDynamicIndex = (task: Task): number => {
@@ -93,13 +93,13 @@ export function TaskList({
     tasks, 
     onToggleComplete, 
     onDeleteTask, 
-    onMarkSchedulingAttempted, 
+    onToggleScheduled, 
     onUpdateTaskValue,
     onSelectTask,
     selectedTaskId,
     onToggleSubTaskComplete,
     onDeleteSubTask,
-    onMarkSubTaskSchedulingAttempted,
+    onToggleSubTaskScheduled,
 }: TaskListProps) {
   const sortedTasks = [...tasks].sort((a, b) => {
     if (a.completado && !b.completado) return 1;
@@ -186,7 +186,7 @@ export function TaskList({
                           task={task}
                           onToggleComplete={onToggleComplete}
                           onDeleteTask={onDeleteTask}
-                          onMarkSchedulingAttempted={onMarkSchedulingAttempted}
+                          onToggleScheduled={onToggleScheduled}
                           onUpdateTaskValue={onUpdateTaskValue}
                           agingFactor={agingFactor}
                       />
@@ -216,7 +216,7 @@ export function TaskList({
                           subtask={subtask}
                           onToggleComplete={() => onToggleSubTaskComplete(subtask.id, task.id)}
                           onDelete={() => onDeleteSubTask(subtask.id, task.id)}
-                          onSchedule={() => onMarkSubTaskSchedulingAttempted(subtask.id, task.id)}
+                          onToggleScheduled={() => onToggleSubTaskScheduled(subtask.id, task.id, subtask.scheduledAt)}
                         />
                       ))}
                     </div>
@@ -230,3 +230,5 @@ export function TaskList({
     </div>
   );
 }
+
+    

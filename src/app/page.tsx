@@ -227,17 +227,20 @@ export default function HomePage() {
     });
   };
 
-
-  const handleMarkSchedulingAttempted = (id: string) => {
+  const handleToggleScheduled = (taskId: string, currentScheduledAt: any) => {
     if (!firestore) return;
-    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
-    updateDocumentNonBlocking(taskRef, { scheduledAt: serverTimestamp() });
+    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', taskId);
+    updateDocumentNonBlocking(taskRef, {
+      scheduledAt: currentScheduledAt ? null : serverTimestamp()
+    });
   };
   
-  const handleMarkSubTaskSchedulingAttempted = (subTaskId: string, parentId: string) => {
+  const handleToggleSubTaskScheduled = (subTaskId: string, parentId: string, currentScheduledAt: any) => {
     if (!firestore) return;
     const subTaskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', parentId, 'subtasks', subTaskId);
-    updateDocumentNonBlocking(subTaskRef, { scheduledAt: serverTimestamp() });
+    updateDocumentNonBlocking(subTaskRef, {
+      scheduledAt: currentScheduledAt ? null : serverTimestamp()
+    });
   };
 
   const handleUpdateTaskValue = (
@@ -327,13 +330,13 @@ export default function HomePage() {
                 tasks={filteredTasks || []}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
-                onMarkSchedulingAttempted={handleMarkSchedulingAttempted}
+                onToggleScheduled={handleToggleScheduled}
                 onUpdateTaskValue={handleUpdateTaskValue}
                 onSelectTask={handleSelectTask}
                 selectedTaskId={selectedTaskId}
                 onToggleSubTaskComplete={handleToggleSubTaskComplete}
                 onDeleteSubTask={handleDeleteSubTask}
-                onMarkSubTaskSchedulingAttempted={handleMarkSubTaskSchedulingAttempted}
+                onToggleSubTaskScheduled={handleToggleSubTaskScheduled}
               />
             </div>
           )}
@@ -342,3 +345,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    

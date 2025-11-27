@@ -31,17 +31,17 @@ interface SubTaskItemProps {
   subtask: SubTask;
   onToggleComplete: () => void;
   onDelete: () => void;
-  onSchedule: () => void;
+  onToggleScheduled: () => void;
 }
 
-export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }: SubTaskItemProps) {
+export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleScheduled }: SubTaskItemProps) {
 
   const handleScheduleOnCalendar = (e: React.MouseEvent) => {
     e.stopPropagation();
     const taskTitle = encodeURIComponent(subtask.tarea);
     const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${taskTitle}`;
     window.open(calendarUrl, '_blank', 'noopener,noreferrer');
-    onSchedule();
+    // We no longer automatically mark as scheduled. The user does it by clicking the clock.
   };
   
   const createdDate = subtask.createdAt && 'toDate' in subtask.createdAt ? subtask.createdAt.toDate() : new Date(subtask.createdAt);
@@ -49,6 +49,11 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }:
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     onToggleComplete();
+  };
+  
+  const handleClockClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleScheduled();
   };
 
   return (
@@ -80,7 +85,7 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }:
             </Dialog>
         </div>
 
-        <div className="flex-grow min-w-0 text-left">
+        <div className="flex-grow min-w-0">
             <div className={cn("font-medium whitespace-nowrap text-sm", subtask.completado && "line-through text-muted-foreground")}>
                 {subtask.tarea}
             </div>
@@ -88,9 +93,14 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }:
 
         <div className="w-[80px] flex-shrink-0 text-right">
             <div className="flex items-center justify-end space-x-1 sm:space-x-2">
-                {subtask.scheduledAt && (
-                    <Clock className="h-3 w-3 text-muted-foreground flex-shrink-0" title="Se intentó programar en calendario" />
-                )}
+                <div onClick={handleClockClick} className="cursor-pointer p-1" title="Marcar como agendado">
+                  <Clock
+                    className={cn(
+                      "h-3.5 w-3.5 flex-shrink-0 transition-colors",
+                      subtask.scheduledAt ? 'text-muted-foreground' : 'text-muted-foreground/30'
+                    )}
+                  />
+                </div>
                 <Button
                     variant="outline"
                     size="sm"
@@ -132,3 +142,5 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onSchedule }:
     </div>
   );
 }
+
+    
