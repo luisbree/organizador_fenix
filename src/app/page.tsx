@@ -12,8 +12,19 @@ import { collection, doc, serverTimestamp, runTransaction, onSnapshot, writeBatc
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { useMemoFirebase } from '@/firebase/provider';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Settings } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 const SHARED_USER_ID = "shared_user";
 
@@ -24,6 +35,8 @@ export default function HomePage() {
   const { user, isUserLoading } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [language, setLanguage] = useState("es");
+
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -332,10 +345,26 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
-       <header className="my-2 md:my-4 text-center">
+       <header className="my-2 md:my-4 flex items-center justify-between">
         <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
           Fénix
         </h1>
+         <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Settings className="h-[1.2rem] w-[1.2rem]" />
+              <span className="sr-only">Configuración</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Idioma</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup value={language} onValueChange={setLanguage}>
+              <DropdownMenuRadioItem value="es">Español</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="en">English</DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
 
