@@ -107,13 +107,14 @@ export function TaskItem({
   
   const handleClockClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (task.completado) return;
     onToggleScheduled(task.id, task.scheduledAt);
   };
   
   const formattedCreationDate = createdDate.toLocaleDateString(t.locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="flex items-center w-full p-1.5 min-w-[600px]">
+    <div className={cn("flex items-center w-full p-1.5 min-w-[600px]", task.completado && "opacity-70")}>
       <div className="w-[40px] flex-shrink-0 flex items-center justify-center">
         {task.completado ? (
           <Checkbox
@@ -167,15 +168,16 @@ export function TaskItem({
                       <PhoenixIcon className="h-3.5 w-3.5 flex-shrink-0 text-amber-600" />
                   </div>
               )}
-              <div onClick={handleClockClick} className="cursor-pointer p-1" title={t.toggleScheduledTooltip}>
+              <div onClick={handleClockClick} className={cn("cursor-pointer p-1", task.completado && "cursor-not-allowed")} title={t.toggleScheduledTooltip}>
                   <Clock
                       className={cn(
                           "h-3.5 w-3.5 flex-shrink-0 transition-colors",
-                          task.scheduledAt ? 'text-muted-foreground' : 'text-muted-foreground/30'
+                          task.scheduledAt ? 'text-muted-foreground' : 'text-muted-foreground/30',
+                          task.completado && "text-muted-foreground/20"
                       )}
                   />
               </div>
-              <p className="text-base font-bold tabular-nums">
+              <p className={cn("text-base font-bold tabular-nums", task.completado && "text-muted-foreground/60")}>
                 {isFinite(dynamicIndex) ? dynamicIndex.toFixed(2) : "∞"}
               </p>
            </div>
@@ -186,6 +188,7 @@ export function TaskItem({
           value={task.urgencia}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'urgencia', newValue)}
           t={t}
+          disabled={task.completado}
         />
       </div>
       <div className="w-[50px] text-center flex-shrink-0">
@@ -193,6 +196,7 @@ export function TaskItem({
           value={task.necesidad}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'necesidad', newValue)}
           t={t}
+          disabled={task.completado}
         />
       </div>
       <div className="w-[50px] text-center flex-shrink-0">
@@ -200,6 +204,7 @@ export function TaskItem({
           value={task.costo}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'costo', newValue)}
           t={t}
+          disabled={task.completado}
         />
       </div>
       <div className="w-[50px] text-center flex-shrink-0">
@@ -207,6 +212,7 @@ export function TaskItem({
           value={task.duracion}
           onSave={(newValue) => onUpdateTaskValue(task.id, 'duracion', newValue)}
           t={t}
+          disabled={task.completado}
         />
       </div>
       <div className="w-[80px] flex-shrink-0 text-right">
@@ -217,6 +223,7 @@ export function TaskItem({
               onClick={handleScheduleOnCalendar}
               aria-label={t.scheduleTaskAriaLabel(task.tarea)}
               className="h-6 w-6 p-0"
+              disabled={task.completado}
             >
               <CalendarPlus className="h-3.5 w-3.5" />
             </Button>

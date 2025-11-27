@@ -16,6 +16,7 @@ interface EditableNumericCellProps {
   max?: number;
   className?: string;
   inputClassName?: string;
+  disabled?: boolean;
 }
 
 export function EditableNumericCell({
@@ -26,6 +27,7 @@ export function EditableNumericCell({
   max = 5,
   className,
   inputClassName,
+  disabled = false,
 }: EditableNumericCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [currentValue, setCurrentValue] = useState(String(value));
@@ -92,24 +94,28 @@ export function EditableNumericCell({
   return (
     <div
       className={cn(
-        "flex items-center justify-center space-x-1 cursor-pointer p-1 rounded-md hover:bg-muted/80 min-h-[28px]",
+        "flex items-center justify-center space-x-1 p-1 rounded-md min-h-[28px]",
+        !disabled && "cursor-pointer hover:bg-muted/80",
+        disabled && "cursor-not-allowed",
         className
       )}
-      title={t.editValueTooltip(value)}
+      title={disabled ? undefined : t.editValueTooltip(value)}
       onClick={() => {
+        if (disabled) return;
         setCurrentValue(String(value)); 
         setIsEditing(true);
       }}
-      role="button"
-      tabIndex={0}
+      role={disabled ? "status" : "button"}
+      tabIndex={disabled ? -1 : 0}
       onKeyDown={(e) => {
+        if (disabled) return;
         if (e.key === 'Enter' || e.key === ' ') {
           setCurrentValue(String(value));
           setIsEditing(true);
         }
       }}
     >
-      <span className="tabular-nums text-base">{value}</span>
+      <span className={cn("tabular-nums text-base", disabled && "text-muted-foreground/60")}>{value}</span>
     </div>
   );
 }

@@ -53,13 +53,14 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleSched
   
   const handleClockClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (subtask.completado) return;
     onToggleScheduled();
   };
 
   return (
     <div className={cn(
         "flex items-center w-full p-1.5 rounded-md hover:bg-muted/50 min-w-[600px]",
-        subtask.completado && "opacity-50"
+        subtask.completado && "opacity-70"
     )}>
         <div className="w-[40px] flex-shrink-0 flex items-center justify-center">
             <Dialog>
@@ -93,11 +94,12 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleSched
 
         <div className="w-[80px] flex-shrink-0 text-right">
             <div className="flex items-center justify-end space-x-1 sm:space-x-2">
-                <div onClick={handleClockClick} className="cursor-pointer p-1" title={t.toggleScheduledTooltip}>
+                <div onClick={handleClockClick} className={cn("cursor-pointer p-1", subtask.completado && "cursor-not-allowed")} title={t.toggleScheduledTooltip}>
                   <Clock
                     className={cn(
                       "h-3.5 w-3.5 flex-shrink-0 transition-colors",
-                      subtask.scheduledAt ? 'text-muted-foreground' : 'text-muted-foreground/30'
+                      subtask.scheduledAt ? 'text-muted-foreground' : 'text-muted-foreground/30',
+                      subtask.completado && "text-muted-foreground/20"
                     )}
                   />
                 </div>
@@ -107,6 +109,7 @@ export function SubTaskItem({ subtask, onToggleComplete, onDelete, onToggleSched
                     onClick={handleScheduleOnCalendar}
                     aria-label={t.scheduleSubtaskAriaLabel(subtask.tarea)}
                     className="h-6 w-6 p-0"
+                    disabled={subtask.completado}
                 >
                     <CalendarPlus className="h-3.5 w-3.5" />
                 </Button>

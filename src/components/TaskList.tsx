@@ -108,6 +108,13 @@ export function TaskList({
     if (a.completado && !b.completado) return 1;
     if (!a.completado && b.completado) return -1;
 
+    // For completed tasks, sort by completion date descending
+    if (a.completado && b.completado) {
+        const aDate = a.completedAt && 'toDate' in a.completedAt ? a.completedAt.toDate() : new Date(a.completedAt || 0);
+        const bDate = b.completedAt && 'toDate' in b.completedAt ? b.completedAt.toDate() : new Date(b.completedAt || 0);
+        return bDate.getTime() - aDate.getTime();
+    }
+
     const aIndex = calculateDynamicIndex(a);
     const bIndex = calculateDynamicIndex(b);
 
@@ -173,7 +180,7 @@ export function TaskList({
                 className={cn(
                   "border-b overflow-hidden transition-all duration-300",
                   isSelected ? 'border-4 shadow-lg' : 'border-border',
-                  task.completado ? "bg-muted/50 opacity-60" : ""
+                  task.completado ? "bg-muted/50" : ""
                 )}
                 style={{
                   ...(!task.completado && { backgroundColor: agingColorStyle.backgroundColor }),
