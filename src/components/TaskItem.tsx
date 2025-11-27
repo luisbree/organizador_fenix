@@ -135,9 +135,6 @@ export function TaskItem({
                  <p>{formattedCreationDate} ({agingFactor.toFixed(2)})</p>
               </TooltipContent>
             </Tooltip>
-            <div className="text-xs text-muted-foreground">
-              {createdDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric'})}, {createdDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit'})}
-            </div>
           </div>
           <div className="flex items-center gap-2">
               {task.scheduledAt && (
