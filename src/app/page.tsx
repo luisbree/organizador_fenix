@@ -30,34 +30,6 @@ import { translations, type LanguageStrings } from '@/lib/translations';
 
 const SHARED_USER_ID = "shared_user";
 
-
-// Hook to run an effect only once on component mount
-const useEffectOnce = (effect: React.EffectCallback) => {
-  const effectFn = useRef(effect);
-  const destroyFn = useRef<void | (() => void)>();
-  const effectCalled = useRef(false);
-  const rendered = useRef(false);
-
-  if (effectCalled.current) {
-    rendered.current = true;
-  }
-
-  useEffect(() => {
-    if (!effectCalled.current) {
-      destroyFn.current = effectFn.current();
-      effectCalled.current = true;
-    }
-
-    return () => {
-      if (rendered.current === false) return;
-      if (destroyFn.current) {
-        destroyFn.current();
-      }
-    };
-  }, []);
-};
-
-
 export default function HomePage() {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -68,6 +40,7 @@ export default function HomePage() {
   const [language, setLanguage] = useState<keyof typeof translations>("es");
   const [t, setT] = useState<LanguageStrings>(translations.es);
   const [activeListId, setActiveListId] = useState<string | null>(null);
+  const migrationCompletedRef = useRef(false);
 
   useEffect(() => {
     setT(translations[language]);
@@ -106,41 +79,56 @@ export default function HomePage() {
   }, [taskListsData, activeListId, isLoadingTaskLists, firestore]);
   
   // Migration logic for old tasks
-  useEffectOnce(() => {
-    if (firestore && taskListsData && taskListsData.length > 0) {
-      const generalList = taskListsData.find(list => list.name === "general");
-      const generalListId = generalList ? generalList.id : taskListsData[0].id;
-
-      const migrateTasks = async () => {
-        const oldTasksRef = collection(firestore, 'users', SHARED_USER_ID, 'tasks');
-        const oldTasksSnapshot = await getDocs(oldTasksRef);
-
-        if (!oldTasksSnapshot.empty) {
-          console.log(`Found ${oldTasksSnapshot.size} old tasks to migrate.`);
-          const newTasksRef = collection(firestore, 'users', SHARED_USER_ID, 'taskLists', generalListId, 'tasks');
-          const batch = writeBatch(firestore);
-
-          oldTasksSnapshot.forEach(taskDoc => {
-            const taskData = taskDoc.data();
-            const newDocRef = doc(newTasksRef, taskDoc.id); // Preserve original ID
-            batch.set(newDocRef, taskData);
-            batch.delete(taskDoc.ref); // Delete the old task
-          });
-
-          await batch.commit();
-          toast({
-            title: "Tareas migradas",
-            description: "Tus tareas anteriores se han movido a la lista 'general'.",
-          });
-          console.log("Migration complete.");
-        }
-      };
-
-      migrateTasks().catch(err => {
-        console.error("Task migration failed: ", err);
-      });
+  useEffect(() => {
+    // Ensure migration runs only once and all dependencies are ready
+    if (migrationCompletedRef.current || !firestore || !taskListsData || taskListsData.length === 0) {
+      return;
     }
-  });
+    
+    const generalList = taskListsData.find(list => list.name === "general");
+    
+    // Ensure the "general" list exists before attempting migration
+    if (!generalList) {
+      return;
+    }
+
+    const generalListId = generalList.id;
+
+    const migrateTasks = async () => {
+      const oldTasksRef = collection(firestore, 'users', SHARED_USER_ID, 'tasks');
+      const oldTasksSnapshot = await getDocs(oldTasksRef);
+
+      if (!oldTasksSnapshot.empty) {
+        migrationCompletedRef.current = true; // Mark as started to prevent re-runs
+        console.log(`Found ${oldTasksSnapshot.size} old tasks to migrate.`);
+        const newTasksRef = collection(firestore, 'users', SHARED_USER_ID, 'taskLists', generalListId, 'tasks');
+        const batch = writeBatch(firestore);
+
+        oldTasksSnapshot.forEach(taskDoc => {
+          const taskData = taskDoc.data();
+          const newDocRef = doc(newTasksRef, taskDoc.id); // Preserve original ID
+          batch.set(newDocRef, taskData);
+          batch.delete(taskDoc.ref); // Delete the old task
+        });
+
+        await batch.commit();
+        toast({
+          title: "Tareas migradas",
+          description: "Tus tareas anteriores se han movido a la lista 'general'.",
+        });
+        console.log("Migration complete.");
+      } else {
+        // If no old tasks, just mark as complete to prevent checking again.
+        migrationCompletedRef.current = true; 
+      }
+    };
+
+    migrateTasks().catch(err => {
+      console.error("Task migration failed: ", err);
+      migrationCompletedRef.current = false; // Allow retry if it failed
+    });
+    
+  }, [firestore, taskListsData, toast]);
 
 
   const tasksQuery = useMemoFirebase(() => {
