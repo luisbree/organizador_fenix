@@ -20,9 +20,10 @@ interface TaskFormProps {
   onAddSubTask: (subtask: { tarea: string, parentId: string }) => void;
   selectedTask?: Task | null;
   t: LanguageStrings;
+  disabled?: boolean;
 }
 
-export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormProps) {
+export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t, disabled = false }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -217,6 +218,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormP
 
 
   const handleMicClick = () => {
+    if (disabled) return;
     if (hasMicPermission === false) {
       toast({
         variant: 'destructive',
@@ -256,6 +258,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormP
 
   const handleTextInputSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    if (disabled) return;
     if (!textInputValue.trim()) {
         toast({
             title: t.emptyFieldTitle,
@@ -276,9 +279,9 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormP
   const isParentTaskCompleted = isSubtaskMode && selectedTask?.completado;
 
   let buttonContent;
-  const statusText = isSubtaskMode 
+  const statusText = disabled ? t.selectListToStart : (isSubtaskMode 
     ? t.subtaskDictationPrompt
-    : t.taskDictationPrompt;
+    : t.taskDictationPrompt);
 
   if (isProcessing) {
     buttonContent = <Loader2 className="h-16 w-16 sm:h-20 sm:w-20 animate-spin" />; 
@@ -290,20 +293,20 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormP
     } else if (hasMicPermission === false) {
       buttonContent = <Mic className="h-16 w-16 sm:h-20 sm:w-20 text-muted-foreground" />;
     } else {
-      buttonContent = <Mic className="h-16 w-16 sm:h-20 smw-20" />;
+      buttonContent = <Mic className="h-16 w-16 sm:h-20 sm:w-20" />;
     }
   }
   
-  const placeholderText = isSubtaskMode
+  const placeholderText = disabled ? t.selectListToStart : (isSubtaskMode
     ? isParentTaskCompleted
         ? t.taskCompletedPlaceholder
         : t.subtaskPlaceholder
-    : t.taskPlaceholder;
+    : t.taskPlaceholder);
 
   const buttonText = isSubtaskMode ? t.addSubtaskButton : t.addTaskButton;
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full">
+    <div className={cn("flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full", disabled && "opacity-60")}>
       {hasMicPermission === false && !isRecording && !isProcessing && (
          <Alert variant="destructive" className="w-full mb-2">
             <AlertCircle className="h-4 w-4" />
@@ -320,7 +323,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormP
 
       <Button
         onClick={handleMicClick}
-        disabled={isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording) || isParentTaskCompleted} 
+        disabled={disabled || isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording) || isParentTaskCompleted} 
         className="h-36 w-36 sm:h-40 sm:w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl flex items-center justify-center transition-all duration-150 ease-in-out hover:scale-105 active:scale-95"
         aria-label={isRecording ? t.stopRecordingAriaLabel : t.startRecordingAriaLabel}
       >
@@ -330,7 +333,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormP
       <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2 max-w-xl mx-auto">
         <div className={cn("flex items-center justify-center space-x-4 pb-2", isSubtaskMode && "invisible")}>
             <div className="flex items-center space-x-2">
-                <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} disabled={isSubtaskMode} />
+                <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} disabled={disabled || isSubtaskMode} />
                 <Label htmlFor="fenix-checkbox" className="text-sm font-medium">{t.fenix}</Label>
             </div>
             <div className="flex items-center space-x-2">
@@ -341,7 +344,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormP
                     onChange={(e) => setFenixPeriod(Number(e.target.value))}
                     className="w-20 h-8 text-center"
                     min="1"
-                    disabled={!isFenix || isSubtaskMode}
+                    disabled={disabled || !isFenix || isSubtaskMode}
                 />
                 <Label htmlFor="fenix-period" className="text-sm text-muted-foreground">{t.days}</Label>
             </div>
@@ -351,14 +354,14 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t }: TaskFormP
           placeholder={placeholderText}
           value={textInputValue}
           onChange={(e) => setTextInputValue(e.target.value)}
-          disabled={isRecording || isProcessing || hasMicPermission === null || isParentTaskCompleted}
+          disabled={disabled || isRecording || isProcessing || hasMicPermission === null || isParentTaskCompleted}
           aria-label={t.manualInputAriaLabel}
           className="text-base text-center"
         />
         <Button 
           type="submit" 
           className="w-full" 
-          disabled={isRecording || isProcessing || !textInputValue.trim() || hasMicPermission === null || isParentTaskCompleted}
+          disabled={disabled || isRecording || isProcessing || !textInputValue.trim() || hasMicPermission === null || isParentTaskCompleted}
         >
           {buttonText}
         </Button>

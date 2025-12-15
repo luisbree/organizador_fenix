@@ -1,5 +1,27 @@
 {
   "entities": {
+    "TaskList": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task List",
+      "type": "object",
+      "description": "Represents a list of tasks.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TaskList entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the task list."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the task list was created."
+        }
+      },
+      "required": ["id", "name", "createdAt"]
+    },
     "Task": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Task",
@@ -98,17 +120,27 @@
   "firestore": {
     "structure": [
       {
-        "path": "/users/{userId}/tasks/{taskId}",
+        "path": "/users/{userId}/taskLists/{listId}",
+        "definition": {
+          "entityName": "TaskList",
+          "schema": {
+            "$ref": "#/entities/TaskList"
+          },
+          "description": "Stores the user's task lists."
+        }
+      },
+      {
+        "path": "/users/{userId}/taskLists/{listId}/tasks/{taskId}",
         "definition": {
           "entityName": "Task",
           "schema": {
             "$ref": "#/entities/Task"
           },
-          "description": "Stores tasks for a specific user."
+          "description": "Stores tasks for a specific list."
         }
       },
       {
-        "path": "/users/{userId}/tasks/{taskId}/subtasks/{subtaskId}",
+        "path": "/users/{userId}/taskLists/{listId}/tasks/{taskId}/subtasks/{subtaskId}",
         "definition": {
           "entityName": "SubTask",
           "schema": {

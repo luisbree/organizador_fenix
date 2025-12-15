@@ -27,6 +27,20 @@ export type LanguageStrings = {
   taskUpdatedTitle: string;
   taskUpdatedDescription: (field: string) => string;
   newIndex: string;
+  // List Manager
+  selectListPlaceholder: string;
+  addListAriaLabel: string;
+  addListTitle: string;
+  listNamePlaceholder: string;
+  addListButton: string;
+  deleteListAriaLabel: (listName: string) => string;
+  confirmDeleteListTitle: string;
+  confirmDeleteListDescription: (listName: string) => string;
+  listAddedTitle: string;
+  listAddedDescription: (listName: string) => string;
+  cannotDeleteListTitle: string;
+  cannotDeleteListDescription: string;
+  listDeletedTitle: string;
   // Editable Cell
   invalidValueTitle: string;
   invalidValueDescription: (min: number, max: number) => string;
@@ -67,6 +81,7 @@ export type LanguageStrings = {
   micPermissionPendingDescription: string;
   micStartErrorTitle: string;
   micStartErrorDescription: string;
+  selectListToStart: string;
   subtaskDictationPrompt: string;
   taskDictationPrompt: string;
   taskCompletedPlaceholder: string;
@@ -138,6 +153,19 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     taskUpdatedTitle: 'Tarea actualizada',
     taskUpdatedDescription: (field) => `El campo "${field}" ha sido actualizado.`,
     newIndex: 'Nuevo índice:',
+    selectListPlaceholder: 'Seleccionar una lista',
+    addListAriaLabel: 'Añadir nueva lista',
+    addListTitle: 'Añadir nueva lista',
+    listNamePlaceholder: 'Nombre de la lista',
+    addListButton: 'Añadir lista',
+    deleteListAriaLabel: (listName) => `Eliminar lista ${listName}`,
+    confirmDeleteListTitle: '¿Eliminar esta lista?',
+    confirmDeleteListDescription: (listName) => `La lista "${listName}" y todas sus tareas serán eliminadas permanentemente. Esta acción no se puede deshacer.`,
+    listAddedTitle: 'Lista añadida',
+    listAddedDescription: (listName) => `La lista "${listName}" ha sido creada.`,
+    cannotDeleteListTitle: 'No se puede eliminar',
+    cannotDeleteListDescription: 'No se puede eliminar la única lista existente.',
+    listDeletedTitle: 'Lista eliminada',
     invalidValueTitle: 'Valor inválido',
     invalidValueDescription: (min, max) => `El valor debe ser un número entre ${min} y ${max}.`,
     editValueAriaLabel: 'Editar valor',
@@ -175,6 +203,7 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     micPermissionPendingDescription: 'Esperando confirmación del permiso para usar el micrófono.',
     micStartErrorTitle: 'Error al iniciar grabación',
     micStartErrorDescription: 'No se pudo iniciar el reconocimiento de voz. Intenta de nuevo.',
+    selectListToStart: 'Selecciona una lista para empezar',
     subtaskDictationPrompt: 'Presiona para dictar una subtarea.',
     taskDictationPrompt: 'Presiona el micrófono o escribe para añadir una tarea.',
     taskCompletedPlaceholder: 'La tarea está completada',
@@ -241,6 +270,19 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     taskUpdatedTitle: 'Task updated',
     taskUpdatedDescription: (field) => `The field "${field}" has been updated.`,
     newIndex: 'New index:',
+    selectListPlaceholder: 'Select a list',
+    addListAriaLabel: 'Add new list',
+    addListTitle: 'Add new list',
+    listNamePlaceholder: 'List name',
+    addListButton: 'Add list',
+    deleteListAriaLabel: (listName) => `Delete list ${listName}`,
+    confirmDeleteListTitle: 'Delete this list?',
+    confirmDeleteListDescription: (listName) => `The list "${listName}" and all its tasks will be permanently deleted. This action cannot be undone.`,
+    listAddedTitle: 'List added',
+    listAddedDescription: (listName) => `The list "${listName}" has been created.`,
+    cannotDeleteListTitle: 'Cannot delete',
+    cannotDeleteListDescription: 'You cannot delete the only existing list.',
+    listDeletedTitle: 'List deleted',
     invalidValueTitle: 'Invalid value',
     invalidValueDescription: (min, max) => `The value must be a number between ${min} and ${max}.`,
     editValueAriaLabel: 'Edit value',
@@ -278,6 +320,7 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     micPermissionPendingDescription: 'Waiting for microphone permission confirmation.',
     micStartErrorTitle: 'Error starting recording',
     micStartErrorDescription: 'Could not start speech recognition. Please try again.',
+    selectListToStart: 'Select a list to start',
     subtaskDictationPrompt: 'Press to dictate a subtask.',
     taskDictationPrompt: 'Press the microphone or type to add a task.',
     taskCompletedPlaceholder: 'The task is completed',
@@ -344,6 +387,19 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     taskUpdatedTitle: 'Tarefa atualizada',
     taskUpdatedDescription: (field) => `O campo "${field}" foi atualizado.`,
     newIndex: 'Novo índice:',
+    selectListPlaceholder: 'Selecionar uma lista',
+    addListAriaLabel: 'Adicionar nova lista',
+    addListTitle: 'Adicionar nova lista',
+    listNamePlaceholder: 'Nome da lista',
+    addListButton: 'Adicionar lista',
+    deleteListAriaLabel: (listName) => `Excluir lista ${listName}`,
+    confirmDeleteListTitle: 'Excluir esta lista?',
+    confirmDeleteListDescription: (listName) => `A lista "${listName}" e todas as suas tarefas serão excluídas permanentemente. Esta ação não pode ser desfeita.`,
+    listAddedTitle: 'Lista adicionada',
+    listAddedDescription: (listName) => `A lista "${listName}" foi criada.`,
+    cannotDeleteListTitle: 'Não é possível excluir',
+    cannotDeleteListDescription: 'Você não pode excluir a única lista existente.',
+    listDeletedTitle: 'Lista excluída',
     invalidValueTitle: 'Valor inválido',
     invalidValueDescription: (min, max) => `O valor deve ser um número entre ${min} e ${max}.`,
     editValueAriaLabel: 'Editar valor',
@@ -381,6 +437,7 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     micPermissionPendingDescription: 'Aguardando confirmação da permissão do microfone.',
     micStartErrorTitle: 'Erro ao iniciar a gravação',
     micStartErrorDescription: 'Não foi possível iniciar o reconhecimento de voz. Por favor, tente novamente.',
+    selectListToStart: 'Selecione uma lista para começar',
     subtaskDictationPrompt: 'Pressione para ditar uma subtarefa.',
     taskDictationPrompt: 'Pressione o microfone ou digite para adicionar uma tarefa.',
     taskCompletedPlaceholder: 'A tarefa está concluída',

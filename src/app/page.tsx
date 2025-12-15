@@ -2,13 +2,14 @@
 "use client";
 
 import * as React from 'react';
-import type { Task, SubTask } from '@/types/task';
+import type { Task, SubTask, TaskList as TaskListType } from '@/types/task';
 import { TaskForm } from '@/components/TaskForm';
 import { TaskList } from '@/components/TaskList';
 import { TaskSearch } from '@/components/TaskSearch';
+import { ListManager } from '@/components/ListManager';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, doc, serverTimestamp, runTransaction, onSnapshot, writeBatch } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, runTransaction, onSnapshot, writeBatch, query, orderBy, addDoc, deleteDoc } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { useMemoFirebase } from '@/firebase/provider';
@@ -38,6 +39,7 @@ export default function HomePage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [language, setLanguage] = useState<keyof typeof translations>("es");
   const [t, setT] = useState<LanguageStrings>(translations.es);
+  const [activeListId, setActiveListId] = useState<string | null>(null);
 
   useEffect(() => {
     setT(translations[language]);
@@ -50,10 +52,35 @@ export default function HomePage() {
     }
   }, [isUserLoading, user, auth]);
 
-  const tasksQuery = useMemoFirebase(() => {
+  const taskListsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, 'users', SHARED_USER_ID, 'tasks');
+    return query(collection(firestore, 'users', SHARED_USER_ID, 'taskLists'), orderBy('createdAt', 'asc'));
   }, [firestore]);
+
+  const { data: taskListsData, isLoading: isLoadingTaskLists } = useCollection<TaskListType>(taskListsQuery);
+
+  useEffect(() => {
+    if (taskListsData) {
+      if (taskListsData.length > 0 && !activeListId) {
+        setActiveListId(taskListsData[0].id);
+      } else if (taskListsData.length === 0 && !isLoadingTaskLists && firestore) {
+        // Create a default list if none exist
+        const defaultListName = "general";
+        const listsColRef = collection(firestore, 'users', SHARED_USER_ID, 'taskLists');
+        addDoc(listsColRef, {
+          name: defaultListName,
+          createdAt: serverTimestamp()
+        }).then(docRef => {
+          setActiveListId(docRef.id);
+        });
+      }
+    }
+  }, [taskListsData, activeListId, isLoadingTaskLists, firestore]);
+
+  const tasksQuery = useMemoFirebase(() => {
+    if (!firestore || !activeListId) return null;
+    return collection(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks');
+  }, [firestore, activeListId]);
 
   const { data: tasksData, isLoading: isLoadingTasks } = useCollection<Task>(tasksQuery);
 
@@ -61,7 +88,7 @@ export default function HomePage() {
 
   // Effect to check for and rebirth Fenix tasks
   useEffect(() => {
-    if (tasks && firestore) {
+    if (tasks && firestore && activeListId) {
       const batch = writeBatch(firestore);
       let batchHasWrites = false;
 
@@ -72,7 +99,7 @@ export default function HomePage() {
           rebirthDate.setDate(rebirthDate.getDate() + task.fenixPeriod);
 
           if (new Date() >= rebirthDate) {
-            const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', task.id);
+            const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', task.id);
             batch.update(taskRef, {
               completado: false,
               completedAt: null,
@@ -95,17 +122,15 @@ export default function HomePage() {
         });
       }
     }
-  }, [tasks, firestore, toast, t]);
+  }, [tasks, firestore, activeListId, toast, t]);
 
   useEffect(() => {
-    if (tasksData) {
+    if (tasksData && activeListId && firestore) {
         const initialTasks = tasksData.map(t => ({ ...t, subtasks: t.subtasks || [] }));
         setTasks(initialTasks);
 
-        if (!firestore) return;
-
         const unsubscribers = tasksData.map(task => {
-            const subtasksColRef = collection(firestore, 'users', SHARED_USER_ID, 'tasks', task.id, 'subtasks');
+            const subtasksColRef = collection(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', task.id, 'subtasks');
             
             return onSnapshot(subtasksColRef, (snapshot) => {
                 const fetchedSubtasks = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as SubTask[];
@@ -127,7 +152,7 @@ export default function HomePage() {
     } else {
         setTasks(null);
     }
-  }, [tasksData, firestore]);
+  }, [tasksData, firestore, activeListId]);
   
   const handleSelectTask = (taskId: string | null) => {
     setSelectedTaskId(current => (current === taskId ? null : taskId));
@@ -174,8 +199,8 @@ export default function HomePage() {
   };
 
   const handleAddSubTask = (subTaskData: { tarea: string, parentId: string }) => {
-    if (!firestore) return;
-    const subtaskQuery = collection(firestore, 'users', SHARED_USER_ID, 'tasks', subTaskData.parentId, 'subtasks');
+    if (!firestore || !activeListId) return;
+    const subtaskQuery = collection(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', subTaskData.parentId, 'subtasks');
     const newSubTask: Omit<SubTask, 'id' | 'createdAt'> = {
         ...subTaskData,
         completado: false,
@@ -191,8 +216,8 @@ export default function HomePage() {
   };
 
   const handleToggleComplete = (id: string) => {
-    if (!firestore) return;
-    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
+    if (!firestore || !activeListId) return;
+    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', id);
     const task = tasks?.find(t => t.id === id);
     if(task) {
       if (task.completado) { // Reactivating a task (manually)
@@ -228,8 +253,8 @@ export default function HomePage() {
   };
   
   const handleToggleSubTaskComplete = (subTaskId: string, parentId: string) => {
-    if (!firestore) return;
-    const subTaskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', parentId, 'subtasks', subTaskId);
+    if (!firestore || !activeListId) return;
+    const subTaskRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', parentId, 'subtasks', subTaskId);
     const parentTask = tasks?.find(t => t.id === parentId);
     const subTask = parentTask?.subtasks?.find(st => st.id === subTaskId);
 
@@ -242,9 +267,9 @@ export default function HomePage() {
   };
 
   const handleDeleteTask = async (id: string) => {
-    if (!firestore) return;
+    if (!firestore || !activeListId) return;
 
-    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', id);
+    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', id);
     
     try {
         await runTransaction(firestore, async (transaction) => {
@@ -269,8 +294,8 @@ export default function HomePage() {
   };
 
   const handleDeleteSubTask = (subTaskId: string, parentId: string) => {
-    if (!firestore) return;
-    const subTaskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', parentId, 'subtasks', subTaskId);
+    if (!firestore || !activeListId) return;
+    const subTaskRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', parentId, 'subtasks', subTaskId);
     deleteDocumentNonBlocking(subTaskRef);
     toast({
       title: t.subtaskDeletedTitle,
@@ -278,16 +303,16 @@ export default function HomePage() {
   };
 
   const handleToggleScheduled = (taskId: string, currentScheduledAt: any) => {
-    if (!firestore) return;
-    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', taskId);
+    if (!firestore || !activeListId) return;
+    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', taskId);
     updateDocumentNonBlocking(taskRef, {
       scheduledAt: currentScheduledAt ? null : serverTimestamp()
     });
   };
   
   const handleToggleSubTaskScheduled = (subTaskId: string, parentId: string, currentScheduledAt: any) => {
-    if (!firestore) return;
-    const subTaskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', parentId, 'subtasks', subTaskId);
+    if (!firestore || !activeListId) return;
+    const subTaskRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', parentId, 'subtasks', subTaskId);
     updateDocumentNonBlocking(subTaskRef, {
       scheduledAt: currentScheduledAt ? null : serverTimestamp()
     });
@@ -298,10 +323,10 @@ export default function HomePage() {
     field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
     newValue: number
   ) => {
-     if (!firestore) return;
+     if (!firestore || !activeListId) return;
     const task = tasks?.find(t => t.id === taskId);
     if (task) {
-      const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'tasks', taskId);
+      const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', taskId);
       const updatedTask = { ...task, [field]: newValue };
 
       const num = updatedTask.urgencia + updatedTask.necesidad;
@@ -329,6 +354,42 @@ export default function HomePage() {
     }
   };
   
+  const handleAddList = (listName: string) => {
+    if (!firestore) return;
+    const listsColRef = collection(firestore, 'users', SHARED_USER_ID, 'taskLists');
+    addDoc(listsColRef, {
+      name: listName,
+      createdAt: serverTimestamp()
+    }).then(docRef => {
+      setActiveListId(docRef.id);
+      toast({
+        title: t.listAddedTitle,
+        description: t.listAddedDescription(listName),
+      });
+    });
+  };
+
+  const handleDeleteList = async (listId: string) => {
+    if (!firestore || (taskListsData && taskListsData.length <= 1)) {
+        toast({
+            title: t.cannotDeleteListTitle,
+            description: t.cannotDeleteListDescription,
+            variant: "destructive"
+        });
+        return;
+    }
+    const listRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', listId);
+    
+    // This is a simple delete, for a real app consider deleting subcollections
+    await deleteDoc(listRef);
+    
+    setActiveListId(null); // Will trigger effect to select a new default
+    
+    toast({
+        title: t.listDeletedTitle
+    });
+  };
+
   const filteredTasks = useMemo(() => {
     if (!tasks) return [];
     return tasks.filter(task => 
@@ -338,7 +399,7 @@ export default function HomePage() {
   }, [tasks, searchQuery]);
 
 
-  if (isUserLoading) {
+  if (isUserLoading || isLoadingTaskLists) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -382,10 +443,19 @@ export default function HomePage() {
             onAddSubTask={handleAddSubTask}
             selectedTask={selectedTask}
             t={t}
+            disabled={!activeListId}
           />
         </section>
         
         <section className="w-full">
+            <ListManager
+                taskLists={taskListsData || []}
+                activeListId={activeListId}
+                onSelectList={setActiveListId}
+                onAddList={handleAddList}
+                onDeleteList={handleDeleteList}
+                t={t}
+            />
           <TaskSearch 
             searchQuery={searchQuery} 
             setSearchQuery={setSearchQuery} 
@@ -402,7 +472,7 @@ export default function HomePage() {
                 tasks={filteredTasks || []}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
-                onToggleScheduled={handleToggleScheduled}
+                onToggleScheduled={onToggleScheduled}
                 onUpdateTaskValue={handleUpdateTaskValue}
                 onSelectTask={handleSelectTask}
                 selectedTaskId={selectedTaskId}

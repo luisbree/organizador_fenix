@@ -1,5 +1,11 @@
 import type { Timestamp } from 'firebase/firestore';
 
+export interface TaskList {
+  id: string;
+  name: string;
+  createdAt: Timestamp | Date;
+}
+
 export interface SubTask {
   id: string;
   parentId: string;
