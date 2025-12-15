@@ -71,7 +71,7 @@ export function ListManager({
 
   return (
     <div className="flex w-full items-center space-x-2 my-4">
-      <Select onValueChange={onSelectList} value={activeListId || ''}>
+      <Select onValueChange={onSelectList} value={activeListId || ''} disabled={!activeListId}>
         <SelectTrigger className="flex-grow" style={{backgroundColor: '#fdfdfd'}}>
           <SelectValue placeholder={t.selectListPlaceholder} />
         </SelectTrigger>

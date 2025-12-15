@@ -9,12 +9,12 @@ import { TaskSearch } from '@/components/TaskSearch';
 import { ListManager } from '@/components/ListManager';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useCollection, useFirestore, useUser } from '@/firebase';
-import { collection, doc, serverTimestamp, runTransaction, onSnapshot, writeBatch, query, orderBy, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, runTransaction, onSnapshot, writeBatch, query, orderBy, addDoc, deleteDoc, getDocs } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { initiateAnonymousSignIn } from '@/firebase/non-blocking-login';
 import { useMemoFirebase } from '@/firebase/provider';
 import { Loader2, Settings } from 'lucide-react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,6 +29,34 @@ import { translations, type LanguageStrings } from '@/lib/translations';
 
 
 const SHARED_USER_ID = "shared_user";
+
+
+// Hook to run an effect only once on component mount
+const useEffectOnce = (effect: React.EffectCallback) => {
+  const effectFn = useRef(effect);
+  const destroyFn = useRef<void | (() => void)>();
+  const effectCalled = useRef(false);
+  const rendered = useRef(false);
+
+  if (effectCalled.current) {
+    rendered.current = true;
+  }
+
+  useEffect(() => {
+    if (!effectCalled.current) {
+      destroyFn.current = effectFn.current();
+      effectCalled.current = true;
+    }
+
+    return () => {
+      if (rendered.current === false) return;
+      if (destroyFn.current) {
+        destroyFn.current();
+      }
+    };
+  }, []);
+};
+
 
 export default function HomePage() {
   const { toast } = useToast();
@@ -76,6 +104,44 @@ export default function HomePage() {
       }
     }
   }, [taskListsData, activeListId, isLoadingTaskLists, firestore]);
+  
+  // Migration logic for old tasks
+  useEffectOnce(() => {
+    if (firestore && taskListsData && taskListsData.length > 0) {
+      const generalList = taskListsData.find(list => list.name === "general");
+      const generalListId = generalList ? generalList.id : taskListsData[0].id;
+
+      const migrateTasks = async () => {
+        const oldTasksRef = collection(firestore, 'users', SHARED_USER_ID, 'tasks');
+        const oldTasksSnapshot = await getDocs(oldTasksRef);
+
+        if (!oldTasksSnapshot.empty) {
+          console.log(`Found ${oldTasksSnapshot.size} old tasks to migrate.`);
+          const newTasksRef = collection(firestore, 'users', SHARED_USER_ID, 'taskLists', generalListId, 'tasks');
+          const batch = writeBatch(firestore);
+
+          oldTasksSnapshot.forEach(taskDoc => {
+            const taskData = taskDoc.data();
+            const newDocRef = doc(newTasksRef, taskDoc.id); // Preserve original ID
+            batch.set(newDocRef, taskData);
+            batch.delete(taskDoc.ref); // Delete the old task
+          });
+
+          await batch.commit();
+          toast({
+            title: "Tareas migradas",
+            description: "Tus tareas anteriores se han movido a la lista 'general'.",
+          });
+          console.log("Migration complete.");
+        }
+      };
+
+      migrateTasks().catch(err => {
+        console.error("Task migration failed: ", err);
+      });
+    }
+  });
+
 
   const tasksQuery = useMemoFirebase(() => {
     if (!firestore || !activeListId) return null;
@@ -277,6 +343,13 @@ export default function HomePage() {
             if (!taskDoc.exists()) {
                 throw "Document does not exist!";
             }
+            // Also need to delete subtasks in a transaction
+            const subtasksRef = collection(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', id, 'subtasks');
+            const subtasksSnapshot = await getDocs(subtasksRef);
+            subtasksSnapshot.forEach(subtaskDoc => {
+                transaction.delete(subtaskDoc.ref);
+            });
+
             transaction.delete(taskRef);
         });
         toast({
