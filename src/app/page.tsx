@@ -60,76 +60,67 @@ export default function HomePage() {
 
   const { data: taskListsData, isLoading: isLoadingTaskLists } = useCollection<TaskListType>(taskListsQuery);
 
-  useEffect(() => {
-    if (taskListsData) {
-      if (taskListsData.length > 0 && !activeListId) {
-        setActiveListId(taskListsData[0].id);
-      } else if (taskListsData.length === 0 && !isLoadingTaskLists && firestore) {
-        // Create a default list if none exist
-        const defaultListName = "general";
-        const listsColRef = collection(firestore, 'users', SHARED_USER_ID, 'taskLists');
-        addDoc(listsColRef, {
-          name: defaultListName,
-          createdAt: serverTimestamp()
-        }).then(docRef => {
-          setActiveListId(docRef.id);
-        });
-      }
-    }
-  }, [taskListsData, activeListId, isLoadingTaskLists, firestore]);
-  
-  // Migration logic for old tasks
-  useEffect(() => {
-    // Ensure migration runs only once and all dependencies are ready
-    if (migrationCompletedRef.current || !firestore || !taskListsData || taskListsData.length === 0) {
-      return;
-    }
-    
-    const generalList = taskListsData.find(list => list.name === "general");
-    
-    // Ensure the "general" list exists before attempting migration
-    if (!generalList) {
-      return;
-    }
+  const migrateOldTasks = async (listId: string) => {
+      if (!firestore || migrationCompletedRef.current) return;
 
-    const generalListId = generalList.id;
-
-    const migrateTasks = async () => {
       const oldTasksRef = collection(firestore, 'users', SHARED_USER_ID, 'tasks');
       const oldTasksSnapshot = await getDocs(oldTasksRef);
 
       if (!oldTasksSnapshot.empty) {
-        migrationCompletedRef.current = true; // Mark as started to prevent re-runs
-        console.log(`Found ${oldTasksSnapshot.size} old tasks to migrate.`);
-        const newTasksRef = collection(firestore, 'users', SHARED_USER_ID, 'taskLists', generalListId, 'tasks');
+        console.log(`Found ${oldTasksSnapshot.size} old tasks to migrate to list ${listId}.`);
+        
+        const newTasksRef = collection(firestore, 'users', SHARED_USER_ID, 'taskLists', listId, 'tasks');
         const batch = writeBatch(firestore);
 
         oldTasksSnapshot.forEach(taskDoc => {
           const taskData = taskDoc.data();
-          const newDocRef = doc(newTasksRef, taskDoc.id); // Preserve original ID
+          const newDocRef = doc(newTasksRef, taskDoc.id);
           batch.set(newDocRef, taskData);
-          batch.delete(taskDoc.ref); // Delete the old task
+          batch.delete(taskDoc.ref);
         });
 
         await batch.commit();
+        migrationCompletedRef.current = true;
         toast({
           title: "Tareas migradas",
           description: "Tus tareas anteriores se han movido a la lista 'general'.",
         });
         console.log("Migration complete.");
       } else {
-        // If no old tasks, just mark as complete to prevent checking again.
-        migrationCompletedRef.current = true; 
+        console.log("No old tasks to migrate.");
+        migrationCompletedRef.current = true;
       }
-    };
+  };
 
-    migrateTasks().catch(err => {
-      console.error("Task migration failed: ", err);
-      migrationCompletedRef.current = false; // Allow retry if it failed
-    });
-    
-  }, [firestore, taskListsData, toast]);
 
+  useEffect(() => {
+    if (taskListsData) {
+      if (taskListsData.length > 0 && !activeListId) {
+        const firstListId = taskListsData[0].id;
+        setActiveListId(firstListId);
+        // Attempt migration if not done yet
+        if (!migrationCompletedRef.current) {
+            migrateOldTasks(firstListId);
+        }
+
+      } else if (taskListsData.length === 0 && !isLoadingTaskLists && firestore) {
+        // Create a default list if none exist and then migrate
+        console.log("No lists found, creating default 'general' list.");
+        const defaultListName = "general";
+        const listsColRef = collection(firestore, 'users', SHARED_USER_ID, 'taskLists');
+        addDoc(listsColRef, {
+          name: defaultListName,
+          createdAt: serverTimestamp()
+        }).then(docRef => {
+          console.log(`Default list created with ID: ${docRef.id}. Now migrating old tasks.`);
+          setActiveListId(docRef.id);
+          // Crucially, trigger migration *after* the list is created
+          migrateOldTasks(docRef.id);
+        });
+      }
+    }
+  }, [taskListsData, activeListId, isLoadingTaskLists, firestore]);
+  
 
   const tasksQuery = useMemoFirebase(() => {
     if (!firestore || !activeListId) return null;
@@ -550,4 +541,3 @@ export default function HomePage() {
   );
 }
 
-    
