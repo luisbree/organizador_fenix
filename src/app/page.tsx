@@ -472,7 +472,7 @@ export default function HomePage() {
                 tasks={filteredTasks || []}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
-                onToggleScheduled={onToggleScheduled}
+                onToggleScheduled={handleToggleScheduled}
                 onUpdateTaskValue={handleUpdateTaskValue}
                 onSelectTask={handleSelectTask}
                 selectedTaskId={selectedTaskId}
@@ -488,3 +488,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
