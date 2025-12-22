@@ -113,8 +113,11 @@ export function TaskItem({
   
   const formattedCreationDate = createdDate.toLocaleDateString(t.locale, { month: 'short', day: 'numeric' });
 
+  const criticalTextClass = task.isCritical ? "text-white" : "";
+  const criticalMutedTextClass = task.isCritical ? "text-gray-300" : "text-muted-foreground";
+
   return (
-    <div className={cn("flex items-center w-full p-1.5 min-w-[600px]", task.completado && "opacity-70")}>
+    <div className={cn("flex items-center w-full p-1.5 min-w-[560px]", task.completado && "opacity-70")}>
       <div className="w-[40px] flex-shrink-0 flex items-center justify-center">
         {task.completado ? (
           <Checkbox
@@ -126,6 +129,7 @@ export function TaskItem({
             }}
             onClick={(e) => e.stopPropagation()}
             aria-label={t.reactivateTaskAriaLabel(task.tarea)}
+            className={task.isCritical ? "border-white data-[state=checked]:bg-white data-[state=checked]:text-black" : ""}
           />
         ) : (
           <Dialog>
@@ -134,6 +138,7 @@ export function TaskItem({
                 id={`complete-${task.id}`}
                 checked={task.completado}
                 aria-label={t.completeTaskAriaLabel(task.tarea)}
+                className={task.isCritical ? "border-white" : ""}
               />
             </DialogTrigger>
             <DialogContent className="max-w-[340px] rounded-lg" style={{backgroundColor: '#fdfdfd'}}>
@@ -153,7 +158,11 @@ export function TaskItem({
          <div className="flex-grow min-w-0">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className={cn("font-bold whitespace-nowrap text-sm", task.completado && "line-through text-muted-foreground")}>
+                <div className={cn(
+                    "font-bold whitespace-nowrap text-sm", 
+                    task.completado && "line-through text-muted-foreground",
+                    criticalTextClass
+                )}>
                   {task.tarea}
                 </div>
               </TooltipTrigger>
@@ -165,19 +174,23 @@ export function TaskItem({
           <div className="flex items-center gap-2">
               {task.isFenix && (
                   <div title={t.fenixTaskTooltip(task.fenixPeriod || 0)}>
-                      <PhoenixIcon className="h-3.5 w-3.5 flex-shrink-0 text-amber-600" />
+                      <PhoenixIcon className={cn("h-3.5 w-3.5 flex-shrink-0", task.isCritical ? "text-amber-300" : "text-amber-600")} />
                   </div>
               )}
               <div onClick={handleClockClick} className={cn("cursor-pointer p-1", task.completado && "cursor-not-allowed")} title={t.toggleScheduledTooltip}>
                   <Clock
                       className={cn(
                           "h-3.5 w-3.5 flex-shrink-0 transition-colors",
-                          task.scheduledAt ? 'text-muted-foreground' : 'text-muted-foreground/30',
-                          task.completado && "text-muted-foreground/20"
+                          task.scheduledAt ? (task.isCritical ? criticalMutedTextClass : 'text-muted-foreground') : (task.isCritical ? 'text-gray-400/50' : 'text-muted-foreground/30'),
+                          task.completado && (task.isCritical ? 'text-gray-400/20' : "text-muted-foreground/20")
                       )}
                   />
               </div>
-              <p className={cn("text-base font-bold tabular-nums", task.completado && "text-muted-foreground/60")}>
+              <p className={cn(
+                  "text-base font-bold tabular-nums", 
+                  task.completado && "text-muted-foreground/60",
+                  criticalTextClass
+                )}>
                 {isFinite(dynamicIndex) ? dynamicIndex.toFixed(2) : "∞"}
               </p>
            </div>
@@ -189,6 +202,8 @@ export function TaskItem({
           onSave={(newValue) => onUpdateTaskValue(task.id, 'urgencia', newValue)}
           t={t}
           disabled={task.completado}
+          className={criticalTextClass}
+          inputClassName={task.isCritical ? "bg-gray-800 text-white border-gray-600" : ""}
         />
       </div>
       <div className="w-[50px] text-center flex-shrink-0">
@@ -197,6 +212,8 @@ export function TaskItem({
           onSave={(newValue) => onUpdateTaskValue(task.id, 'necesidad', newValue)}
           t={t}
           disabled={task.completado}
+          className={criticalTextClass}
+          inputClassName={task.isCritical ? "bg-gray-800 text-white border-gray-600" : ""}
         />
       </div>
       <div className="w-[50px] text-center flex-shrink-0">
@@ -205,6 +222,8 @@ export function TaskItem({
           onSave={(newValue) => onUpdateTaskValue(task.id, 'costo', newValue)}
           t={t}
           disabled={task.completado}
+          className={criticalTextClass}
+          inputClassName={task.isCritical ? "bg-gray-800 text-white border-gray-600" : ""}
         />
       </div>
       <div className="w-[50px] text-center flex-shrink-0">
@@ -213,16 +232,18 @@ export function TaskItem({
           onSave={(newValue) => onUpdateTaskValue(task.id, 'duracion', newValue)}
           t={t}
           disabled={task.completado}
+          className={criticalTextClass}
+          inputClassName={task.isCritical ? "bg-gray-800 text-white border-gray-600" : ""}
         />
       </div>
       <div className="w-[80px] flex-shrink-0 text-right">
         <div className="flex items-center justify-end space-x-1 sm:space-x-2">
             <Button
-              variant="outline"
+              variant={task.isCritical ? "outline" : "outline"}
               size="sm"
               onClick={handleScheduleOnCalendar}
               aria-label={t.scheduleTaskAriaLabel(task.tarea)}
-              className="h-6 w-6 p-0"
+              className={cn("h-6 w-6 p-0", task.isCritical && "bg-transparent border-gray-400 text-white hover:bg-white/10 hover:text-white")}
               disabled={task.completado}
             >
               <CalendarPlus className="h-3.5 w-3.5" />
@@ -233,7 +254,7 @@ export function TaskItem({
                   variant="destructive"
                   size="icon"
                   aria-label={t.deleteTaskAriaLabel(task.tarea)}
-                  className="h-6 w-6"
+                  className={cn("h-6 w-6", task.isCritical && "bg-red-700/80 hover:bg-red-700 text-white")}
                   title={t.deleteTaskTooltip}
                 >
                   <Trash2 className="h-3.5 w-3.5" />

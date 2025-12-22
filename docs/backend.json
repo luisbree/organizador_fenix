@@ -72,6 +72,10 @@
         "fenixPeriod": {
           "type": "number",
           "description": "The period in days after which a Fenix task should be reborn."
+        },
+        "isCritical": {
+          "type": "boolean",
+          "description": "Indicates if the task is critical and should appear at the top."
         }
       },
       "required": [

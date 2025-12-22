@@ -30,4 +30,5 @@ export interface Task {
   subtasks?: SubTask[];
   isFenix?: boolean;
   fenixPeriod?: number;
+  isCritical?: boolean;
 }

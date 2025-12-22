@@ -10,6 +10,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { SubTaskItem } from './SubTaskItem';
 import type { LanguageStrings } from '@/lib/translations';
+import { CriticalTaskToggle } from './CriticalTaskToggle';
 
 interface TaskListProps {
   tasks: Task[];
@@ -26,6 +27,8 @@ interface TaskListProps {
   onToggleSubTaskComplete: (subTaskId: string, parentId: string) => void;
   onDeleteSubTask: (subTaskId: string, parentId: string) => void;
   onToggleSubTaskScheduled: (subTaskId: string, parentId: string, currentScheduledAt: any) => void;
+  onToggleCritical: (taskId: string, isCurrentlyCritical: boolean) => void;
+  criticalTasksCount: number;
   t: LanguageStrings;
 }
 
@@ -102,9 +105,15 @@ export function TaskList({
     onToggleSubTaskComplete,
     onDeleteSubTask,
     onToggleSubTaskScheduled,
+    onToggleCritical,
+    criticalTasksCount,
     t
 }: TaskListProps) {
   const sortedTasks = [...tasks].sort((a, b) => {
+    // Critical tasks always on top
+    if (a.isCritical && !b.isCritical) return -1;
+    if (!a.isCritical && b.isCritical) return 1;
+
     if (a.completado && !b.completado) return 1;
     if (!a.completado && b.completado) return -1;
 
@@ -173,6 +182,18 @@ export function TaskList({
             const hasSubtasks = task.subtasks && task.subtasks.length > 0;
             const isSelected = selectedTaskId === task.id;
 
+            const rowStyle: React.CSSProperties = {};
+            if (task.isCritical) {
+              rowStyle.backgroundColor = '#661400';
+              rowStyle.color = 'white';
+            } else if (!task.completado) {
+                rowStyle.backgroundColor = agingColorStyle.backgroundColor;
+            }
+
+            if (isSelected && !task.completado) {
+              rowStyle.borderColor = task.isCritical ? '#ffb700' : agingColorStyle.borderColor;
+            }
+
             return (
               <AccordionItem 
                 value={task.id} 
@@ -180,17 +201,19 @@ export function TaskList({
                 className={cn(
                   "border-b overflow-hidden transition-all duration-300",
                   isSelected ? 'border-4 shadow-lg' : 'border-border',
-                  task.completado ? "bg-muted/50" : ""
+                  task.completado && "bg-muted/50"
                 )}
-                style={{
-                  ...(!task.completado && { backgroundColor: agingColorStyle.backgroundColor }),
-                  ...(isSelected && !task.completado && { borderColor: agingColorStyle.borderColor })
-                }}
+                style={rowStyle}
               >
                 <div 
                    onClick={() => onSelectTask(task.id)} 
                    className="flex items-center w-full relative cursor-pointer"
                 >
+                  <CriticalTaskToggle
+                    isCritical={!!task.isCritical}
+                    onToggle={() => onToggleCritical(task.id, !!task.isCritical)}
+                    disabled={task.completado || (!task.isCritical && criticalTasksCount >= 3)}
+                  />
                   <div className="flex-grow">
                       <TaskItem
                           task={task}
@@ -206,7 +229,8 @@ export function TaskList({
                       className={cn(
                           "p-0 hover:no-underline w-[40px] flex-shrink-0 flex justify-center items-center",
                           "[&[data-state=open]>.chevron]:rotate-180",
-                          !hasSubtasks && "opacity-0 cursor-default"
+                          !hasSubtasks && "opacity-0 cursor-default",
+                          task.isCritical && "text-white hover:bg-white/10"
                       )}
                       disabled={!hasSubtasks}
                       onClick={(e) => {

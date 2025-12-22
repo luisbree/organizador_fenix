@@ -29,6 +29,7 @@ import { translations, type LanguageStrings } from '@/lib/translations';
 
 
 const SHARED_USER_ID = "shared_user";
+const MAX_CRITICAL_TASKS = 3;
 
 export default function HomePage() {
   const { toast } = useToast();
@@ -235,6 +236,7 @@ export default function HomePage() {
       completedAt: null,
       isFenix: taskData.isFenix,
       fenixPeriod: taskData.fenixPeriod,
+      isCritical: false,
     };
     
     addDocumentNonBlocking(tasksQuery, {
@@ -405,6 +407,26 @@ export default function HomePage() {
       });
     }
   };
+
+  const handleToggleCritical = (taskId: string, isCurrentlyCritical: boolean) => {
+    if (!firestore || !activeListId || !tasks) return;
+
+    const criticalTasksCount = tasks.filter(t => t.isCritical && t.id !== taskId).length;
+
+    if (!isCurrentlyCritical && criticalTasksCount >= MAX_CRITICAL_TASKS) {
+      toast({
+        variant: "destructive",
+        title: "Límite de tareas críticas alcanzado",
+        description: `Solo puedes tener un máximo de ${MAX_CRITICAL_TASKS} tareas críticas a la vez.`,
+      });
+      return;
+    }
+
+    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', taskId);
+    updateDocumentNonBlocking(taskRef, {
+      isCritical: !isCurrentlyCritical
+    });
+  };
   
   const handleAddList = (listName: string) => {
     if (!firestore) return;
@@ -461,6 +483,7 @@ export default function HomePage() {
   }
   
   const selectedTask = tasks?.find(t => t.id === selectedTaskId);
+  const criticalTasksCount = tasks?.filter(t => t.isCritical).length ?? 0;
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
@@ -531,6 +554,8 @@ export default function HomePage() {
                 onToggleSubTaskComplete={handleToggleSubTaskComplete}
                 onDeleteSubTask={handleDeleteSubTask}
                 onToggleSubTaskScheduled={handleToggleSubTaskScheduled}
+                onToggleCritical={handleToggleCritical}
+                criticalTasksCount={criticalTasksCount}
                 t={t}
               />
             </div>
