@@ -44,7 +44,7 @@ export function CriticalTaskToggle({ isCritical, onToggle, disabled = false }: C
                     onKeyDown={handleKeyDown}
                     tabIndex={disabled ? -1 : 0}
                     className={cn(
-                    "w-10 h-full flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-l-md",
+                    "w-10 h-full flex-shrink-0 flex items-center justify-center cursor-pointer transition-colors focus:outline-none rounded-l-md",
                     disabled && "cursor-not-allowed opacity-50",
                     isCritical ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'
                     )}
