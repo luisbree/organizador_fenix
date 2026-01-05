@@ -498,11 +498,20 @@ export default function HomePage() {
     const eligibleTasks = tasks.filter(t => !t.completado);
     if (eligibleTasks.length === 0) return 0;
 
-    // Step 2: Sum up the 'indice' property from the eligible tasks.
+    // Step 2: Sum up the 'indice' property from the eligible tasks, recalculating it on the fly.
     const totalIndex = eligibleTasks.reduce((sum, task) => {
+        const num = task.urgencia + task.necesidad;
+        const den = task.costo + task.duracion;
+        let taskIndex = 0;
+        if (den === 0) {
+            taskIndex = num > 0 ? Infinity : 0;
+        } else {
+            taskIndex = num / den;
+        }
+        
         // Ensure the index is a finite number before adding.
-        if (isFinite(task.indice)) {
-            return sum + task.indice;
+        if (isFinite(taskIndex)) {
+            return sum + taskIndex;
         }
         return sum;
     }, 0);
@@ -611,7 +620,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
-
-    
