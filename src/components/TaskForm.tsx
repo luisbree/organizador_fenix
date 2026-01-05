@@ -325,7 +325,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
       )}
       
       <p className="text-center text-muted-foreground px-2 py-1 flex items-center text-sm min-h-[2rem]">
-        {statusText}
+        {disabled ? statusText : isSubtaskMode ? statusText : ''}
       </p>
 
       <div className="flex justify-center items-center w-full">
