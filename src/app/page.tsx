@@ -31,6 +31,18 @@ import { translations, type LanguageStrings } from '@/lib/translations';
 const SHARED_USER_ID = "shared_user";
 const MAX_CRITICAL_TASKS = 3;
 
+const getAgingColor = (agingFactor: number): string => {
+  if (agingFactor <= 0) {
+    return `hsla(121, 63%, 58%, 1)`;
+  }
+  const maxFactorForColor = 2.5;
+  const normalizedFactor = Math.min(agingFactor / maxFactorForColor, 1.0);
+  const hue = 120 - (normalizedFactor * 120);
+  const saturation = 70 + (normalizedFactor * 30);
+  const lightness = 60 - (normalizedFactor * 10);
+  return `hsla(${hue}, ${saturation}%, ${lightness}%, 1)`;
+};
+
 export default function HomePage() {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -493,35 +505,26 @@ export default function HomePage() {
 
   const averageIndex = useMemo(() => {
     if (!tasks) return 0;
-  
     const eligibleTasks = tasks.filter(t => !t.completado);
     if (eligibleTasks.length === 0) return 0;
-  
+
     const totalIndex = eligibleTasks.reduce((sum, task) => {
-      // Recalculate the pure index
+      // Recalculate dynamic index (pure index + aging factor)
       const num = task.urgencia + task.necesidad;
       const den = task.costo + task.duracion;
-      let pureIndex = 0;
-      if (den === 0) {
-        pureIndex = num > 0 ? Infinity : 0;
-      } else {
-        pureIndex = num / den;
-      }
-      if (isNaN(pureIndex)) {
-        pureIndex = 0;
-      }
-  
-      // Recalculate the aging factor
+      let pureIndex = den === 0 ? (num > 0 ? Infinity : 0) : num / den;
+      if (isNaN(pureIndex)) pureIndex = 0;
+
       let agingFactor = 0;
       if (task.createdAt) {
         const createdDate = 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         createdDate.setHours(0, 0, 0, 0);
-  
+        
         const timeDiff = today.getTime() - createdDate.getTime();
         const daysOld = Math.max(0, Math.floor(timeDiff / (1000 * 3600 * 24)));
-  
+        
         if (daysOld >= 1) {
           const factor = ((task.urgencia + task.necesidad) / 10) * Math.log(daysOld + 1);
           if (!isNaN(factor)) {
@@ -529,17 +532,41 @@ export default function HomePage() {
           }
         }
       }
-  
-      // Sum the dynamic index (pure + aging)
+      
       const dynamicIndex = pureIndex + agingFactor;
-      if (isFinite(dynamicIndex)) {
-        return sum + dynamicIndex;
-      }
-      return sum;
+      return isFinite(dynamicIndex) ? sum + dynamicIndex : sum;
     }, 0);
-  
-    // Calculate and return the average
+
     return totalIndex / eligibleTasks.length;
+  }, [tasks]);
+
+  const averageAgingFactor = useMemo(() => {
+    if (!tasks) return 0;
+    const eligibleTasks = tasks.filter(t => !t.completado);
+    if (eligibleTasks.length === 0) return 0;
+
+    const totalAgingFactor = eligibleTasks.reduce((sum, task) => {
+      let agingFactor = 0;
+      if (task.createdAt) {
+        const createdDate = 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        createdDate.setHours(0, 0, 0, 0);
+        
+        const timeDiff = today.getTime() - createdDate.getTime();
+        const daysOld = Math.max(0, Math.floor(timeDiff / (1000 * 3600 * 24)));
+        
+        if (daysOld >= 1) {
+          const factor = ((task.urgencia + task.necesidad) / 10) * Math.log(daysOld + 1);
+          if (!isNaN(factor)) {
+            agingFactor = factor;
+          }
+        }
+      }
+      return sum + agingFactor;
+    }, 0);
+
+    return totalAgingFactor / eligibleTasks.length;
   }, [tasks]);
 
 
@@ -554,6 +581,7 @@ export default function HomePage() {
   
   const selectedTask = tasks?.find(t => t.id === selectedTaskId);
   const criticalTasksCount = tasks?.filter(t => t.isCritical).length ?? 0;
+  const leafColor = getAgingColor(averageAgingFactor);
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
@@ -591,6 +619,7 @@ export default function HomePage() {
             sortOrder={sortOrder}
             setSortOrder={setSortOrder}
             averageIndex={averageIndex}
+            leafColor={leafColor}
             t={t}
             disabled={!activeListId}
           />
@@ -642,3 +671,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    

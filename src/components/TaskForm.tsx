@@ -1,3 +1,4 @@
+
 // @ts-nocheck
 // Using @ts-nocheck because SpeechRecognition and related event types are not standard in all TS lib versions.
 "use client";
@@ -15,6 +16,7 @@ import type { LanguageStrings } from '@/lib/translations';
 import { cn } from '@/lib/utils';
 import { SortAndAgingIndicator } from './SortAndAgingIndicator';
 import { AverageIndexGauge } from './AverageIndexGauge';
+import { AgingLeaf } from './AgingLeaf';
 
 interface TaskFormProps {
   onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string; isFenix: boolean; fenixPeriod: number; }) => void;
@@ -24,11 +26,12 @@ interface TaskFormProps {
   sortOrder: SortOrder;
   setSortOrder: (order: SortOrder) => void;
   averageIndex: number;
+  leafColor: string;
   t: LanguageStrings;
   disabled?: boolean;
 }
 
-export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrder, setSortOrder, averageIndex, t, disabled = false }: TaskFormProps) {
+export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrder, setSortOrder, averageIndex, leafColor, t, disabled = false }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -329,10 +332,10 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
       </p>
 
       <div className="flex justify-center items-center w-full">
-        {/* Left Spacer */}
-        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-end items-center pr-4"></div>
+        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-center items-center">
+            <AgingLeaf color={leafColor} className="w-20 h-20"/>
+        </div>
         
-        {/* Centered Microphone Button */}
         <div className="flex-shrink-0">
           <Button
             onClick={handleMicClick}
@@ -344,7 +347,6 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
           </Button>
         </div>
 
-        {/* Right-side Gauge */}
         <div style={{ width: gaugeSize }} className="hidden sm:flex justify-start items-center pl-4">
             <AverageIndexGauge value={averageIndex} maxValue={11} />
         </div>
@@ -402,3 +404,5 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
     </div>
   );
 }
+
+    
