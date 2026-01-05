@@ -326,7 +326,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
       </p>
 
       <div className="flex justify-center items-center w-full">
-        <div className="flex-1 flex justify-center">
+         <div className="flex-1 flex justify-center">
             <Button
                 onClick={handleMicClick}
                 disabled={disabled || isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording) || isParentTaskCompleted} 
@@ -342,16 +342,17 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
       </div>
       
       <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2 max-w-xl mx-auto">
-        <div className="flex items-center space-x-2">
-            <Input 
-                type="text"
-                placeholder={placeholderText}
-                value={textInputValue}
-                onChange={(e) => setTextInputValue(e.target.value)}
-                disabled={disabled || isRecording || isProcessing || hasMicPermission === null || isParentTaskCompleted}
-                aria-label={t.manualInputAriaLabel}
-                className="text-base flex-grow"
-            />
+        <Input 
+            type="text"
+            placeholder={placeholderText}
+            value={textInputValue}
+            onChange={(e) => setTextInputValue(e.target.value)}
+            disabled={disabled || isRecording || isProcessing || hasMicPermission === null || isParentTaskCompleted}
+            aria-label={t.manualInputAriaLabel}
+            className="text-base w-full"
+        />
+
+        <div className="flex items-center space-x-4">
             {!isSubtaskMode && (
                 <div className="flex items-center space-x-2 flex-shrink-0 bg-muted/30 p-1.5 rounded-md">
                     <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} disabled={disabled} />
@@ -368,14 +369,14 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
                     <Label htmlFor="fenix-period" className="text-sm text-muted-foreground pr-1">{t.days}</Label>
                 </div>
             )}
+            <Button 
+              type="submit" 
+              className="flex-grow" 
+              disabled={disabled || isRecording || isProcessing || !textInputValue.trim() || hasMicPermission === null || isParentTaskCompleted}
+            >
+              {buttonText}
+            </Button>
         </div>
-        <Button 
-          type="submit" 
-          className="w-full" 
-          disabled={disabled || isRecording || isProcessing || !textInputValue.trim() || hasMicPermission === null || isParentTaskCompleted}
-        >
-          {buttonText}
-        </Button>
       </form>
     </div>
   );
