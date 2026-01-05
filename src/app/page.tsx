@@ -493,30 +493,52 @@ export default function HomePage() {
 
   const averageIndex = useMemo(() => {
     if (!tasks) return 0;
-    
-    // Step 1: Filter for tasks that are not completed.
+  
     const eligibleTasks = tasks.filter(t => !t.completado);
     if (eligibleTasks.length === 0) return 0;
-
-    // Step 2: Sum up the 'indice' property from the eligible tasks, recalculating it on the fly.
+  
     const totalIndex = eligibleTasks.reduce((sum, task) => {
-        const num = task.urgencia + task.necesidad;
-        const den = task.costo + task.duracion;
-        let taskIndex = 0;
-        if (den === 0) {
-            taskIndex = num > 0 ? Infinity : 0;
-        } else {
-            taskIndex = num / den;
+      // Recalculate the pure index
+      const num = task.urgencia + task.necesidad;
+      const den = task.costo + task.duracion;
+      let pureIndex = 0;
+      if (den === 0) {
+        pureIndex = num > 0 ? Infinity : 0;
+      } else {
+        pureIndex = num / den;
+      }
+      if (isNaN(pureIndex)) {
+        pureIndex = 0;
+      }
+  
+      // Recalculate the aging factor
+      let agingFactor = 0;
+      if (task.createdAt) {
+        const createdDate = 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        createdDate.setHours(0, 0, 0, 0);
+  
+        const timeDiff = today.getTime() - createdDate.getTime();
+        const daysOld = Math.max(0, Math.floor(timeDiff / (1000 * 3600 * 24)));
+  
+        if (daysOld >= 1) {
+          const factor = ((task.urgencia + task.necesidad) / 10) * Math.log(daysOld + 1);
+          if (!isNaN(factor)) {
+            agingFactor = factor;
+          }
         }
-        
-        // Ensure the index is a finite number before adding.
-        if (isFinite(taskIndex)) {
-            return sum + taskIndex;
-        }
-        return sum;
+      }
+  
+      // Sum the dynamic index (pure + aging)
+      const dynamicIndex = pureIndex + agingFactor;
+      if (isFinite(dynamicIndex)) {
+        return sum + dynamicIndex;
+      }
+      return sum;
     }, 0);
-    
-    // Step 3: Calculate and return the average.
+  
+    // Calculate and return the average
     return totalIndex / eligibleTasks.length;
   }, [tasks]);
 
