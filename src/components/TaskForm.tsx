@@ -1,4 +1,3 @@
-
 // @ts-nocheck
 // Using @ts-nocheck because SpeechRecognition and related event types are not standard in all TS lib versions.
 "use client";
@@ -15,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import type { LanguageStrings } from '@/lib/translations';
 import { cn } from '@/lib/utils';
 import { SortAndAgingIndicator } from './SortAndAgingIndicator';
+import { AverageIndexGauge } from './AverageIndexGauge';
 
 interface TaskFormProps {
   onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string; isFenix: boolean; fenixPeriod: number; }) => void;
@@ -94,7 +94,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
       const costo = parseInt(match[4], 10);
       const duracion = parseInt(match[5], 10);
 
-      const isValidNumber = (num: number) => !isNaN(num) && num >= 0 && num <= 5;
+      const isValidNumber = (num: number) => !isNaN(num) && num >= 1 && num <= 5;
 
       if ([urgencia, necesidad, costo, duracion].every(isValidNumber)) {
         onAddTask({ rawTarea, tarea: rawTarea, urgencia, necesidad, costo, duracion, isFenix, fenixPeriod });
@@ -111,7 +111,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
       } else {
          toast({
           title: t.invalidValuesErrorTitle,
-          description: t.invalidValuesErrorDescription,
+          description: t.invalidValueDescription(1, 5),
           variant: "destructive",
           duration: 7000,
         });
@@ -310,6 +310,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
 
   const buttonText = isSubtaskMode ? t.addSubtaskButton : t.addTaskButton;
 
+  const gaugeSize = "160px"; // 144px (button) + 16px (spacing)
+
   return (
     <div className={cn("flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full", disabled && "opacity-60")}>
       {hasMicPermission === false && !isRecording && !isProcessing && (
@@ -326,14 +328,27 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
         {statusText}
       </p>
 
-      <Button
-        onClick={handleMicClick}
-        disabled={disabled || isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording) || isParentTaskCompleted} 
-        className="h-36 w-36 sm:h-40 sm:w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl flex items-center justify-center transition-all duration-150 ease-in-out hover:scale-105 active:scale-95"
-        aria-label={isRecording ? t.stopRecordingAriaLabel : t.startRecordingAriaLabel}
-      >
-        {buttonContent}
-      </Button>
+      <div className="flex justify-center items-center w-full">
+        {/* Invisible spacer to balance the layout */}
+        <div style={{ width: gaugeSize, height: gaugeSize }} className="hidden sm:flex"></div>
+        
+        {/* Centered Microphone Button */}
+        <div className="flex-shrink-0">
+          <Button
+            onClick={handleMicClick}
+            disabled={disabled || isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording) || isParentTaskCompleted} 
+            className="h-36 w-36 sm:h-40 sm:w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl flex items-center justify-center transition-all duration-150 ease-in-out hover:scale-105 active:scale-95"
+            aria-label={isRecording ? t.stopRecordingAriaLabel : t.startRecordingAriaLabel}
+          >
+            {buttonContent}
+          </Button>
+        </div>
+
+        {/* Right-side Gauge */}
+        <div style={{ width: gaugeSize, height: gaugeSize }} className="hidden sm:flex justify-start items-center pl-4">
+            <AverageIndexGauge value={averageIndex} maxValue={11} />
+        </div>
+      </div>
       
       <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2 max-w-xl mx-auto">
         <div className={cn("flex items-center justify-center space-x-4 pb-2", isSubtaskMode && "invisible")}>
