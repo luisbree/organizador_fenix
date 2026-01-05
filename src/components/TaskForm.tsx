@@ -333,7 +333,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
 
       <div className="flex justify-center items-center w-full">
         <div style={{ width: gaugeSize }} className="hidden sm:flex justify-center items-center">
-            <AgingLeaf color={leafColor} className="w-20 h-20"/>
+            <AgingLeaf color={leafColor} className="w-24 h-24"/>
         </div>
         
         <div className="flex-shrink-0">
@@ -404,5 +404,3 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
     </div>
   );
 }
-
-    
