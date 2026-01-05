@@ -23,7 +23,7 @@ export function EditableNumericCell({
   value,
   onSave,
   t,
-  min = 0,
+  min = 1,
   max = 5,
   className,
   inputClassName,
