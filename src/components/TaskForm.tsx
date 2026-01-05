@@ -336,7 +336,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
                 {buttonContent}
             </Button>
         </div>
-        <div className="flex-1 flex justify-start pl-8">
+        <div className="flex-1 flex justify-end">
             <AverageIndexGauge value={averageIndex} maxValue={11} />
         </div>
       </div>
@@ -380,5 +380,3 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
     </div>
   );
 }
-
-    
