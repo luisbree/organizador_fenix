@@ -7,14 +7,13 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import type { Task, SortOrder } from '@/types/task';
+import type { Task } from '@/types/task';
 import { Mic, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import type { LanguageStrings } from '@/lib/translations';
 import { cn } from '@/lib/utils';
-import { SortAndAgingIndicator } from './SortAndAgingIndicator';
 import { AverageIndexGauge } from './AverageIndexGauge';
 import { AgingLeaf } from './AgingLeaf';
 
@@ -351,15 +350,33 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
       </div>
       
       <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2 max-w-xl mx-auto">
-        <Input 
-          type="text"
-          placeholder={placeholderText}
-          value={textInputValue}
-          onChange={(e) => setTextInputValue(e.target.value)}
-          disabled={disabled || isRecording || isProcessing || hasMicPermission === null || isParentTaskCompleted}
-          aria-label={t.manualInputAriaLabel}
-          className="text-base text-center"
-        />
+        <div className="flex items-center space-x-2">
+            <Input 
+                type="text"
+                placeholder={placeholderText}
+                value={textInputValue}
+                onChange={(e) => setTextInputValue(e.target.value)}
+                disabled={disabled || isRecording || isProcessing || hasMicPermission === null || isParentTaskCompleted}
+                aria-label={t.manualInputAriaLabel}
+                className="text-base flex-grow"
+            />
+            {!isSubtaskMode && (
+                <div className="flex items-center space-x-2 flex-shrink-0 bg-muted/30 p-1.5 rounded-md">
+                    <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} disabled={disabled} />
+                    <Label htmlFor="fenix-checkbox" className="text-sm font-medium cursor-pointer">{t.fenix}</Label>
+                    <Input
+                        id="fenix-period"
+                        type="number"
+                        value={fenixPeriod}
+                        onChange={(e) => setFenixPeriod(Number(e.target.value))}
+                        className="w-14 h-7 text-center"
+                        min="1"
+                        disabled={disabled || !isFenix}
+                    />
+                    <Label htmlFor="fenix-period" className="text-sm text-muted-foreground pr-1">{t.days}</Label>
+                </div>
+            )}
+        </div>
         <Button 
           type="submit" 
           className="w-full" 
@@ -368,29 +385,6 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
           {buttonText}
         </Button>
       </form>
-
-      <div className={cn("w-full pt-3 max-w-xl mx-auto", isSubtaskMode && "invisible")}>
-         <div className="w-full flex items-center justify-center space-x-2 px-1">
-            <div className={cn("flex items-center justify-center space-x-4 pr-2", isSubtaskMode && "invisible")}>
-                <div className="flex items-center space-x-2">
-                    <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} disabled={disabled || isSubtaskMode} />
-                    <Label htmlFor="fenix-checkbox" className="text-sm font-medium">{t.fenix}</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <Input
-                        id="fenix-period"
-                        type="number"
-                        value={fenixPeriod}
-                        onChange={(e) => setFenixPeriod(Number(e.target.value))}
-                        className="w-16 h-8 text-center"
-                        min="1"
-                        disabled={disabled || !isFenix || isSubtaskMode}
-                    />
-                    <Label htmlFor="fenix-period" className="text-sm text-muted-foreground">{t.days}</Label>
-                </div>
-            </div>
-        </div>
-      </div>
     </div>
   );
 }
