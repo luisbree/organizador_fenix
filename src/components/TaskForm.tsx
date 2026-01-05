@@ -23,11 +23,12 @@ interface TaskFormProps {
   tasks: Task[];
   sortOrder: SortOrder;
   setSortOrder: (order: SortOrder) => void;
+  averageIndex: number;
   t: LanguageStrings;
   disabled?: boolean;
 }
 
-export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrder, setSortOrder, t, disabled = false }: TaskFormProps) {
+export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrder, setSortOrder, averageIndex, t, disabled = false }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -376,6 +377,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
             tasks={tasks}
             sortOrder={sortOrder}
             setSortOrder={setSortOrder}
+            averageIndex={averageIndex}
             t={t}
             disabled={disabled}
         />

@@ -491,6 +491,14 @@ export default function HomePage() {
     );
   }, [tasks, searchQuery]);
 
+  const averageIndex = useMemo(() => {
+    if (!tasks) return 0;
+    const nonCompletedTasks = tasks.filter(t => !t.completado && !t.isCritical && isFinite(t.indice));
+    if (nonCompletedTasks.length === 0) return 0;
+    const totalIndex = nonCompletedTasks.reduce((sum, task) => sum + task.indice, 0);
+    return totalIndex / nonCompletedTasks.length;
+  }, [tasks]);
+
 
   if (isUserLoading || isLoadingTaskLists) {
     return (
@@ -539,6 +547,7 @@ export default function HomePage() {
             tasks={tasks || []}
             sortOrder={sortOrder}
             setSortOrder={setSortOrder}
+            averageIndex={averageIndex}
             t={t}
             disabled={!activeListId}
           />

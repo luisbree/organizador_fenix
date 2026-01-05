@@ -77,11 +77,12 @@ interface SortAndAgingIndicatorProps {
     tasks: Task[];
     sortOrder: SortOrder;
     setSortOrder: (order: SortOrder) => void;
+    averageIndex: number;
     t: LanguageStrings;
     disabled: boolean;
 }
 
-export function SortAndAgingIndicator({ tasks, sortOrder, setSortOrder, t, disabled }: SortAndAgingIndicatorProps) {
+export function SortAndAgingIndicator({ tasks, sortOrder, setSortOrder, averageIndex, t, disabled }: SortAndAgingIndicatorProps) {
   const averageColor = React.useMemo(() => getAverageAgingColor(tasks), [tasks]);
   
   const toggleSortOrder = () => {
@@ -89,7 +90,10 @@ export function SortAndAgingIndicator({ tasks, sortOrder, setSortOrder, t, disab
   };
 
   const Icon = sortOrder === 'index' ? ArrowUpDown : CalendarDays;
-  const buttonText = sortOrder === 'index' ? t.sortBy.index : t.sortBy.age;
+  const buttonText = sortOrder === 'index' 
+    ? `${t.sortBy.index} (${averageIndex.toFixed(2)})` 
+    : t.sortBy.age;
+
 
   return (
     <div className="w-full flex items-center justify-center space-x-2 px-1 pt-3 max-w-xl mx-auto">
