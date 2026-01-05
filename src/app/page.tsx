@@ -494,19 +494,21 @@ export default function HomePage() {
   const averageIndex = useMemo(() => {
     if (!tasks) return 0;
     
-    // Step 1: Filter for tasks that are not completed. Include critical tasks.
+    // Step 1: Filter for tasks that are not completed.
     const eligibleTasks = tasks.filter(t => !t.completado);
     if (eligibleTasks.length === 0) return 0;
 
-    // Step 2: Extract only the 'indice' property and filter out non-finite values.
-    const indices = eligibleTasks.map(t => t.indice).filter(isFinite);
-    if (indices.length === 0) return 0;
-
-    // Step 3: Sum up the valid indices.
-    const totalIndex = indices.reduce((sum, currentIndex) => sum + currentIndex, 0);
+    // Step 2: Sum up the 'indice' property from the eligible tasks.
+    const totalIndex = eligibleTasks.reduce((sum, task) => {
+        // Ensure the index is a finite number before adding.
+        if (isFinite(task.indice)) {
+            return sum + task.indice;
+        }
+        return sum;
+    }, 0);
     
-    // Step 4: Calculate and return the average.
-    return totalIndex / indices.length;
+    // Step 3: Calculate and return the average.
+    return totalIndex / eligibleTasks.length;
   }, [tasks]);
 
 
@@ -609,5 +611,7 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
 
     
