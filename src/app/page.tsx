@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { translations, type LanguageStrings } from '@/lib/translations';
+import { AgingLeaf } from '@/components/AgingLeaf';
 
 
 const SHARED_USER_ID = "shared_user";
@@ -587,9 +588,12 @@ export default function HomePage() {
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
        <header className="my-2 md:my-4 flex items-center justify-between">
-        <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
-          Fénix
-        </h1>
+        <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
+            Fénix
+            </h1>
+            <AgingLeaf color={leafColor} className="h-8 w-8" />
+        </div>
          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">
@@ -618,7 +622,6 @@ export default function HomePage() {
             selectedTask={selectedTask}
             tasks={tasks || []}
             averageIndex={averageIndex}
-            leafColor={leafColor}
             t={t}
             disabled={!activeListId}
           />
@@ -682,3 +685,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    

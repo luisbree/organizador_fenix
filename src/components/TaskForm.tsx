@@ -23,12 +23,11 @@ interface TaskFormProps {
   selectedTask?: Task | null;
   tasks: Task[];
   averageIndex: number;
-  leafColor: string;
   t: LanguageStrings;
   disabled?: boolean;
 }
 
-export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, averageIndex, leafColor, t, disabled = false }: TaskFormProps) {
+export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, averageIndex, t, disabled = false }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -286,7 +285,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
   let buttonContent;
   const statusText = disabled ? t.selectListToStart : (isSubtaskMode 
     ? t.subtaskDictationPrompt
-    : t.taskDictationPrompt);
+    : '');
 
   if (isProcessing) {
     buttonContent = <Loader2 className="h-16 w-16 sm:h-20 sm:w-20 animate-spin" />; 
@@ -310,8 +309,6 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
 
   const buttonText = isSubtaskMode ? t.addSubtaskButton : t.addTaskButton;
 
-  const gaugeSize = "128px"; 
-
   return (
     <div className={cn("flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full", disabled && "opacity-60")}>
       {hasMicPermission === false && !isRecording && !isProcessing && (
@@ -325,26 +322,21 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
       )}
       
       <p className="text-center text-muted-foreground px-2 py-1 flex items-center text-sm min-h-[2rem]">
-        {disabled ? statusText : isSubtaskMode ? statusText : ''}
+        {statusText}
       </p>
 
       <div className="flex justify-center items-center w-full">
-        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-end pr-4">
-            <AgingLeaf color={leafColor} className="w-60 h-60"/>
+        <div className="flex-1 flex justify-center">
+            <Button
+                onClick={handleMicClick}
+                disabled={disabled || isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording) || isParentTaskCompleted} 
+                className="h-36 w-36 sm:h-40 sm:w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl flex items-center justify-center transition-all duration-150 ease-in-out hover:scale-105 active:scale-95"
+                aria-label={isRecording ? t.stopRecordingAriaLabel : t.startRecordingAriaLabel}
+            >
+                {buttonContent}
+            </Button>
         </div>
-        
-        <div className="flex-shrink-0">
-          <Button
-            onClick={handleMicClick}
-            disabled={disabled || isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording) || isParentTaskCompleted} 
-            className="h-36 w-36 sm:h-40 sm:w-40 rounded-full bg-accent hover:bg-accent/90 text-accent-foreground shadow-xl flex items-center justify-center transition-all duration-150 ease-in-out hover:scale-105 active:scale-95"
-            aria-label={isRecording ? t.stopRecordingAriaLabel : t.startRecordingAriaLabel}
-          >
-            {buttonContent}
-          </Button>
-        </div>
-
-        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-start pl-8">
+        <div className="flex-1 flex justify-start pl-8">
             <AverageIndexGauge value={averageIndex} maxValue={11} />
         </div>
       </div>
@@ -388,3 +380,5 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
     </div>
   );
 }
+
+    
