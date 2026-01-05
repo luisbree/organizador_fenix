@@ -23,15 +23,13 @@ interface TaskFormProps {
   onAddSubTask: (subtask: { tarea: string, parentId: string }) => void;
   selectedTask?: Task | null;
   tasks: Task[];
-  sortOrder: SortOrder;
-  setSortOrder: (order: SortOrder) => void;
   averageIndex: number;
   leafColor: string;
   t: LanguageStrings;
   disabled?: boolean;
 }
 
-export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrder, setSortOrder, averageIndex, leafColor, t, disabled = false }: TaskFormProps) {
+export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, averageIndex, leafColor, t, disabled = false }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -332,7 +330,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
       </p>
 
       <div className="flex justify-center items-center w-full">
-        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-center items-center">
+        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-end pr-4">
             <AgingLeaf color={leafColor} className="w-60 h-60"/>
         </div>
         
@@ -347,7 +345,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
           </Button>
         </div>
 
-        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-start items-center pl-4">
+        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-start pl-4">
             <AverageIndexGauge value={averageIndex} maxValue={11} />
         </div>
       </div>
@@ -373,7 +371,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
 
       <div className={cn("w-full pt-3 max-w-xl mx-auto", isSubtaskMode && "invisible")}>
          <div className="w-full flex items-center justify-center space-x-2 px-1">
-            <div className={cn("w-1/2 flex items-center justify-center space-x-4 pr-2", isSubtaskMode && "invisible")}>
+            <div className={cn("flex items-center justify-center space-x-4 pr-2", isSubtaskMode && "invisible")}>
                 <div className="flex items-center space-x-2">
                     <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} disabled={disabled || isSubtaskMode} />
                     <Label htmlFor="fenix-checkbox" className="text-sm font-medium">{t.fenix}</Label>
@@ -390,14 +388,6 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
                     />
                     <Label htmlFor="fenix-period" className="text-sm text-muted-foreground">{t.days}</Label>
                 </div>
-            </div>
-            <div className="w-1/2 flex items-center justify-center pl-2">
-                <SortAndAgingIndicator 
-                    sortOrder={sortOrder}
-                    setSortOrder={setSortOrder}
-                    t={t}
-                    disabled={disabled}
-                />
             </div>
         </div>
       </div>

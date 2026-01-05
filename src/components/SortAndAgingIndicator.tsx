@@ -30,7 +30,7 @@ export function SortAndAgingIndicator({ sortOrder, setSortOrder, t, disabled }: 
         <Button
             onClick={toggleSortOrder}
             variant="outline"
-            className="w-full h-10"
+            className="h-10"
             disabled={disabled}
         >
             <Icon className="mr-2 h-4 w-4" />
@@ -38,5 +38,3 @@ export function SortAndAgingIndicator({ sortOrder, setSortOrder, t, disabled }: 
         </Button>
   );
 }
-
-    

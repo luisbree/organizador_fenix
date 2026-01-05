@@ -7,6 +7,7 @@ import { TaskForm } from '@/components/TaskForm';
 import { TaskList } from '@/components/TaskList';
 import { TaskSearch } from '@/components/TaskSearch';
 import { ListManager } from '@/components/ListManager';
+import { SortAndAgingIndicator } from '@/components/SortAndAgingIndicator';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useCollection, useFirestore, useUser } from '@/firebase';
 import { collection, doc, serverTimestamp, runTransaction, onSnapshot, writeBatch, query, orderBy, addDoc, deleteDoc, getDocs } from 'firebase/firestore';
@@ -616,8 +617,6 @@ export default function HomePage() {
             onAddSubTask={handleAddSubTask}
             selectedTask={selectedTask}
             tasks={tasks || []}
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
             averageIndex={averageIndex}
             leafColor={leafColor}
             t={t}
@@ -634,11 +633,23 @@ export default function HomePage() {
                 onDeleteList={handleDeleteList}
                 t={t}
             />
-          <TaskSearch 
-            searchQuery={searchQuery} 
-            setSearchQuery={setSearchQuery} 
-            t={t}
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-grow">
+              <TaskSearch 
+                searchQuery={searchQuery} 
+                setSearchQuery={setSearchQuery} 
+                t={t}
+              />
+            </div>
+            <div className="flex-shrink-0">
+               <SortAndAgingIndicator 
+                    sortOrder={sortOrder}
+                    setSortOrder={setSortOrder}
+                    t={t}
+                    disabled={!activeListId}
+                />
+            </div>
+          </div>
         </section>
 
         <section className="flex-grow flex flex-col">
@@ -671,5 +682,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
