@@ -344,7 +344,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
           </Button>
         </div>
 
-        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-start pl-4">
+        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-start pl-8">
             <AverageIndexGauge value={averageIndex} maxValue={11} />
         </div>
       </div>
