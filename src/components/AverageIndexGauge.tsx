@@ -25,9 +25,7 @@ export function AverageIndexGauge({ value, maxValue, className }: AverageIndexGa
   const valueAngle = startAngle + (clampedValue / maxValue) * totalAngle;
 
   const needleLength = radius - 12; // Adjusted needle length
-  const needleX = center + needleLength * Math.sin((valueAngle * Math.PI) / 180);
-  const needleY = center - needleLength * Math.cos((valueAngle * Math.PI) / 180);
-
+  
   const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
     const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
     return {
@@ -68,22 +66,29 @@ export function AverageIndexGauge({ value, maxValue, className }: AverageIndexGa
 
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={cn("transition-opacity duration-300", value > 0 ? "opacity-100" : "opacity-30", className)}>
-      {/* Gauge background arc */}
-      <path
-        d={describeArc(center, center, radius, -120, 120)}
-        fill="none"
-        stroke="hsl(var(--muted))"
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-      />
-      {/* Ticks */}
-      <g>{ticks}</g>
-      {/* Needle */}
-      <g transform={`rotate(${valueAngle} ${center} ${center})`}>
-         <path d={`M ${center - 4} ${center + 8} L ${center} ${center - needleLength} L ${center + 4} ${center + 8} Z`} fill="hsl(var(--foreground))" />
-         <circle cx={center} cy={center} r="6" fill="hsl(var(--foreground))" />
-      </g>
-    </svg>
+    <div className="flex flex-col items-center justify-center">
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={cn("transition-opacity duration-300", value > 0 ? "opacity-100" : "opacity-30", className)}>
+            {/* Gauge background arc */}
+            <path
+                d={describeArc(center, center, radius, -120, 120)}
+                fill="none"
+                stroke="hsl(var(--muted))"
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+            />
+            {/* Ticks */}
+            <g>{ticks}</g>
+            {/* Needle */}
+            <g transform={`rotate(${valueAngle} ${center} ${center})`}>
+                <path d={`M ${center - 4} ${center + 8} L ${center} ${center - needleLength} L ${center + 4} ${center + 8} Z`} fill="hsl(var(--foreground))" />
+                <circle cx={center} cy={center} r="6" fill="hsl(var(--foreground))" />
+            </g>
+        </svg>
+        {value > 0 && (
+            <p className="text-center text-sm font-bold text-foreground mt-2 tabular-nums">
+                {value.toFixed(2)}
+            </p>
+        )}
+    </div>
   );
 }

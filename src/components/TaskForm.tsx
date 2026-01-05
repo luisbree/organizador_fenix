@@ -310,7 +310,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
 
   const buttonText = isSubtaskMode ? t.addSubtaskButton : t.addTaskButton;
 
-  const gaugeSize = "144px"; 
+  const gaugeSize = "128px"; 
 
   return (
     <div className={cn("flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full", disabled && "opacity-60")}>
@@ -329,8 +329,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
       </p>
 
       <div className="flex justify-center items-center w-full">
-        {/* Invisible spacer to balance the layout */}
-        <div style={{ width: gaugeSize, height: gaugeSize }} className="hidden sm:flex"></div>
+        {/* Left Spacer */}
+        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-end items-center pr-4"></div>
         
         {/* Centered Microphone Button */}
         <div className="flex-shrink-0">
@@ -345,30 +345,12 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
         </div>
 
         {/* Right-side Gauge */}
-        <div style={{ width: gaugeSize, height: gaugeSize }} className="hidden sm:flex justify-start items-center pl-4">
+        <div style={{ width: gaugeSize }} className="hidden sm:flex justify-start items-center pl-4">
             <AverageIndexGauge value={averageIndex} maxValue={11} />
         </div>
       </div>
       
       <form onSubmit={handleTextInputSubmit} className="w-full space-y-3 px-1 pt-2 max-w-xl mx-auto">
-        <div className={cn("flex items-center justify-center space-x-4 pb-2", isSubtaskMode && "invisible")}>
-            <div className="flex items-center space-x-2">
-                <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} disabled={disabled || isSubtaskMode} />
-                <Label htmlFor="fenix-checkbox" className="text-sm font-medium">{t.fenix}</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-                <Input
-                    id="fenix-period"
-                    type="number"
-                    value={fenixPeriod}
-                    onChange={(e) => setFenixPeriod(Number(e.target.value))}
-                    className="w-20 h-8 text-center"
-                    min="1"
-                    disabled={disabled || !isFenix || isSubtaskMode}
-                />
-                <Label htmlFor="fenix-period" className="text-sm text-muted-foreground">{t.days}</Label>
-            </div>
-        </div>
         <Input 
           type="text"
           placeholder={placeholderText}
@@ -387,15 +369,35 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
         </Button>
       </form>
 
-      <div className={cn("w-full", isSubtaskMode && "invisible h-14")}>
-        <SortAndAgingIndicator 
-            tasks={tasks}
-            sortOrder={sortOrder}
-            setSortOrder={setSortOrder}
-            averageIndex={averageIndex}
-            t={t}
-            disabled={disabled}
-        />
+      <div className={cn("w-full pt-3 max-w-xl mx-auto", isSubtaskMode && "invisible")}>
+         <div className="w-full flex items-center justify-center space-x-2 px-1">
+            <div className={cn("w-1/2 flex items-center justify-center space-x-4 pr-2", isSubtaskMode && "invisible")}>
+                <div className="flex items-center space-x-2">
+                    <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} disabled={disabled || isSubtaskMode} />
+                    <Label htmlFor="fenix-checkbox" className="text-sm font-medium">{t.fenix}</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Input
+                        id="fenix-period"
+                        type="number"
+                        value={fenixPeriod}
+                        onChange={(e) => setFenixPeriod(Number(e.target.value))}
+                        className="w-16 h-8 text-center"
+                        min="1"
+                        disabled={disabled || !isFenix || isSubtaskMode}
+                    />
+                    <Label htmlFor="fenix-period" className="text-sm text-muted-foreground">{t.days}</Label>
+                </div>
+            </div>
+            <div className="w-1/2 flex items-center justify-center pl-2">
+                <SortAndAgingIndicator 
+                    sortOrder={sortOrder}
+                    setSortOrder={setSortOrder}
+                    t={t}
+                    disabled={disabled}
+                />
+            </div>
+        </div>
       </div>
     </div>
   );
