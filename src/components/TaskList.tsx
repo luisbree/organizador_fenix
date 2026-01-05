@@ -12,29 +12,6 @@ import { SubTaskItem } from './SubTaskItem';
 import type { LanguageStrings } from '@/lib/translations';
 import { CriticalTaskToggle } from './CriticalTaskToggle';
 
-interface TaskListProps {
-  tasks: Task[];
-  sortOrder: SortOrder;
-  onToggleComplete: (id: string) => void;
-  onDeleteTask: (id: string) => void;
-  onToggleScheduled: (id: string, currentScheduledAt: any) => void;
-  onUpdateTaskValue: (
-    taskId: string,
-    field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
-    newValue: number
-  ) => void;
-  onSelectTask: (taskId: string | null) => void;
-  selectedTaskId: string | null;
-  onToggleSubTaskComplete: (subTaskId: string, parentId: string) => void;
-  onDeleteSubTask: (subTaskId: string, parentId: string) => void;
-  onToggleSubTaskScheduled: (subTaskId: string, parentId: string, currentScheduledAt: any) => void;
-  onToggleCritical: (taskId: string, isCurrentlyCritical: boolean) => void;
-  onUpdateTaskName: (taskId: string, newName: string) => void;
-  onUpdateFenixPeriod: (taskId: string, newPeriod: number) => void;
-  criticalTasksCount: number;
-  t: LanguageStrings;
-}
-
 const calculateDynamicIndex = (task: Task): number => {
     if (!task.createdAt) return task.indice;
     const createdDate = task.createdAt && 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
@@ -117,11 +94,12 @@ export function TaskList({
 }: TaskListProps) {
   const [openAccordionItems, setOpenAccordionItems] = React.useState<string[]>([]);
   
-  const sortedTasks = [...tasks].sort((a, b) => {
+  const sortedTasks = React.useMemo(() => [...tasks].sort((a, b) => {
     // Critical tasks always on top
     if (a.isCritical && !b.isCritical) return -1;
     if (!a.isCritical && b.isCritical) return 1;
 
+    // Separate completed from non-completed
     if (a.completado && !b.completado) return 1;
     if (!a.completado && b.completado) return -1;
 
@@ -132,41 +110,29 @@ export function TaskList({
         return bDate.getTime() - aDate.getTime();
     }
     
-    // Sort by age if specified
+    // Sort by age (aging factor) if specified
     if (sortOrder === 'age') {
-        const aDate = a.createdAt && 'toDate' in a.createdAt ? a.createdAt.toDate() : new Date(a.createdAt);
-        const bDate = b.createdAt && 'toDate' in b.createdAt ? b.createdAt.toDate() : new Date(b.createdAt);
-        return aDate.getTime() - bDate.getTime();
+        const aAgingFactor = calculateAgingFactor(a);
+        const bAgingFactor = calculateAgingFactor(b);
+        return bAgingFactor - aAgingFactor; // Higher aging factor first
     }
 
-    // Default sort by index
+    // Default sort by dynamic index
     const aIndex = calculateDynamicIndex(a);
     const bIndex = calculateDynamicIndex(b);
-
-    if (aIndex === Infinity && bIndex !== Infinity) return -1;
-    if (bIndex === Infinity && aIndex !== Infinity) return 1;
-    if (aIndex === Infinity && bIndex === Infinity) {
-      const aDate = a.createdAt && 'toDate' in a.createdAt ? a.createdAt.toDate() : new Date(a.createdAt);
-      const bDate = b.createdAt && 'toDate' in b.createdAt ? b.createdAt.toDate() : new Date(b.createdAt);
-      return bDate.getTime() - aDate.getTime();
-    }
     
-    if (isNaN(aIndex) && !isNaN(bIndex)) return 1;
-    if (!isNaN(aIndex) && isNaN(bIndex)) return -1;
-    if (isNaN(aIndex) && isNaN(bIndex)) {
-      const aDate = a.createdAt && 'toDate' in a.createdAt ? a.createdAt.toDate() : new Date(a.createdAt);
-      const bDate = b.createdAt && 'toDate' in b.createdAt ? b.createdAt.toDate() : new Date(b.createdAt);
-      return bDate.getTime() - aDate.getTime();
-    }
-    
-    if (bIndex !== aIndex) {
-      return bIndex - aIndex; 
+    if (isFinite(aIndex) && isFinite(bIndex)) {
+        if (bIndex !== aIndex) return bIndex - aIndex;
+    } else {
+        if (aIndex === Infinity && bIndex !== Infinity) return -1;
+        if (bIndex === Infinity && aIndex !== Infinity) return 1;
     }
 
     const aDate = a.createdAt && 'toDate' in a.createdAt ? a.createdAt.toDate() : new Date(a.createdAt);
     const bDate = b.createdAt && 'toDate' in b.createdAt ? b.createdAt.toDate() : new Date(b.createdAt);
     return bDate.getTime() - aDate.getTime();
-  });
+
+  }), [tasks, sortOrder]);
   
   const sortedSubtasks = (subtasks: SubTask[] = []) => {
     return [...subtasks].sort((a, b) => {
