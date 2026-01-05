@@ -592,7 +592,7 @@ export default function HomePage() {
             <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
             Fénix
             </h1>
-            <AgingLeaf color={leafColor} className="h-8 w-8" />
+            <AgingLeaf color={leafColor} className="h-24 w-24" />
         </div>
          <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -685,5 +685,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-    
