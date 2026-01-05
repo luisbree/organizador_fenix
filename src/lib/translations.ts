@@ -27,6 +27,8 @@ export type LanguageStrings = {
   taskUpdatedTitle: string;
   taskUpdatedDescription: (field: string) => string;
   newIndex: string;
+  taskNameUpdatedTitle: string;
+  fenixPeriodUpdatedTitle: string;
   // List Manager
   selectListPlaceholder: string;
   addListAriaLabel: string;
@@ -46,6 +48,9 @@ export type LanguageStrings = {
   invalidValueDescription: (min: number, max: number) => string;
   editValueAriaLabel: string;
   editValueTooltip: (value: number) => string;
+  // Fenix Period Editor
+  fenixRebirthPeriodTitle: string;
+  fenixRebirthPeriodDescription: string;
   // SubTaskItem
   completeSubtaskAriaLabel: (name: string) => string;
   confirmCompletionTitle: string;
@@ -101,6 +106,10 @@ export type LanguageStrings = {
   formatTitle: string;
   formatDescription: string;
   formatExample: string;
+  sortBy: {
+    index: string;
+    age: string;
+  };
   // TaskItem
   urgency: string;
   necessity: string;
@@ -153,6 +162,8 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     taskUpdatedTitle: 'Tarea actualizada',
     taskUpdatedDescription: (field) => `El campo "${field}" ha sido actualizado.`,
     newIndex: 'Nuevo índice:',
+    taskNameUpdatedTitle: 'Nombre de tarea actualizado',
+    fenixPeriodUpdatedTitle: 'Período Fénix actualizado',
     selectListPlaceholder: 'Seleccionar una lista',
     addListAriaLabel: 'Añadir nueva lista',
     addListTitle: 'Añadir nueva lista',
@@ -170,13 +181,15 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     invalidValueDescription: (min, max) => `El valor debe ser un número entre ${min} y ${max}.`,
     editValueAriaLabel: 'Editar valor',
     editValueTooltip: (value) => `Valor actual: ${value}. Click para editar.`,
+    fenixRebirthPeriodTitle: 'Período de Renacimiento',
+    fenixRebirthPeriodDescription: 'Días hasta que la tarea reaparezca tras completarse.',
     completeSubtaskAriaLabel: (name) => `Marcar ${name} como completada`,
     confirmCompletionTitle: 'Confirmar Tarea Completada',
     confirm: 'Confirmar',
     toggleScheduledTooltip: 'Marcar como agendado',
     scheduleSubtaskAriaLabel: (name) => `Programar subtarea ${name} en Google Calendar`,
     deleteSubtaskAriaLabel: (name) => `Eliminar subtarea ${name}`,
-    deleteSubtaskTooltip: 'Eliminar subtarea',
+    deleteSubtaskTooltip: 'Eliminar subtarefa',
     confirmDeleteSubtaskTitle: '¿Eliminar esta subtarea?',
     confirmDeleteSubtaskDescription: (name) => `La subtarea "${name}" será eliminada permanentemente.`,
     cancel: 'Cancelar',
@@ -223,6 +236,10 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     formatTitle: 'Formato',
     formatDescription: '"Descripción U N C D" (0-5).',
     formatExample: 'Ej: "Pasear al perro 5312" o "Pasear al perro 5 3 1 2".',
+    sortBy: {
+      index: 'Índice',
+      age: 'Antigüedad',
+    },
     urgency: 'Urgencia',
     necessity: 'Necesidad',
     cost: 'Costo',
@@ -270,6 +287,8 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     taskUpdatedTitle: 'Task updated',
     taskUpdatedDescription: (field) => `The field "${field}" has been updated.`,
     newIndex: 'New index:',
+    taskNameUpdatedTitle: 'Task name updated',
+    fenixPeriodUpdatedTitle: 'Fenix period updated',
     selectListPlaceholder: 'Select a list',
     addListAriaLabel: 'Add new list',
     addListTitle: 'Add new list',
@@ -287,6 +306,8 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     invalidValueDescription: (min, max) => `The value must be a number between ${min} and ${max}.`,
     editValueAriaLabel: 'Edit value',
     editValueTooltip: (value) => `Current value: ${value}. Click to edit.`,
+    fenixRebirthPeriodTitle: 'Rebirth Period',
+    fenixRebirthPeriodDescription: 'Days until the task reappears after completion.',
     completeSubtaskAriaLabel: (name) => `Mark ${name} as completed`,
     confirmCompletionTitle: 'Confirm Task Completion',
     confirm: 'Confirm',
@@ -340,6 +361,10 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     formatTitle: 'Format',
     formatDescription: '"Description U N C D" (0-5).',
     formatExample: 'e.g., "Walk the dog 5312" or "Walk the dog 5 3 1 2".',
+    sortBy: {
+      index: 'Index',
+      age: 'Age',
+    },
     urgency: 'Urgency',
     necessity: 'Necessity',
     cost: 'Cost',
@@ -387,6 +412,8 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     taskUpdatedTitle: 'Tarefa atualizada',
     taskUpdatedDescription: (field) => `O campo "${field}" foi atualizado.`,
     newIndex: 'Novo índice:',
+    taskNameUpdatedTitle: 'Nome da tarefa atualizado',
+    fenixPeriodUpdatedTitle: 'Período Fênix atualizado',
     selectListPlaceholder: 'Selecionar uma lista',
     addListAriaLabel: 'Adicionar nova lista',
     addListTitle: 'Adicionar nova lista',
@@ -404,6 +431,8 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     invalidValueDescription: (min, max) => `O valor deve ser um número entre ${min} e ${max}.`,
     editValueAriaLabel: 'Editar valor',
     editValueTooltip: (value) => `Valor atual: ${value}. Clique para editar.`,
+    fenixRebirthPeriodTitle: 'Período de Renascimento',
+    fenixRebirthPeriodDescription: 'Dias até que a tarefa reapareça após a conclusão.',
     completeSubtaskAriaLabel: (name) => `Marcar ${name} como concluída`,
     confirmCompletionTitle: 'Confirmar Conclusão da Tarefa',
     confirm: 'Confirmar',
@@ -457,6 +486,10 @@ export const translations: Record<'es' | 'en' | 'pt', LanguageStrings> = {
     formatTitle: 'Formato',
     formatDescription: '"Descrição U N C D" (0-5).',
     formatExample: 'Ex: "Passear com o cachorro 5312" ou "Passear com o cachorro 5 3 1 2".',
+    sortBy: {
+      index: 'Índice',
+      age: 'Antiguidade',
+    },
     urgency: 'Urgência',
     necessity: 'Necessidade',
     cost: 'Custo',

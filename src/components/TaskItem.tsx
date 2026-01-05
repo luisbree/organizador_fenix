@@ -2,13 +2,8 @@
 "use client";
 
 import type * as React from 'react';
-import {
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
-import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Trash2, CalendarPlus, Clock, ChevronDown } from 'lucide-react';
+import { Trash2, CalendarPlus, Clock } from 'lucide-react';
 import type { Task } from '@/types/task';
 import { cn } from '@/lib/utils';
 import { EditableNumericCell } from './EditableNumericCell';
@@ -33,6 +28,9 @@ import {
 } from "@/components/ui/dialog";
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import type { LanguageStrings } from '@/lib/translations';
+import { Checkbox } from '@/components/ui/checkbox';
+import { EditableText } from './EditableText';
+import { FenixPeriodEditor } from './FenixPeriodEditor';
 
 // A simple, inline SVG for the Phoenix icon
 const PhoenixIcon = ({ className }: { className?: string }) => (
@@ -62,6 +60,8 @@ interface TaskItemProps {
     field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
     newValue: number
   ) => void;
+  onUpdateTaskName: (taskId: string, newName: string) => void;
+  onUpdateFenixPeriod: (taskId: string, newPeriod: number) => void;
   agingFactor: number;
   t: LanguageStrings;
 }
@@ -76,6 +76,8 @@ export function TaskItem({
     onDeleteTask, 
     onToggleScheduled, 
     onUpdateTaskValue,
+    onUpdateTaskName,
+    onUpdateFenixPeriod,
     agingFactor,
     t
 }: TaskItemProps) {
@@ -155,15 +157,23 @@ export function TaskItem({
         )}
       </div>
       <div className="flex-grow min-w-0 grid grid-cols-[1fr_auto] items-center gap-2 pr-2">
-         <div className="flex-grow min-w-0">
+         <div className="flex-grow min-w-0 font-bold text-sm">
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className={cn(
-                    "font-bold whitespace-nowrap text-sm", 
-                    task.completado && "line-through text-muted-foreground",
-                    criticalTextClass
-                )}>
-                  {task.tarea}
+                <div>
+                   <FenixPeriodEditor
+                      isFenix={!!task.isFenix}
+                      fenixPeriod={task.fenixPeriod || 30}
+                      onUpdate={(newPeriod) => onUpdateFenixPeriod(task.id, newPeriod)}
+                      t={t}
+                   >
+                      <EditableText
+                          initialValue={task.tarea}
+                          onSave={(newName) => onUpdateTaskName(task.id, newName)}
+                          isCompleted={task.completado}
+                          className={criticalTextClass}
+                      />
+                   </FenixPeriodEditor>
                 </div>
               </TooltipTrigger>
               <TooltipContent>

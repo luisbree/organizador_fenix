@@ -1,8 +1,8 @@
 
 "use client";
 
-import type * as React from 'react';
-import type { Task, SubTask } from '@/types/task';
+import * as React from 'react';
+import type { Task, SubTask, SortOrder } from '@/types/task';
 import { TaskItem } from './TaskItem';
 import { ListChecks, ChevronDown } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -14,6 +14,7 @@ import { CriticalTaskToggle } from './CriticalTaskToggle';
 
 interface TaskListProps {
   tasks: Task[];
+  sortOrder: SortOrder;
   onToggleComplete: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onToggleScheduled: (id: string, currentScheduledAt: any) => void;
@@ -28,6 +29,8 @@ interface TaskListProps {
   onDeleteSubTask: (subTaskId: string, parentId: string) => void;
   onToggleSubTaskScheduled: (subTaskId: string, parentId: string, currentScheduledAt: any) => void;
   onToggleCritical: (taskId: string, isCurrentlyCritical: boolean) => void;
+  onUpdateTaskName: (taskId: string, newName: string) => void;
+  onUpdateFenixPeriod: (taskId: string, newPeriod: number) => void;
   criticalTasksCount: number;
   t: LanguageStrings;
 }
@@ -96,6 +99,7 @@ const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
 
 export function TaskList({ 
     tasks, 
+    sortOrder,
     onToggleComplete, 
     onDeleteTask, 
     onToggleScheduled, 
@@ -106,9 +110,13 @@ export function TaskList({
     onDeleteSubTask,
     onToggleSubTaskScheduled,
     onToggleCritical,
+    onUpdateTaskName,
+    onUpdateFenixPeriod,
     criticalTasksCount,
     t
 }: TaskListProps) {
+  const [openAccordionItems, setOpenAccordionItems] = React.useState<string[]>([]);
+  
   const sortedTasks = [...tasks].sort((a, b) => {
     // Critical tasks always on top
     if (a.isCritical && !b.isCritical) return -1;
@@ -123,7 +131,15 @@ export function TaskList({
         const bDate = b.completedAt && 'toDate' in b.completedAt ? b.completedAt.toDate() : new Date(b.completedAt || 0);
         return bDate.getTime() - aDate.getTime();
     }
+    
+    // Sort by age if specified
+    if (sortOrder === 'age') {
+        const aDate = a.createdAt && 'toDate' in a.createdAt ? a.createdAt.toDate() : new Date(a.createdAt);
+        const bDate = b.createdAt && 'toDate' in b.createdAt ? b.createdAt.toDate() : new Date(b.createdAt);
+        return aDate.getTime() - bDate.getTime();
+    }
 
+    // Default sort by index
     const aIndex = calculateDynamicIndex(a);
     const bIndex = calculateDynamicIndex(b);
 
@@ -161,6 +177,13 @@ export function TaskList({
         return aDate.getTime() - bDate.getTime();
     });
   };
+  
+  const handleAccordionToggle = (value: string[]) => {
+    setOpenAccordionItems(value);
+    // When accordion opens/closes, ensure no task is selected for subtask addition
+    onSelectTask(null);
+  };
+
 
   if (tasks.length === 0) {
     return (
@@ -175,12 +198,13 @@ export function TaskList({
   return (
     <div className="overflow-x-auto">
       <TooltipProvider>
-        <Accordion type="multiple" className="w-full border-t-0 rounded-none min-w-[600px]">
+        <Accordion type="multiple" value={openAccordionItems} onValueChange={handleAccordionToggle} className="w-full border-t-0 rounded-none min-w-[600px]">
           {sortedTasks.map((task) => {
             const agingFactor = calculateAgingFactor(task);
             const agingColorStyle = getAgingColorStyle(agingFactor);
             const hasSubtasks = task.subtasks && task.subtasks.length > 0;
-            const isSelected = selectedTaskId === task.id;
+            const isSelectedForSubtask = selectedTaskId === task.id;
+            const isAccordionOpen = openAccordionItems.includes(task.id);
 
             const rowStyle: React.CSSProperties = {};
             if (task.isCritical) {
@@ -190,9 +214,13 @@ export function TaskList({
                 rowStyle.backgroundColor = agingColorStyle.backgroundColor;
             }
 
-            if (isSelected && !task.completado) {
-              rowStyle.borderColor = task.isCritical ? '#ffb700' : agingColorStyle.borderColor;
+            if (isSelectedForSubtask && !isAccordionOpen) {
+              rowStyle.borderColor = '#9ef200';
+              rowStyle.borderWidth = '4px';
+            } else if (task.isCritical) {
+              rowStyle.borderColor = '#ffb700'; // Keep critical border color
             }
+
 
             return (
               <AccordionItem 
@@ -200,13 +228,13 @@ export function TaskList({
                 key={task.id} 
                 className={cn(
                   "border-b overflow-hidden transition-all duration-300",
-                  isSelected ? 'border-4 shadow-lg' : 'border-border',
+                  isSelectedForSubtask && !isAccordionOpen ? 'shadow-lg' : 'border-border',
                   task.completado && "bg-muted/50"
                 )}
                 style={rowStyle}
               >
                 <div 
-                   onClick={() => onSelectTask(task.id)} 
+                   onClick={() => !isAccordionOpen && onSelectTask(task.id)}
                    className="flex items-center w-full relative cursor-pointer"
                 >
                   <CriticalTaskToggle
@@ -221,6 +249,8 @@ export function TaskList({
                           onDeleteTask={onDeleteTask}
                           onToggleScheduled={onToggleScheduled}
                           onUpdateTaskValue={onUpdateTaskValue}
+                          onUpdateTaskName={onUpdateTaskName}
+                          onUpdateFenixPeriod={onUpdateFenixPeriod}
                           agingFactor={agingFactor}
                           t={t}
                       />
@@ -235,7 +265,7 @@ export function TaskList({
                       disabled={!hasSubtasks}
                       onClick={(e) => {
                         if (hasSubtasks) {
-                          e.stopPropagation(); // Evita que onSelectTask se dispare al hacer clic en el trigger del acordeón
+                          e.stopPropagation(); // Prevents row's onSelectTask when clicking trigger
                         }
                       }}
                   >

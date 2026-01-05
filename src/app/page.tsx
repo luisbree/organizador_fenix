@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from 'react';
-import type { Task, SubTask, TaskList as TaskListType } from '@/types/task';
+import type { Task, SubTask, TaskList as TaskListType, SortOrder } from '@/types/task';
 import { TaskForm } from '@/components/TaskForm';
 import { TaskList } from '@/components/TaskList';
 import { TaskSearch } from '@/components/TaskSearch';
@@ -42,6 +42,7 @@ export default function HomePage() {
   const [t, setT] = useState<LanguageStrings>(translations.es);
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const migrationCompletedRef = useRef(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('index');
 
   useEffect(() => {
     setT(translations[language]);
@@ -463,6 +464,24 @@ export default function HomePage() {
         title: t.listDeletedTitle
     });
   };
+  
+  const handleUpdateTaskName = (taskId: string, newName: string) => {
+    if (!firestore || !activeListId || !newName.trim()) return;
+    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', taskId);
+    updateDocumentNonBlocking(taskRef, { tarea: newName.trim() });
+    toast({
+        title: t.taskNameUpdatedTitle,
+    });
+  };
+
+  const handleUpdateFenixPeriod = (taskId: string, newPeriod: number) => {
+    if (!firestore || !activeListId) return;
+    const taskRef = doc(firestore, 'users', SHARED_USER_ID, 'taskLists', activeListId, 'tasks', taskId);
+    updateDocumentNonBlocking(taskRef, { fenixPeriod: newPeriod });
+    toast({
+        title: t.fenixPeriodUpdatedTitle,
+    });
+  };
 
   const filteredTasks = useMemo(() => {
     if (!tasks) return [];
@@ -517,6 +536,9 @@ export default function HomePage() {
             onAddTask={handleAddTask} 
             onAddSubTask={handleAddSubTask}
             selectedTask={selectedTask}
+            tasks={tasks || []}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
             t={t}
             disabled={!activeListId}
           />
@@ -545,6 +567,7 @@ export default function HomePage() {
             <div className="flex-grow">
               <TaskList
                 tasks={filteredTasks || []}
+                sortOrder={sortOrder}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
                 onToggleScheduled={handleToggleScheduled}
@@ -556,6 +579,8 @@ export default function HomePage() {
                 onToggleSubTaskScheduled={handleToggleSubTaskScheduled}
                 onToggleCritical={handleToggleCritical}
                 criticalTasksCount={criticalTasksCount}
+                onUpdateTaskName={handleUpdateTaskName}
+                onUpdateFenixPeriod={handleUpdateFenixPeriod}
                 t={t}
               />
             </div>

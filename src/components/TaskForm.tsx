@@ -7,23 +7,27 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import type { Task } from '@/types/task';
+import type { Task, SortOrder } from '@/types/task';
 import { Mic, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import type { LanguageStrings } from '@/lib/translations';
 import { cn } from '@/lib/utils';
+import { SortAndAgingIndicator } from './SortAndAgingIndicator';
 
 interface TaskFormProps {
   onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string; isFenix: boolean; fenixPeriod: number; }) => void;
   onAddSubTask: (subtask: { tarea: string, parentId: string }) => void;
   selectedTask?: Task | null;
+  tasks: Task[];
+  sortOrder: SortOrder;
+  setSortOrder: (order: SortOrder) => void;
   t: LanguageStrings;
   disabled?: boolean;
 }
 
-export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t, disabled = false }: TaskFormProps) {
+export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrder, setSortOrder, t, disabled = false }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -367,15 +371,15 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, t, disabled = 
         </Button>
       </form>
 
-      <p className={cn(
-        "text-xs text-center text-muted-foreground px-4 pt-3 max-w-md",
-        isSubtaskMode && "invisible"
-      )}>
-        <strong>{t.formatTitle}:</strong> {t.formatDescription}
-        <br/>{t.formatExample}
-      </p>
+      <div className={cn("w-full", isSubtaskMode && "invisible h-14")}>
+        <SortAndAgingIndicator 
+            tasks={tasks}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+            t={t}
+            disabled={disabled}
+        />
+      </div>
     </div>
   );
 }
-
-    

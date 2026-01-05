@@ -1,5 +1,7 @@
 import type { Timestamp } from 'firebase/firestore';
 
+export type SortOrder = 'index' | 'age';
+
 export interface TaskList {
   id: string;
   name: string;
