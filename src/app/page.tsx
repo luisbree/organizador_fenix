@@ -579,7 +579,7 @@ export default function HomePage() {
                 sortOrder={sortOrder}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
-                onToggleScheduled={handleToggleScheduled}
+                onToggleScheduled={onToggleScheduled}
                 onUpdateTaskValue={handleUpdateTaskValue}
                 onSelectTask={handleSelectTask}
                 selectedTaskId={selectedTaskId}
