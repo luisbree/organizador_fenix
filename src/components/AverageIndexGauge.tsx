@@ -11,8 +11,8 @@ interface AverageIndexGaugeProps {
 }
 
 export function AverageIndexGauge({ value, maxValue, className }: AverageIndexGaugeProps) {
-  const size = 144; // Matches the microphone button size (w-36)
-  const strokeWidth = 8;
+  const size = 128; // 80% of 160px
+  const strokeWidth = 8; // Adjusted stroke width
   const center = size / 2;
   const radius = center - strokeWidth;
 
@@ -24,7 +24,7 @@ export function AverageIndexGauge({ value, maxValue, className }: AverageIndexGa
 
   const valueAngle = startAngle + (clampedValue / maxValue) * totalAngle;
 
-  const needleLength = radius - 15;
+  const needleLength = radius - 12; // Adjusted needle length
   const needleX = center + needleLength * Math.sin((valueAngle * Math.PI) / 180);
   const needleY = center - needleLength * Math.cos((valueAngle * Math.PI) / 180);
 
@@ -51,8 +51,8 @@ export function AverageIndexGauge({ value, maxValue, className }: AverageIndexGa
     const tickValue = (i / numTicks) * maxValue;
     const tickAngle = startAngle + (tickValue / maxValue) * totalAngle;
 
-    const tickInnerRadius = radius - 5;
-    const tickOuterRadius = radius + 5;
+    const tickInnerRadius = radius - 4; // Adjusted tick size
+    const tickOuterRadius = radius + 4;
 
     const startPt = {
         x: center + tickInnerRadius * Math.sin(tickAngle * Math.PI / 180),
@@ -63,7 +63,7 @@ export function AverageIndexGauge({ value, maxValue, className }: AverageIndexGa
         y: center - tickOuterRadius * Math.cos(tickAngle * Math.PI / 180),
     };
     
-    ticks.push(<line key={i} x1={startPt.x} y1={startPt.y} x2={endPt.x} y2={endPt.y} stroke="hsl(var(--foreground))" strokeWidth="2" />);
+    ticks.push(<line key={i} x1={startPt.x} y1={startPt.y} x2={endPt.x} y2={endPt.y} stroke="hsl(var(--foreground))" strokeWidth="1.5" />);
   }
 
 
@@ -81,8 +81,8 @@ export function AverageIndexGauge({ value, maxValue, className }: AverageIndexGa
       <g>{ticks}</g>
       {/* Needle */}
       <g transform={`rotate(${valueAngle} ${center} ${center})`}>
-         <path d={`M ${center - 5} ${center + 10} L ${center} ${center - needleLength} L ${center + 5} ${center + 10} Z`} fill="hsl(var(--foreground))" />
-         <circle cx={center} cy={center} r="7" fill="hsl(var(--foreground))" />
+         <path d={`M ${center - 4} ${center + 8} L ${center} ${center - needleLength} L ${center + 4} ${center + 8} Z`} fill="hsl(var(--foreground))" />
+         <circle cx={center} cy={center} r="6" fill="hsl(var(--foreground))" />
       </g>
     </svg>
   );

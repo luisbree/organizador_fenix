@@ -310,7 +310,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, sortOrd
 
   const buttonText = isSubtaskMode ? t.addSubtaskButton : t.addTaskButton;
 
-  const gaugeSize = "160px"; // 144px (button) + 16px (spacing)
+  const gaugeSize = "144px"; 
 
   return (
     <div className={cn("flex flex-col items-center justify-center space-y-3 bg-card p-4 sm:p-6 rounded-xl shadow-lg min-h-[280px] w-full", disabled && "opacity-60")}>
