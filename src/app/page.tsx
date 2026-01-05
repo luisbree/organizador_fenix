@@ -587,9 +587,9 @@ export default function HomePage() {
                 onDeleteSubTask={handleDeleteSubTask}
                 onToggleSubTaskScheduled={handleToggleSubTaskScheduled}
                 onToggleCritical={handleToggleCritical}
-                criticalTasksCount={criticalTasksCount}
                 onUpdateTaskName={handleUpdateTaskName}
                 onUpdateFenixPeriod={handleUpdateFenixPeriod}
+                criticalTasksCount={criticalTasksCount}
                 t={t}
               />
             </div>
