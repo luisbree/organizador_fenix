@@ -671,7 +671,7 @@ export default function HomePage() {
                 sortOrder={sortOrder}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
-                onToggleScheduled={onToggleScheduled}
+                onToggleScheduled={handleToggleScheduled}
                 onUpdateTaskValue={handleUpdateTaskValue}
                 onSelectTask={handleSelectTask}
                 selectedTaskId={selectedTaskId}
@@ -691,3 +691,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+    
