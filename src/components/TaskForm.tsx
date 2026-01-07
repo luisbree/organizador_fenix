@@ -339,7 +339,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
         <div className="flex-1 flex justify-end items-center gap-2">
              <AverageIndexGauge value={averageIndex} maxValue={11} useGradient={true} />
              <AverageIndexGauge value={totalDynamicIndex} maxValue={240} colorBands={true} />
-             <AverageIndexGauge value={averageAgingFactor} maxValue={6} useAgingGradient={true} />
+             <AverageIndexGauge value={averageAgingFactor} maxValue={4} useAgingGradient={true} />
         </div>
       </div>
       

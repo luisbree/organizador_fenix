@@ -61,7 +61,7 @@ export const getAgingGradientColor = (factor: number, maxFactor: number): string
 
 export const getAgingColor = (agingFactor: number): string => {
   // The max factor for the leaf and gauge should be consistent.
-  return getAgingGradientColor(agingFactor, 3.0); 
+  return getAgingGradientColor(agingFactor, 4.0); 
 };
 
 const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
