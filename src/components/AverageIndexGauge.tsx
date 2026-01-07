@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -11,6 +12,19 @@ interface AverageIndexGaugeProps {
   useGradient?: boolean;
   useAgingGradient?: boolean;
 }
+
+export const getAgingGradientColor = (factor: number, maxFactor: number): string => {
+  if (factor <= 0) return `hsla(121, 63%, 58%, 1)`; // Green
+  const normalizedFactor = Math.min(factor / maxFactor, 1.0);
+  const hue = 120 - (normalizedFactor * 120); // 120 (green) -> 0 (red)
+  const saturation = 70 + (normalizedFactor * 30); // 70 -> 100
+  const lightness = 60 - (normalizedFactor * 10); // 60 -> 50
+  return `hsla(${hue}, ${saturation}%, ${lightness}%, 1)`;
+};
+
+export const getAgingColor = (agingFactor: number): string => {
+  return getAgingGradientColor(agingFactor, 2.5);
+};
 
 export function AverageIndexGauge({ 
   value, 
@@ -73,19 +87,7 @@ export function AverageIndexGauge({
     
     ticks.push(<line key={i} x1={startPt.x} y1={startPt.y} x2={endPt.x} y2={endPt.y} stroke="hsl(var(--foreground))" strokeWidth="1" />);
   }
-
-  const getAgingGradientColor = (offset: number) => {
-      const maxFactorForColor = 2.5;
-      // We need to map the offset (0-1) to an agingFactor value to get the right color
-      const agingFactor = offset * maxFactorForColor;
-      const normalizedFactor = Math.min(agingFactor / maxFactorForColor, 1.0);
-      const hue = 120 - (normalizedFactor * 120);
-      const saturation = 70 + (normalizedFactor * 30);
-      const lightness = 60 - (normalizedFactor * 10);
-      return `hsla(${hue}, ${saturation}%, ${lightness}%, 1)`;
-  };
-
-
+  
   return (
     <div className="flex flex-col items-center justify-center">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={cn("transition-opacity duration-300", value > 0 ? "opacity-100" : "opacity-30", className)}>
@@ -97,9 +99,11 @@ export function AverageIndexGauge({
                 <stop offset="100%" stopColor="red" />
               </linearGradient>
               <linearGradient id="agingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor={getAgingGradientColor(0)} />
-                <stop offset="50%" stopColor={getAgingGradientColor(0.5)} />
-                <stop offset="100%" stopColor={getAgingGradientColor(1.0)} />
+                <stop offset="0%" stopColor={getAgingGradientColor(0, maxValue)} />
+                <stop offset="25%" stopColor={getAgingGradientColor(0.25 * maxValue, maxValue)} />
+                <stop offset="50%" stopColor={getAgingGradientColor(0.5 * maxValue, maxValue)} />
+                <stop offset="75%" stopColor={getAgingGradientColor(0.75 * maxValue, maxValue)} />
+                <stop offset="100%" stopColor={getAgingGradientColor(maxValue, maxValue)} />
             </linearGradient>
             </defs>
 
@@ -151,3 +155,5 @@ export function AverageIndexGauge({
     </div>
   );
 }
+
+    

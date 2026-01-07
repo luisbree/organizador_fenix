@@ -28,22 +28,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { translations, type LanguageStrings } from '@/lib/translations';
 import { AgingLeaf } from '@/components/AgingLeaf';
+import { getAgingColor } from '@/components/AverageIndexGauge';
 
 
 const SHARED_USER_ID = "shared_user";
 const MAX_CRITICAL_TASKS = 3;
-
-const getAgingColor = (agingFactor: number): string => {
-  if (agingFactor <= 0) {
-    return `hsla(121, 63%, 58%, 1)`;
-  }
-  const maxFactorForColor = 2.5;
-  const normalizedFactor = Math.min(agingFactor / maxFactorForColor, 1.0);
-  const hue = 120 - (normalizedFactor * 120);
-  const saturation = 70 + (normalizedFactor * 30);
-  const lightness = 60 - (normalizedFactor * 10);
-  return `hsla(${hue}, ${saturation}%, ${lightness}%, 1)`;
-};
 
 export default function HomePage() {
   const { toast } = useToast();
