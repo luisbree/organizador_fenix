@@ -15,7 +15,6 @@ import { Label } from "@/components/ui/label";
 import type { LanguageStrings } from '@/lib/translations';
 import { cn } from '@/lib/utils';
 import { AverageIndexGauge } from './AverageIndexGauge';
-import { AgingLeaf } from './AgingLeaf';
 
 interface TaskFormProps {
   onAddTask: (task: Omit<Task, 'id' | 'indice' | 'completado' | 'createdAt' | 'scheduledAt'> & { rawTarea: string; isFenix: boolean; fenixPeriod: number; }) => void;
@@ -23,11 +22,12 @@ interface TaskFormProps {
   selectedTask?: Task | null;
   tasks: Task[];
   averageIndex: number;
+  totalDynamicIndex: number;
   t: LanguageStrings;
   disabled?: boolean;
 }
 
-export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, averageIndex, t, disabled = false }: TaskFormProps) {
+export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, averageIndex, totalDynamicIndex, t, disabled = false }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -147,7 +147,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
     
     recognitionInstance.maxSpeechInputLength = 20000;
     if ('speechRecognitionTimeout' in recognitionInstance) { (recognitionInstance as any).speechRecognitionTimeout = 20000; }
-    if ('endpointerTimeout' in recognitionInstance) { (recognitionInstance as any).endpointerTimeout = 10000; }
+    if ('endpointerTimeout' in recognitionInstance) { (recognitionInstance as any).endpointerTimeout = 1000; }
     if ('silenceTimeout' in recognitionInstance) { (recognitionInstance as any).silenceTimeout = 10000; }
     if ('longSilenceTimeout' in recognitionInstance) { (recognitionInstance as any).longSilenceTimeout = 10000; }
 
@@ -336,8 +336,9 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
                 {buttonContent}
             </Button>
         </div>
-        <div className="flex-1 flex justify-end">
-            <AverageIndexGauge value={averageIndex} maxValue={11} />
+        <div className="flex-1 flex justify-end items-center gap-2">
+             <AverageIndexGauge value={averageIndex} maxValue={11} />
+             <AverageIndexGauge value={totalDynamicIndex} maxValue={240} />
         </div>
       </div>
       
@@ -381,3 +382,4 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
     </div>
   );
 }
+
