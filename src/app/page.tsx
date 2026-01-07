@@ -505,13 +505,15 @@ export default function HomePage() {
     );
   }, [tasks, searchQuery]);
 
-  const { averageIndex, totalDynamicIndex } = useMemo(() => {
-    if (!tasks) return { averageIndex: 0, totalDynamicIndex: 0 };
+  const { averageIndex, totalDynamicIndex, averageAgingFactor } = useMemo(() => {
+    if (!tasks) return { averageIndex: 0, totalDynamicIndex: 0, averageAgingFactor: 0 };
     const eligibleTasks = tasks.filter(t => !t.completado);
-    if (eligibleTasks.length === 0) return { averageIndex: 0, totalDynamicIndex: 0 };
+    if (eligibleTasks.length === 0) return { averageIndex: 0, totalDynamicIndex: 0, averageAgingFactor: 0 };
 
-    const totalIndex = eligibleTasks.reduce((sum, task) => {
-      // Recalculate dynamic index (pure index + aging factor)
+    let totalIndex = 0;
+    let totalAgingFactor = 0;
+
+    eligibleTasks.forEach(task => {
       const num = task.urgencia + task.necesidad;
       const den = task.costo + task.duracion;
       let pureIndex = den === 0 ? (num > 0 ? Infinity : 0) : num / den;
@@ -536,42 +538,17 @@ export default function HomePage() {
       }
       
       const dynamicIndex = pureIndex + agingFactor;
-      return isFinite(dynamicIndex) ? sum + dynamicIndex : sum;
-    }, 0);
+      if (isFinite(dynamicIndex)) {
+        totalIndex += dynamicIndex;
+      }
+      totalAgingFactor += agingFactor;
+    });
 
     return {
       averageIndex: totalIndex / eligibleTasks.length,
       totalDynamicIndex: totalIndex,
+      averageAgingFactor: totalAgingFactor / eligibleTasks.length
     };
-  }, [tasks]);
-
-  const averageAgingFactor = useMemo(() => {
-    if (!tasks) return 0;
-    const eligibleTasks = tasks.filter(t => !t.completado);
-    if (eligibleTasks.length === 0) return 0;
-
-    const totalAgingFactor = eligibleTasks.reduce((sum, task) => {
-      let agingFactor = 0;
-      if (task.createdAt) {
-        const createdDate = 'toDate' in task.createdAt ? task.createdAt.toDate() : new Date(task.createdAt);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        createdDate.setHours(0, 0, 0, 0);
-        
-        const timeDiff = today.getTime() - createdDate.getTime();
-        const daysOld = Math.max(0, Math.floor(timeDiff / (1000 * 3600 * 24)));
-        
-        if (daysOld >= 1) {
-          const factor = ((task.urgencia + task.necesidad) / 10) * Math.log(daysOld + 1);
-          if (!isNaN(factor)) {
-            agingFactor = factor;
-          }
-        }
-      }
-      return sum + agingFactor;
-    }, 0);
-
-    return totalAgingFactor / eligibleTasks.length;
   }, [tasks]);
 
 
@@ -626,6 +603,7 @@ export default function HomePage() {
             tasks={tasks || []}
             averageIndex={averageIndex}
             totalDynamicIndex={totalDynamicIndex}
+            averageAgingFactor={averageAgingFactor}
             t={t}
             disabled={!activeListId}
           />

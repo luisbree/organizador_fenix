@@ -22,11 +22,12 @@ interface TaskFormProps {
   tasks: Task[];
   averageIndex: number;
   totalDynamicIndex: number;
+  averageAgingFactor: number;
   t: LanguageStrings;
   disabled?: boolean;
 }
 
-export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, averageIndex, totalDynamicIndex, t, disabled = false }: TaskFormProps) {
+export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, averageIndex, totalDynamicIndex, averageAgingFactor, t, disabled = false }: TaskFormProps) {
   const { toast } = useToast();
   const [isRecording, setIsRecording] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -338,6 +339,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
         <div className="flex-1 flex justify-end items-center gap-2">
              <AverageIndexGauge value={averageIndex} maxValue={11} useGradient={true} />
              <AverageIndexGauge value={totalDynamicIndex} maxValue={240} colorBands={true} />
+             <AverageIndexGauge value={averageAgingFactor} maxValue={6} useAgingGradient={true} />
         </div>
       </div>
       

@@ -9,9 +9,17 @@ interface AverageIndexGaugeProps {
   className?: string;
   colorBands?: boolean;
   useGradient?: boolean;
+  useAgingGradient?: boolean;
 }
 
-export function AverageIndexGauge({ value, maxValue, className, colorBands = false, useGradient = false }: AverageIndexGaugeProps) {
+export function AverageIndexGauge({ 
+  value, 
+  maxValue, 
+  className, 
+  colorBands = false, 
+  useGradient = false,
+  useAgingGradient = false 
+}: AverageIndexGaugeProps) {
   const size = 77; 
   const strokeWidth = 5;
   const center = size / 2;
@@ -66,6 +74,17 @@ export function AverageIndexGauge({ value, maxValue, className, colorBands = fal
     ticks.push(<line key={i} x1={startPt.x} y1={startPt.y} x2={endPt.x} y2={endPt.y} stroke="hsl(var(--foreground))" strokeWidth="1" />);
   }
 
+  const getAgingGradientColor = (offset: number) => {
+      const maxFactorForColor = 2.5;
+      // We need to map the offset (0-1) to an agingFactor value to get the right color
+      const agingFactor = offset * maxFactorForColor;
+      const normalizedFactor = Math.min(agingFactor / maxFactorForColor, 1.0);
+      const hue = 120 - (normalizedFactor * 120);
+      const saturation = 70 + (normalizedFactor * 30);
+      const lightness = 60 - (normalizedFactor * 10);
+      return `hsla(${hue}, ${saturation}%, ${lightness}%, 1)`;
+  };
+
 
   return (
     <div className="flex flex-col items-center justify-center">
@@ -77,6 +96,11 @@ export function AverageIndexGauge({ value, maxValue, className, colorBands = fal
                 <stop offset="66%" stopColor="pink" />
                 <stop offset="100%" stopColor="red" />
               </linearGradient>
+              <linearGradient id="agingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor={getAgingGradientColor(0)} />
+                <stop offset="50%" stopColor={getAgingGradientColor(0.5)} />
+                <stop offset="100%" stopColor={getAgingGradientColor(1.0)} />
+            </linearGradient>
             </defs>
 
             {/* Gauge background arc */}
@@ -105,7 +129,7 @@ export function AverageIndexGauge({ value, maxValue, className, colorBands = fal
                <path
                   d={describeArc(center, center, radius, -120, 120)}
                   fill="none"
-                  stroke={useGradient ? "url(#avgIndexGradient)" : "hsl(var(--muted))"}
+                  stroke={useGradient ? "url(#avgIndexGradient)" : useAgingGradient ? "url(#agingGradient)" : "hsl(var(--muted))"}
                   strokeWidth={strokeWidth}
                   strokeLinecap="round"
               />
