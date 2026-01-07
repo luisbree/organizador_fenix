@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -13,22 +12,56 @@ interface AverageIndexGaugeProps {
   useAgingGradient?: boolean;
 }
 
+// Function to interpolate between two colors
+const lerpColor = (a: [number, number, number], b: [number, number, number], amount: number): [number, number, number] => {
+  const clampedAmount = Math.max(0, Math.min(1, amount));
+  const r = Math.round(a[0] + (b[0] - a[0]) * clampedAmount);
+  const g = Math.round(a[1] + (b[1] - a[1]) * clampedAmount);
+  const blue = Math.round(a[2] + (b[2] - a[2]) * clampedAmount);
+  return [r, g, blue];
+};
+
+// Hex to RGB conversion
+const hexToRgb = (hex: string): [number, number, number] => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [
+    parseInt(result[1], 16),
+    parseInt(result[2], 16),
+    parseInt(result[3], 16)
+  ] : [0, 0, 0];
+};
+
+const COLORS = {
+  GREEN: hexToRgb('#5cd65c'),
+  YELLOW: hexToRgb('#fdf068'),
+  ORANGE: hexToRgb('#ff9933'),
+  RED: hexToRgb('#fa0505'),
+};
 
 // This function is now the single source of truth for aging colors.
 export const getAgingGradientColor = (factor: number, maxFactor: number): string => {
-  if (factor <= 0) return `hsla(121, 63%, 58%, 1)`; // Green for solid color
   const normalizedFactor = Math.min(factor / maxFactor, 1.0);
-  const hue = 120 - (normalizedFactor * 120); // 120 (green) -> 0 (red)
-  const saturation = 70 + (normalizedFactor * 30); // 70 -> 100
-  const lightness = 60 - (normalizedFactor * 10); // 60 -> 50
+
+  let rgb: [number, number, number];
+
+  if (normalizedFactor < 0.33) {
+    // Green to Yellow
+    rgb = lerpColor(COLORS.GREEN, COLORS.YELLOW, normalizedFactor / 0.33);
+  } else if (normalizedFactor < 0.66) {
+    // Yellow to Orange
+    rgb = lerpColor(COLORS.YELLOW, COLORS.ORANGE, (normalizedFactor - 0.33) / 0.33);
+  } else {
+    // Orange to Red
+    rgb = lerpColor(COLORS.ORANGE, COLORS.RED, (normalizedFactor - 0.66) / 0.34);
+  }
   
-  // For the gauge arc and the leaf, we want a solid color (alpha = 1)
-  return `hsla(${hue}, ${saturation}%, ${lightness}%, 1)`;
+  return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
 };
 
 
 export const getAgingColor = (agingFactor: number): string => {
-  return getAgingGradientColor(agingFactor, 2.5);
+  // The max factor for the leaf and gauge should be consistent.
+  return getAgingGradientColor(agingFactor, 3.0); 
 };
 
 const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {

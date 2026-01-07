@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { SubTaskItem } from './SubTaskItem';
 import type { LanguageStrings } from '@/lib/translations';
 import { CriticalTaskToggle } from './CriticalTaskToggle';
+import { getAgingGradientColor } from './AverageIndexGauge';
 
 const calculateDynamicIndex = (task: Task): number => {
     if (!task.createdAt) return task.indice;
@@ -52,24 +53,16 @@ const calculateAgingFactor = (task: Task): number => {
 }
 
 const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
-  if (agingFactor <= 0) {
-    return { 
-        backgroundColor: `hsla(121, 63%, 58%, 0.5)`,
-        borderColor: `hsla(121, 63%, 48%, 1)`
-    };
-  }
+  const solidColor = getAgingGradientColor(agingFactor, 3.0); // Max factor of 3.0 for the gradient
+  
+  // Convert rgb(r, g, b) to rgba(r, g, b, alpha)
+  const rgbaColor = solidColor.replace('rgb', 'rgba').replace(')', ', 0.6)');
 
-  const maxFactorForColor = 2.5;
-  const normalizedFactor = Math.min(agingFactor / maxFactorForColor, 1.0);
+  const borderColor = solidColor.replace('rgb', 'rgba').replace(')', ', 1)');
 
-  const hue = 120 - (normalizedFactor * 120);
-  const saturation = 70 + (normalizedFactor * 30); 
-  const lightness = 60 - (normalizedFactor * 10); 
-  const alpha = 0.5 + (normalizedFactor * 0.2); 
-
-  return { 
-      backgroundColor: `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`,
-      borderColor: `hsla(${hue}, ${saturation}%, ${lightness - 10}%, 1)` 
+  return {
+    backgroundColor: rgbaColor,
+    borderColor: borderColor
   };
 };
 
