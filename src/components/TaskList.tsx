@@ -73,6 +73,29 @@ const getAgingColorStyle = (agingFactor: number): React.CSSProperties => {
   };
 };
 
+interface TaskListProps {
+    tasks: Task[];
+    sortOrder: SortOrder;
+    onToggleComplete: (id: string) => void;
+    onDeleteTask: (id: string) => void;
+    onToggleScheduled: (id: string, currentScheduledAt: any) => void;
+    onUpdateTaskValue: (
+      taskId: string,
+      field: keyof Pick<Task, 'urgencia' | 'necesidad' | 'costo' | 'duracion'>,
+      newValue: number
+    ) => void;
+    onSelectTask: (taskId: string | null) => void;
+    selectedTaskId: string | null;
+    onToggleSubTaskComplete: (subTaskId: string, parentId: string) => void;
+    onDeleteSubTask: (subTaskId: string, parentId: string) => void;
+    onToggleSubTaskScheduled: (subTaskId: string, parentId: string, currentScheduledAt: any) => void;
+    onToggleCritical: (taskId: string, isCurrentlyCritical: boolean) => void;
+    onUpdateTaskName: (taskId: string, newName: string) => void;
+    onUpdateFenixPeriod: (taskId: string, newPeriod: number) => void;
+    criticalTasksCount: number;
+    t: LanguageStrings;
+}
+
 
 export function TaskList({ 
     tasks, 

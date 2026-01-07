@@ -13,14 +13,19 @@ interface AverageIndexGaugeProps {
   useAgingGradient?: boolean;
 }
 
+
+// This function is now the single source of truth for aging colors.
 export const getAgingGradientColor = (factor: number, maxFactor: number): string => {
-  if (factor <= 0) return `hsla(121, 63%, 58%, 1)`; // Green
+  if (factor <= 0) return `hsla(121, 63%, 58%, 1)`; // Green for solid color
   const normalizedFactor = Math.min(factor / maxFactor, 1.0);
   const hue = 120 - (normalizedFactor * 120); // 120 (green) -> 0 (red)
   const saturation = 70 + (normalizedFactor * 30); // 70 -> 100
   const lightness = 60 - (normalizedFactor * 10); // 60 -> 50
+  
+  // For the gauge arc and the leaf, we want a solid color (alpha = 1)
   return `hsla(${hue}, ${saturation}%, ${lightness}%, 1)`;
 };
+
 
 export const getAgingColor = (agingFactor: number): string => {
   return getAgingGradientColor(agingFactor, 2.5);
