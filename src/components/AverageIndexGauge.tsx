@@ -8,9 +8,10 @@ interface AverageIndexGaugeProps {
   value: number;
   maxValue: number;
   className?: string;
+  colorBands?: boolean;
 }
 
-export function AverageIndexGauge({ value, maxValue, className }: AverageIndexGaugeProps) {
+export function AverageIndexGauge({ value, maxValue, className, colorBands = false }: AverageIndexGaugeProps) {
   const size = 128; // 80% of 160px
   const strokeWidth = 8; // Adjusted stroke width
   const center = size / 2;
@@ -19,10 +20,11 @@ export function AverageIndexGauge({ value, maxValue, className }: AverageIndexGa
   const totalAngle = 240; // The total sweep of the gauge arc in degrees
   const startAngle = -totalAngle / 2; // Start from -120 degrees
 
-  // Clamp the value to be within the min/max range
-  const clampedValue = Math.max(0, Math.min(value, maxValue));
+  const valueToAngle = (val: number) => {
+    return startAngle + (Math.max(0, Math.min(val, maxValue)) / maxValue) * totalAngle;
+  };
 
-  const valueAngle = startAngle + (clampedValue / maxValue) * totalAngle;
+  const valueAngle = valueToAngle(value);
 
   const needleLength = radius - 12; // Adjusted needle length
   
@@ -69,13 +71,37 @@ export function AverageIndexGauge({ value, maxValue, className }: AverageIndexGa
     <div className="flex flex-col items-center justify-center">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={cn("transition-opacity duration-300", value > 0 ? "opacity-100" : "opacity-30", className)}>
             {/* Gauge background arc */}
-            <path
-                d={describeArc(center, center, radius, -120, 120)}
-                fill="none"
-                stroke="hsl(var(--muted))"
-                strokeWidth={strokeWidth}
-                strokeLinecap="round"
-            />
+            {!colorBands ? (
+              <path
+                  d={describeArc(center, center, radius, -120, 120)}
+                  fill="none"
+                  stroke="hsl(var(--muted))"
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+              />
+            ) : (
+              <>
+                <path
+                    d={describeArc(center, center, radius, valueToAngle(0), valueToAngle(80))}
+                    fill="none"
+                    stroke="#22c55e" // Green
+                    strokeWidth={strokeWidth}
+                />
+                <path
+                    d={describeArc(center, center, radius, valueToAngle(80), valueToAngle(160))}
+                    fill="none"
+                    stroke="#facc15" // Yellow
+                    strokeWidth={strokeWidth}
+                />
+                <path
+                    d={describeArc(center, center, radius, valueToAngle(160), valueToAngle(240))}
+                    fill="none"
+                    stroke="#ef4444" // Red
+                    strokeWidth={strokeWidth}
+                />
+              </>
+            )}
+
             {/* Ticks */}
             <g>{ticks}</g>
             {/* Needle */}

@@ -325,8 +325,8 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
         {statusText}
       </p>
 
-      <div className="flex justify-center items-center w-full">
-         <div className="flex-1 flex justify-center">
+      <div className="flex justify-between items-center w-full">
+        <div className="flex-1 flex justify-center">
             <Button
                 onClick={handleMicClick}
                 disabled={disabled || isProcessing || hasMicPermission === null || (hasMicPermission === false && !isRecording) || isParentTaskCompleted} 
@@ -338,7 +338,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
         </div>
         <div className="flex-1 flex justify-end items-center gap-2">
              <AverageIndexGauge value={averageIndex} maxValue={11} />
-             <AverageIndexGauge value={totalDynamicIndex} maxValue={240} />
+             <AverageIndexGauge value={totalDynamicIndex} maxValue={240} colorBands={true} />
         </div>
       </div>
       
@@ -382,4 +382,3 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
     </div>
   );
 }
-
