@@ -12,8 +12,8 @@ interface AverageIndexGaugeProps {
 }
 
 export function AverageIndexGauge({ value, maxValue, className, colorBands = false }: AverageIndexGaugeProps) {
-  const size = 128; // 80% of 160px
-  const strokeWidth = 8; // Adjusted stroke width
+  const size = 77; 
+  const strokeWidth = 5;
   const center = size / 2;
   const radius = center - strokeWidth;
 
@@ -26,7 +26,7 @@ export function AverageIndexGauge({ value, maxValue, className, colorBands = fal
 
   const valueAngle = valueToAngle(value);
 
-  const needleLength = radius - 12; // Adjusted needle length
+  const needleLength = radius - 8;
   
   const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
     const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
@@ -51,8 +51,8 @@ export function AverageIndexGauge({ value, maxValue, className, colorBands = fal
     const tickValue = (i / numTicks) * maxValue;
     const tickAngle = startAngle + (tickValue / maxValue) * totalAngle;
 
-    const tickInnerRadius = radius - 4; // Adjusted tick size
-    const tickOuterRadius = radius + 4;
+    const tickInnerRadius = radius - 2; 
+    const tickOuterRadius = radius + 2;
 
     const startPt = {
         x: center + tickInnerRadius * Math.sin(tickAngle * Math.PI / 180),
@@ -63,7 +63,7 @@ export function AverageIndexGauge({ value, maxValue, className, colorBands = fal
         y: center - tickOuterRadius * Math.cos(tickAngle * Math.PI / 180),
     };
     
-    ticks.push(<line key={i} x1={startPt.x} y1={startPt.y} x2={endPt.x} y2={endPt.y} stroke="hsl(var(--foreground))" strokeWidth="1.5" />);
+    ticks.push(<line key={i} x1={startPt.x} y1={startPt.y} x2={endPt.x} y2={endPt.y} stroke="hsl(var(--foreground))" strokeWidth="1" />);
   }
 
 
@@ -106,12 +106,12 @@ export function AverageIndexGauge({ value, maxValue, className, colorBands = fal
             <g>{ticks}</g>
             {/* Needle */}
             <g transform={`rotate(${valueAngle} ${center} ${center})`}>
-                <path d={`M ${center - 4} ${center + 8} L ${center} ${center - needleLength} L ${center + 4} ${center + 8} Z`} fill="hsl(var(--foreground))" />
-                <circle cx={center} cy={center} r="6" fill="hsl(var(--foreground))" />
+                <path d={`M ${center - 2.5} ${center + 5} L ${center} ${center - needleLength} L ${center + 2.5} ${center + 5} Z`} fill="hsl(var(--foreground))" />
+                <circle cx={center} cy={center} r="4" fill="hsl(var(--foreground))" />
             </g>
         </svg>
         {value > 0 && (
-            <p className="text-center text-sm font-bold text-foreground mt-2 tabular-nums">
+            <p className="text-center text-sm font-bold text-foreground mt-1 tabular-nums">
                 {value.toFixed(2)}
             </p>
         )}
