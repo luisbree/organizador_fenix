@@ -505,10 +505,10 @@ export default function HomePage() {
     );
   }, [tasks, searchQuery]);
 
-  const averageIndex = useMemo(() => {
-    if (!tasks) return 0;
+  const { averageIndex, totalDynamicIndex } = useMemo(() => {
+    if (!tasks) return { averageIndex: 0, totalDynamicIndex: 0 };
     const eligibleTasks = tasks.filter(t => !t.completado);
-    if (eligibleTasks.length === 0) return 0;
+    if (eligibleTasks.length === 0) return { averageIndex: 0, totalDynamicIndex: 0 };
 
     const totalIndex = eligibleTasks.reduce((sum, task) => {
       // Recalculate dynamic index (pure index + aging factor)
@@ -539,7 +539,10 @@ export default function HomePage() {
       return isFinite(dynamicIndex) ? sum + dynamicIndex : sum;
     }, 0);
 
-    return totalIndex / eligibleTasks.length;
+    return {
+      averageIndex: totalIndex / eligibleTasks.length,
+      totalDynamicIndex: totalIndex,
+    };
   }, [tasks]);
 
   const averageAgingFactor = useMemo(() => {
@@ -588,11 +591,14 @@ export default function HomePage() {
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex flex-col">
        <header className="my-2 md:my-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
-            Fénix
-            </h1>
-            <AgingLeaf color={leafColor} className="h-24 w-24" />
+        <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight">
+                Fénix
+                </h1>
+                <AgingLeaf color={leafColor} className="h-24 w-24" />
+            </div>
+            <p className="text-xs text-muted-foreground ml-1">Suma Índices: {totalDynamicIndex.toFixed(2)}</p>
         </div>
          <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -665,7 +671,7 @@ export default function HomePage() {
                 sortOrder={sortOrder}
                 onToggleComplete={handleToggleComplete}
                 onDeleteTask={handleDeleteTask}
-                onToggleScheduled={handleToggleScheduled}
+                onToggleScheduled={onToggleScheduled}
                 onUpdateTaskValue={handleUpdateTaskValue}
                 onSelectTask={handleSelectTask}
                 selectedTaskId={selectedTaskId}
