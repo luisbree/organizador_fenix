@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -9,9 +8,10 @@ interface AverageIndexGaugeProps {
   maxValue: number;
   className?: string;
   colorBands?: boolean;
+  useGradient?: boolean;
 }
 
-export function AverageIndexGauge({ value, maxValue, className, colorBands = false }: AverageIndexGaugeProps) {
+export function AverageIndexGauge({ value, maxValue, className, colorBands = false, useGradient = false }: AverageIndexGaugeProps) {
   const size = 77; 
   const strokeWidth = 5;
   const center = size / 2;
@@ -70,16 +70,17 @@ export function AverageIndexGauge({ value, maxValue, className, colorBands = fal
   return (
     <div className="flex flex-col items-center justify-center">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={cn("transition-opacity duration-300", value > 0 ? "opacity-100" : "opacity-30", className)}>
+            <defs>
+              <linearGradient id="avgIndexGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="blue" />
+                <stop offset="33%" stopColor="lightblue" />
+                <stop offset="66%" stopColor="pink" />
+                <stop offset="100%" stopColor="red" />
+              </linearGradient>
+            </defs>
+
             {/* Gauge background arc */}
-            {!colorBands ? (
-              <path
-                  d={describeArc(center, center, radius, -120, 120)}
-                  fill="none"
-                  stroke="hsl(var(--muted))"
-                  strokeWidth={strokeWidth}
-                  strokeLinecap="round"
-              />
-            ) : (
+            {colorBands ? (
               <>
                 <path
                     d={describeArc(center, center, radius, valueToAngle(0), valueToAngle(80))}
@@ -100,6 +101,14 @@ export function AverageIndexGauge({ value, maxValue, className, colorBands = fal
                     strokeWidth={strokeWidth}
                 />
               </>
+            ) : (
+               <path
+                  d={describeArc(center, center, radius, -120, 120)}
+                  fill="none"
+                  stroke={useGradient ? "url(#avgIndexGradient)" : "hsl(var(--muted))"}
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+              />
             )}
 
             {/* Ticks */}

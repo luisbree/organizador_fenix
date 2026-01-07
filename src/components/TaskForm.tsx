@@ -1,4 +1,3 @@
-
 // @ts-nocheck
 // Using @ts-nocheck because SpeechRecognition and related event types are not standard in all TS lib versions.
 "use client";
@@ -337,7 +336,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
             </Button>
         </div>
         <div className="flex-1 flex justify-end items-center gap-2">
-             <AverageIndexGauge value={averageIndex} maxValue={11} />
+             <AverageIndexGauge value={averageIndex} maxValue={11} useGradient={true} />
              <AverageIndexGauge value={totalDynamicIndex} maxValue={240} colorBands={true} />
         </div>
       </div>
@@ -353,7 +352,7 @@ export function TaskForm({ onAddTask, onAddSubTask, selectedTask, tasks, average
             className="text-base w-full"
         />
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center justify-between space-x-4">
             {!isSubtaskMode && (
                 <div className="flex items-center space-x-2 flex-shrink-0 bg-muted/30 p-1.5 rounded-md">
                     <Checkbox id="fenix-checkbox" checked={isFenix} onCheckedChange={setIsFenix} disabled={disabled} />
