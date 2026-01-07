@@ -26,6 +26,23 @@ export const getAgingColor = (agingFactor: number): string => {
   return getAgingGradientColor(agingFactor, 2.5);
 };
 
+const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
+    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+    return {
+      x: centerX + radius * Math.cos(angleInRadians),
+      y: centerY + radius * Math.sin(angleInRadians),
+    };
+  };
+
+const describeArc = (x: number, y: number, radius: number, startAngle: number, endAngle: number) => {
+    const start = polarToCartesian(x, y, radius, endAngle);
+    const end = polarToCartesian(x, y, radius, startAngle);
+    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
+    const d = ['M', start.x, start.y, 'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y].join(' ');
+    return d;
+  };
+
+
 export function AverageIndexGauge({ 
   value, 
   maxValue, 
@@ -50,22 +67,6 @@ export function AverageIndexGauge({
 
   const needleLength = radius - 8;
   
-  const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
-    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
-    return {
-      x: centerX + radius * Math.cos(angleInRadians),
-      y: centerY + radius * Math.sin(angleInRadians),
-    };
-  };
-
-  const describeArc = (x: number, y: number, radius: number, startAngle: number, endAngle: number) => {
-    const start = polarToCartesian(x, y, radius, endAngle);
-    const end = polarToCartesian(x, y, radius, startAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
-    const d = ['M', start.x, start.y, 'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y].join(' ');
-    return d;
-  };
-
   // Create ticks
   const ticks = [];
   const numTicks = 5;
@@ -88,6 +89,27 @@ export function AverageIndexGauge({
     ticks.push(<line key={i} x1={startPt.x} y1={startPt.y} x2={endPt.x} y2={endPt.y} stroke="hsl(var(--foreground))" strokeWidth="1" />);
   }
   
+  const agingGradientArcs = useAgingGradient ? 
+    Array.from({ length: 100 }).map((_, i) => {
+        const segmentStartValue = (i / 100) * maxValue;
+        const segmentEndValue = ((i + 1) / 100) * maxValue;
+        
+        const segmentStartAngle = valueToAngle(segmentStartValue);
+        const segmentEndAngle = valueToAngle(segmentEndValue);
+        
+        const color = getAgingGradientColor(segmentStartValue, maxValue);
+
+        return (
+            <path
+                key={i}
+                d={describeArc(center, center, radius, segmentStartAngle, segmentEndAngle)}
+                fill="none"
+                stroke={color}
+                strokeWidth={strokeWidth}
+            />
+        );
+    }) : null;
+
   return (
     <div className="flex flex-col items-center justify-center">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={cn("transition-opacity duration-300", value > 0 ? "opacity-100" : "opacity-30", className)}>
@@ -98,17 +120,12 @@ export function AverageIndexGauge({
                 <stop offset="66%" stopColor="pink" />
                 <stop offset="100%" stopColor="red" />
               </linearGradient>
-              <linearGradient id="agingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor={getAgingGradientColor(0, maxValue)} />
-                <stop offset="25%" stopColor={getAgingGradientColor(0.25 * maxValue, maxValue)} />
-                <stop offset="50%" stopColor={getAgingGradientColor(0.5 * maxValue, maxValue)} />
-                <stop offset="75%" stopColor={getAgingGradientColor(0.75 * maxValue, maxValue)} />
-                <stop offset="100%" stopColor={getAgingGradientColor(maxValue, maxValue)} />
-            </linearGradient>
             </defs>
 
             {/* Gauge background arc */}
-            {colorBands ? (
+            {useAgingGradient ? (
+              <g>{agingGradientArcs}</g>
+            ) : colorBands ? (
               <>
                 <path
                     d={describeArc(center, center, radius, valueToAngle(0), valueToAngle(80))}
@@ -133,7 +150,7 @@ export function AverageIndexGauge({
                <path
                   d={describeArc(center, center, radius, -120, 120)}
                   fill="none"
-                  stroke={useGradient ? "url(#avgIndexGradient)" : useAgingGradient ? "url(#agingGradient)" : "hsl(var(--muted))"}
+                  stroke={useGradient ? "url(#avgIndexGradient)" : "hsl(var(--muted))"}
                   strokeWidth={strokeWidth}
                   strokeLinecap="round"
               />
@@ -155,5 +172,3 @@ export function AverageIndexGauge({
     </div>
   );
 }
-
-    
